@@ -1,21 +1,22 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { localAxios } from "@/util/http-commons.js";
+import { useRouter } from "vue-router";
 import PlanBoardCard from "./item/PlanBoardCard.vue";
-let id = 1;
-const planArticleList = ref([
-  {
-    id: id++,
-    subject: "hihi",
-  },
-  {
-    id: id++,
-    subject: "234",
-  },
-  {
-    id: id++,
-    subject: "345",
-  },
-]);
+
+const local = localAxios();
+const router = useRouter();
+
+const planArticleList = ref();
+const getArticleList = async () => {
+  local.get("shareplan/list").then(({ data }) => {
+    console.log(data.articles);
+    planArticleList.value = data.articles;
+  });
+};
+onMounted(() => {
+  getArticleList();
+});
 </script>
 <template>
   <div>🚗 다녀온 여행 공유</div>
@@ -34,7 +35,7 @@ const planArticleList = ref([
   </form>
   <PlanBoardCard
     v-for="planArticle in planArticleList"
-    :key="planArticle.id"
+    :key="planArticle.planBoardId"
     :planArticle="planArticle"
   />
 </template>
