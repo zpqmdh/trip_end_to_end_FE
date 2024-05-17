@@ -153,4 +153,20 @@ const router = createRouter({
   ],
 });
 
+const passedPaths = ["/", "/main", "/member/login", "/member/signup"]; // 보호된 경로 배열
+
+router.beforeEach((to, from, next) => {
+  if (passedPaths.includes(to.path)) {
+    next();
+  } else {
+    console.log(to);
+    console.log(from);
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      throw new Error("access token이 없습니다.");
+    } else {
+      next();
+    }
+  }
+});
 export default router;
