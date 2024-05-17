@@ -1,13 +1,31 @@
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
+import { decodedTokenFunc } from "@/util/auth";
 
 const local = localAxios();
 const router = useRouter();
 
+onMounted(() => {
+  getMemberId();
+});
+
+let member = ref({
+  memberId: "",
+  id: loginedId,
+  nickname: "",
+});
+const getMemberId = () => {
+  const loginedId = decodedTokenFunc();
+  local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    member.value.memberId = data.memberId;
+    member.value.nickname = data.nickname;
+  });
+};
+
 const qnaBoardDto = ref({
-  memberId: "1",
+  memberId: "",
   subject: "",
   content: "",
   secret: false,
@@ -16,9 +34,10 @@ const qnaBoardDto = ref({
 
 const insertArticle = () => {
   qnaBoardDto.value.secret = qnaBoardDto.value.secret ? 1 : 0;
-  console.log(qnaBoardDto.value);
+  qnaBoardDto.value.memberId = member.value.memberId;
   local.post("/qna/insert", qnaBoardDto.value).then(({ data }) => {
     console.log(data);
+    router.push("qna-list");
   });
 };
 
@@ -65,7 +84,9 @@ const resetInput = () => {
             v-model="qnaBoardDto.secret"
             id="flexCheckDefault"
           />
-          <label class="form-check-label" for="flexCheckDefault"> 비밀글로 등록하기 </label>
+          <label class="form-check-label" for="flexCheckDefault">
+            비밀글로 등록하기
+          </label>
         </div>
         <div class="col-lg-4">
           <input
@@ -87,7 +108,11 @@ const resetInput = () => {
           >
             등록하기
           </button>
-          <button type="reset" class="btn btn-outline-danger mb-3" @click="resetInput">
+          <button
+            type="reset"
+            class="btn btn-outline-danger mb-3"
+            @click="resetInput"
+          >
             초기화
           </button>
         </div>
