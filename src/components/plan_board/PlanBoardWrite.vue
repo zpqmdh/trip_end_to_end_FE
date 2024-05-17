@@ -7,6 +7,11 @@ import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
 import SearchBar from "@/components/plan_board/item/SearchBar.vue";
 import { format } from "date-fns";
+import { localAxios } from "@/util/http-commons.js";
+import { useRouter } from "vue-router";
+
+const local = localAxios();
+const router = useRouter();
 
 const center = { lat: 36.355387, lng: 127.29964 };
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
@@ -15,27 +20,33 @@ let startDate = ref(new Date());
 let endDate = ref(new Date());
 let content = ref(null);
 let subject = ref(null);
-
+let theNumberOfMembers = ref(null);
 const locale = ref(ko);
 const inputFormat = ref("yyyy-MM-dd");
 
 const planBoardObject = {
-  memberId: "",
-  subject: "",
-  content: "",
-  startDate: startDate.value,
-  endDate: endDate.value,
-  theNumberOfMembers: "",
-  thumbnail: "",
+  planBoard: {
+    memberId: "",
+    subject: "",
+    content: "",
+    startDate: startDate.value,
+    endDate: endDate.value,
+    theNumberOfMembers: "",
+    thumbnail: "",
+  },
+  tagList: [],
 };
 
 const testasdf = () => {
-  planBoardObject.subject = subject.value;
-  planBoardObject.content = content.value.getHTML();
-  planBoardObject.startDate = format(startDate.value, inputFormat.value);
-  planBoardObject.endDate = format(endDate.value, inputFormat.value);
-
-  console.log(planBoardObject);
+  planBoardObject.planBoard.memberId = "1";
+  planBoardObject.planBoard.subject = subject.value;
+  planBoardObject.planBoard.content = content.value.getHTML();
+  planBoardObject.planBoard.startDate = format(startDate.value, inputFormat.value);
+  planBoardObject.planBoard.endDate = format(endDate.value, inputFormat.value);
+  planBoardObject.planBoard.theNumberOfMembers = "3";
+  local.post("/shareplan/insert", planBoardObject).then(({ data }) => {
+    console.log(data);
+  });
 };
 </script>
 <template>

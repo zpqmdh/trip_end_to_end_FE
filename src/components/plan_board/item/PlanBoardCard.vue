@@ -16,8 +16,13 @@ defineProps({ planArticle: Object });
     />
     <div class="card-body">
       <h5 class="card-title">{{ planArticle.subject }}</h5>
-      <p class="card-text">{{ planArticle.content }}</p>
-      <button type="button" @click="setArticle(planArticle.planBoardId)">자세히 보기</button>
+      <button type="button">
+        <router-link
+          :to="{ name: 'share-plan-detail', params: { id: planArticle.planBoardId } }"
+          class="text-black text-decoration-none"
+          >자세히 보기</router-link
+        >
+      </button>
     </div>
   </div>
 </template>
