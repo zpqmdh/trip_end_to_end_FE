@@ -17,10 +17,10 @@ function logout() {
   localStorage.removeItem("refreshToken");
 }
 
-const loginedId = null;
 const decodedTokenFunc = () => {
-  const decodedToken = jwtDecode(token);
-  loginedId = decodedToken.memberId;
+  const decodedToken = jwtDecode(localStorage.getItem("accessToken"));
+  const loginedId = decodedToken.memberId;
+  return loginedId;
 };
 
-export { isAuthenticated, login, logout, loginedId, decodedTokenFunc };
+export { isAuthenticated, login, logout, decodedTokenFunc };
