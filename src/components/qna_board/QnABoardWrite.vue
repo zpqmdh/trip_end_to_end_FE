@@ -13,7 +13,7 @@ onMounted(() => {
 
 let member = ref({
   memberId: "",
-  id: loginedId,
+  id: "",
   nickname: "",
 });
 const getMemberId = () => {
@@ -37,7 +37,7 @@ const insertArticle = () => {
   qnaBoardDto.value.memberId = member.value.memberId;
   local.post("/qna/insert", qnaBoardDto.value).then(({ data }) => {
     console.log(data);
-    router.push("qna-list");
+    router.push({ name: "qna-list" });
   });
 };
 
