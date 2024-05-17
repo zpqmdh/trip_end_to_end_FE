@@ -43,10 +43,10 @@ function logoutHandle() {
             <router-link :to="{ name: 'share-plan-list' }" class="nav-link">여행공유</router-link>
           </li>
           <li class="nav-item">
-            <router-link :to="{ name: 'notice' }" class="nav-link">공지사항</router-link>
+            <router-link :to="{ name: 'notice-list' }" class="nav-link">공지사항</router-link>
           </li>
           <li class="nav-item">
-            <router-link :to="{ name: 'qna' }" class="nav-link">고객센터</router-link>
+            <router-link :to="{ name: 'qna-list' }" class="nav-link">고객센터</router-link>
           </li>
           <li v-if="!isAuthenticated" class="nav-item">
             <router-link :to="{ name: 'member-login' }" class="nav-link">로그인</router-link>

@@ -6,19 +6,66 @@ import { ko } from "date-fns/locale";
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
 import SearchBar from "@/components/plan_board/item/SearchBar.vue";
+import { format } from "date-fns";
+import { localAxios } from "@/util/http-commons.js";
+import { useRouter } from "vue-router";
+
+const local = localAxios();
+const router = useRouter();
+
 const center = { lat: 36.355387, lng: 127.29964 };
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 
 let startDate = ref(new Date());
 let endDate = ref(new Date());
+let content = ref(null);
+let subject = ref(null);
+let theNumberOfMembers = ref(null);
 const locale = ref(ko);
 const inputFormat = ref("yyyy-MM-dd");
+
+const planBoardObject = {
+  planBoard: {
+    memberId: "",
+    subject: "",
+    content: "",
+    startDate: startDate.value,
+    endDate: endDate.value,
+    theNumberOfMembers: "",
+    thumbnail: "",
+  },
+  tagList: [],
+};
+
+const testasdf = () => {
+  planBoardObject.planBoard.memberId = "1";
+  planBoardObject.planBoard.subject = subject.value;
+  planBoardObject.planBoard.content = content.value.getHTML();
+  planBoardObject.planBoard.startDate = format(startDate.value, inputFormat.value);
+  planBoardObject.planBoard.endDate = format(endDate.value, inputFormat.value);
+  planBoardObject.planBoard.theNumberOfMembers = "3";
+  local.post("/shareplan/insert", planBoardObject).then(({ data }) => {
+    console.log(data);
+  });
+};
 </script>
 <template>
   <div>
-    <input type="text" class="border-0 mb-3" placeholder="제목..." />
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8">
+          <input
+            id="title"
+            v-model="subject"
+            class="form-control"
+            type="text"
+            placeholder="제목 ..."
+          />
+        </div>
+      </div>
+    </div>
     <hr />
-    <div class="row mx-3">
+    <div class="row mx-5">
       <div class="col-md-4">
         <SearchBar />
         <GoogleMap :api-key="VITE_GOOGLE_MAP_KEY" style="height: 500px" :center="center" :zoom="15">
@@ -63,9 +110,15 @@ const inputFormat = ref("yyyy-MM-dd");
       </div>
 
       <div class="col-md-4">
-        <QuillEditor theme="snow" />
+        <QuillEditor theme="snow" ref="content" />
       </div>
     </div>
+
+    <button @click="testasdf" type="submit">테스트</button>
   </div>
 </template>
-<style scoped></style>
+<style scoped>
+#title {
+  margin: 35px 0px;
+}
+</style>

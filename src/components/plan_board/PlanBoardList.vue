@@ -9,34 +9,45 @@ const router = useRouter();
 
 const planArticleList = ref();
 const getArticleList = async () => {
-  local.get("shareplan/list").then(({ data }) => {
-    console.log(data.articles);
+  local.get("/shareplan/list").then(({ data }) => {
     planArticleList.value = data.articles;
   });
 };
+
 onMounted(() => {
   getArticleList();
 });
 </script>
 <template>
-  <div>🚗 다녀온 여행 공유</div>
-
-  <button><router-link :to="{ name: 'share-plan-write' }">게시글 작성하기</router-link></button>
-  <form>
-    <div class="form-row align-items-center">
-      <div class="col-7">
-        <label class="mr-sm-2" for="inlineFormCustomSelect">태그 검색</label>
-        <input type="text" class="form-control" placeholder="Tag" />
+  <div class="container">
+    <h1 class="text-center">🚗 다녀온 여행 공유</h1>
+    <div class="text-center mb-4">
+      <button class="btn btn-primary">
+        <router-link :to="{ name: 'share-plan-write' }" class="text-white"
+          >게시글 작성하기</router-link
+        >
+      </button>
+    </div>
+    <form class="text-center mb-4">
+      <div class="form-row align-items-center justify-content-center">
+        <div class="col-7">
+          <label class="mr-sm-2" for="inlineFormCustomSelect">태그 검색</label>
+          <input type="text" class="form-control" placeholder="Tag" />
+        </div>
+        <div class="col-auto my-1">
+          <button type="submit" class="btn btn-primary">검색</button>
+        </div>
       </div>
-      <div class="col-auto my-1">
-        <button type="submit" class="btn btn-primary">검색</button>
+    </form>
+    <div class="row">
+      <div
+        class="col-md-4 mb-4"
+        v-for="planArticle in planArticleList"
+        :key="planArticle.planBoardId"
+      >
+        <PlanBoardCard :planArticle="planArticle" />
       </div>
     </div>
-  </form>
-  <PlanBoardCard
-    v-for="planArticle in planArticleList"
-    :key="planArticle.planBoardId"
-    :planArticle="planArticle"
-  />
+  </div>
 </template>
 <style scoped></style>
