@@ -1,9 +1,20 @@
 <script setup>
-import { RouterLink } from "vue-router";
-import { ref } from "vue";
+import { RouterLink, useRouter } from "vue-router";
+import { ref, reactive, computed } from "vue";
+import { logout, isAuthenticated } from '@/util/auth';
+
+const router = useRouter();
+
+
+
 function toggleNavbar() {
   const navbar = document.getElementById("navbarNav");
   navbar.classList.toggle("show");
+}
+
+function logoutHandle() {
+  logout();
+  router.push({ name: "main" });
 }
 </script>
 
@@ -37,17 +48,17 @@ function toggleNavbar() {
           <li class="nav-item">
             <router-link :to="{ name: 'qna' }" class="nav-link">고객센터</router-link>
           </li>
-          <li class="nav-item">
+          <li v-if="!isAuthenticated" class="nav-item">
             <router-link :to="{ name: 'member-login' }" class="nav-link">로그인</router-link>
           </li>
-          <li class="nav-item">
+          <li v-if="!isAuthenticated" class="nav-item">
             <router-link :to="{ name: 'member-signup' }" class="nav-link">회원가입</router-link>
           </li>
-          <li class="nav-item">
+          <li v-if="isAuthenticated" class="nav-item">
             <router-link :to="{ name: 'member-mypage' }" class="nav-link">마이페이지</router-link>
           </li>
-          <li class="nav-item">
-            <router-link :to="{ name: 'member-login' }" class="nav-link">로그아웃</router-link>
+          <li v-if="isAuthenticated" class="nav-item">
+            <button @click="logoutHandle()" class="nav-link">로그아웃</button>
           </li>
         </ul>
       </div>
