@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { localAxios } from '@/util/http-commons';
-import { jwtDecode } from 'jwt-decode';
+import { loginedId } from '@/util/auth';
 
 const local = localAxios();
 const member = ref({
@@ -18,12 +18,7 @@ const member = ref({
 
 const loadMemberDetails = async () => {
   try {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      throw new Error('access token이 없습니다.');
-    }
-    const decodedToken = jwtDecode(token);
-    const id = decodedToken.memberId;
+    const id = loginedId;
     const response = await local.get(`/members/detail/${id}`);
     const data = response.data;
 
