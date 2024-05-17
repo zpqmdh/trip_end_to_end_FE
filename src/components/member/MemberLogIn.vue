@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router';
 import { localAxios } from '@/util/http-commons';
 import { login } from '@/util/auth';
 
+const local = localAxios();
+
 const router = useRouter();
 const loginMember = ref({
   id: '',
@@ -12,7 +14,7 @@ const loginMember = ref({
 
 const handleLogin = async () => {
   try {
-    const response = await localAxios().post('/members/login', loginMember.value);
+    const response = await local.post('/members/login', loginMember.value);
     const { accessToken, refreshToken } = response.data;
 
     // 토큰 저장 (localStorage)

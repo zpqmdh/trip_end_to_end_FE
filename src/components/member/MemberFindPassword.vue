@@ -1,5 +1,13 @@
-<script setup></script>
+<script setup>
+
+</script>
+
 <template>
-  <div>Member FindPassword</div>
+  <div>
+    
+  </div>
 </template>
-<style scoped></style>
+
+<style scoped>
+
+</style>

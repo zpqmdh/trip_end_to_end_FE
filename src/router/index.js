@@ -34,6 +34,11 @@ const router = createRouter({
           name: "member-findpassword",
           component: () => import("@/components/member/MemberFindPassword.vue"),
         },
+        {
+          path: "changepassword",
+          name: "member-changepassword",
+          component: () => import("@/components/member/MemberChangePassword.vue"),
+        },
       ],
     },
     {
