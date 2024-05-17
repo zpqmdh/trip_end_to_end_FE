@@ -37,7 +37,8 @@ const router = createRouter({
         {
           path: "changepassword",
           name: "member-changepassword",
-          component: () => import("@/components/member/MemberChangePassword.vue"),
+          component: () =>
+            import("@/components/member/MemberChangePassword.vue"),
         },
       ],
     },
@@ -164,8 +165,6 @@ router.beforeEach((to, from, next) => {
   if (passedPaths.includes(to.path)) {
     next();
   } else {
-    console.log(to);
-    console.log(from);
     const token = localStorage.getItem("accessToken");
     if (!token) {
       throw new Error("access token이 없습니다.");
