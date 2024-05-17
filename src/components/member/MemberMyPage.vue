@@ -1,24 +1,35 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, isReactive } from 'vue';
 import { localAxios } from '@/util/http-commons';
 import { loginedId } from '@/util/auth';
+import { useRouter } from "vue-router"
 
+const router = useRouter()
 const local = localAxios();
 const member = ref({
-  nickname: '',
-  mbti: '',
+  memberId: '',
+  id: loginedId,
+  password: '',
   name: '',
   birthdate: '',
+  image:'',
   emailId: '',
   emailDomain: '',
-  area: '',
+  token: null,
+  isActive: '',
+  joinDate: '',
+  type: '',
+  nickname: '',
   sex: '',
+  area: '',
   phoneNumber: '',
+  mbti: '',
 });
 
 const loadMemberDetails = async () => {
   try {
     const id = loginedId;
+    console.log(id);
     const response = await local.get(`/members/detail/${id}`);
     const data = response.data;
 
@@ -27,6 +38,7 @@ const loadMemberDetails = async () => {
       mbti: data.mbti,
       name: data.name,
       birthdate: data.birthdate,
+      image: data.image,
       emailId: data.emailId,
       emailDomain: data.emailDomain,
       area: data.area,
@@ -34,22 +46,38 @@ const loadMemberDetails = async () => {
       phoneNumber: data.phoneNumber,
     };
   } catch (error) {
-    console.error('Failed to load member details:', error);
+    console.error('회원 정보를 불러오는 데 실패하였습니다.', error);
   }
 };
 
 onMounted(loadMemberDetails);
 
 const handleUpdate = async () => {
-  // 회원 정보 수정 로직
+  // 회원 정보 수정
+  try {
+    const id = loginedId;
+    const response = await local.put(`/members/update/${id}`, member.value);
+    alert(response.data);
+  } catch (error) {
+    console.error('회원 정보 수정에 실패하였습니다.')
+  }
 };
 
 const handlePasswordChange = async () => {
-  // 비밀번호 변경 로직
+  // 비밀번호 변경
+  router.push({name: "member-changepassword"})
 };
 
 const handleDelete = async () => {
-  // 회원 탈퇴 로직
+  // 회원 탈퇴
+  try {
+    const id = loginedId;
+    const response = await local.put(`/members/delete`, loginedId);
+    alert(response.data);
+  } catch (error) {
+    alert("탈퇴에 실패하였습니다.");
+    console.error('탈퇴에 실패하였습니다.');
+  }
 };
 </script>
 
@@ -64,7 +92,7 @@ const handleDelete = async () => {
     </div>
     <div class="content">
       <div class="profile-header">
-        <img src="" alt="Profile Image" class="profile-image" />
+        <img :src="member.image" alt="Profile Image" class="profile-image" />
         <div class="profile-details">
           <input v-model="member.nickname" type="text" placeholder="닉네임" />
           <input v-model="member.mbti" type="text" placeholder="MBTI" />
