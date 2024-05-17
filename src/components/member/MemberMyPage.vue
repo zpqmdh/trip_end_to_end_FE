@@ -1,29 +1,30 @@
 <script setup>
-import { ref, onMounted, isReactive } from 'vue';
-import { localAxios } from '@/util/http-commons';
-import { loginedId } from '@/util/auth';
-import { useRouter } from "vue-router"
+import { ref, onMounted, isReactive } from "vue";
+import { localAxios } from "@/util/http-commons";
+import { decodedTokenFunc } from "@/util/auth";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const loginedId = decodedTokenFunc();
+const router = useRouter();
 const local = localAxios();
 const member = ref({
-  memberId: '',
+  memberId: "",
   id: loginedId,
-  password: '',
-  name: '',
-  birthdate: '',
-  image:'',
-  emailId: '',
-  emailDomain: '',
+  password: "",
+  name: "",
+  birthdate: "",
+  image: "",
+  emailId: "",
+  emailDomain: "",
   token: null,
-  isActive: '',
-  joinDate: '',
-  type: '',
-  nickname: '',
-  sex: '',
-  area: '',
-  phoneNumber: '',
-  mbti: '',
+  isActive: "",
+  joinDate: "",
+  type: "",
+  nickname: "",
+  sex: "",
+  area: "",
+  phoneNumber: "",
+  mbti: "",
 });
 
 const loadMemberDetails = async () => {
@@ -46,7 +47,7 @@ const loadMemberDetails = async () => {
       phoneNumber: data.phoneNumber,
     };
   } catch (error) {
-    console.error('회원 정보를 불러오는 데 실패하였습니다.', error);
+    console.error("회원 정보를 불러오는 데 실패하였습니다.", error);
   }
 };
 
@@ -59,13 +60,13 @@ const handleUpdate = async () => {
     const response = await local.put(`/members/update/${id}`, member.value);
     alert(response.data);
   } catch (error) {
-    console.error('회원 정보 수정에 실패하였습니다.')
+    console.error("회원 정보 수정에 실패하였습니다.");
   }
 };
 
 const handlePasswordChange = async () => {
   // 비밀번호 변경
-  router.push({name: "member-changepassword"})
+  router.push({ name: "member-changepassword" });
 };
 
 const handleDelete = async () => {
@@ -76,7 +77,7 @@ const handleDelete = async () => {
     alert(response.data);
   } catch (error) {
     alert("탈퇴에 실패하였습니다.");
-    console.error('탈퇴에 실패하였습니다.');
+    console.error("탈퇴에 실패하였습니다.");
   }
 };
 </script>
@@ -101,19 +102,39 @@ const handleDelete = async () => {
       <form class="member-details-form">
         <div class="form-group">
           <label for="name">이름</label>
-          <input v-model="member.name" type="text" id="name" placeholder="이름" />
+          <input
+            v-model="member.name"
+            type="text"
+            id="name"
+            placeholder="이름"
+          />
         </div>
         <div class="form-group">
           <label for="birthdate">생년월일</label>
-          <input v-model="member.birthdate" type="date" id="birthdate" placeholder="생년월일" />
+          <input
+            v-model="member.birthdate"
+            type="date"
+            id="birthdate"
+            placeholder="생년월일"
+          />
         </div>
         <div class="form-group">
           <label for="email">이메일</label>
-          <input v-model="member.emailId" type="text" id="email" placeholder="이메일" />
+          <input
+            v-model="member.emailId"
+            type="text"
+            id="email"
+            placeholder="이메일"
+          />
         </div>
         <div class="form-group">
           <label for="area">지역</label>
-          <input v-model="member.area" type="text" id="area" placeholder="지역" />
+          <input
+            v-model="member.area"
+            type="text"
+            id="area"
+            placeholder="지역"
+          />
         </div>
         <div class="form-group">
           <label for="sex">성별</label>
@@ -121,11 +142,18 @@ const handleDelete = async () => {
         </div>
         <div class="form-group">
           <label for="phoneNumber">휴대폰</label>
-          <input v-model="member.phoneNumber" type="text" id="phoneNumber" placeholder="휴대폰" />
+          <input
+            v-model="member.phoneNumber"
+            type="text"
+            id="phoneNumber"
+            placeholder="휴대폰"
+          />
         </div>
         <div class="button-group">
           <button type="button" @click="handleUpdate">회원 정보 수정</button>
-          <button type="button" @click="handlePasswordChange">비밀번호 변경</button>
+          <button type="button" @click="handlePasswordChange">
+            비밀번호 변경
+          </button>
           <button type="button" @click="handleDelete">회원탈퇴</button>
         </div>
       </form>

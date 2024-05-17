@@ -1,31 +1,36 @@
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { localAxios } from '@/util/http-commons';
-import { loginedId } from '@/util/auth';
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { localAxios } from "@/util/http-commons";
+import { decodedTokenFunc } from "@/util/auth";
 
 const local = localAxios();
 const router = useRouter();
 const changePassword = ref({
-  id: loginedId,
-  currentPassword: '',
-  newPassword: '',
-  newPasswordCheck: '',
+  id: decodedTokenFunc(),
+  currentPassword: "",
+  newPassword: "",
+  newPasswordCheck: "",
 });
 
 const handleChangePassword = async () => {
-  if (changePassword.value.newPassword !== changePassword.value.newPasswordCheck) {
-    alert('새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.');
+  if (
+    changePassword.value.newPassword !== changePassword.value.newPasswordCheck
+  ) {
+    alert("새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.");
     return;
   }
   try {
-    const response = await local.put('/members/changepassword', changePassword.value);
-    alert('비밀번호 변경이 완료되었습니다.');
+    const response = await local.put(
+      "/members/changepassword",
+      changePassword.value
+    );
+    alert("비밀번호 변경이 완료되었습니다.");
     router.push({ name: "mypage" });
   } catch (error) {
-    console.error('비밀번호 변경에 실패하였습니다.', error)
+    console.error("비밀번호 변경에 실패하였습니다.", error);
   }
-}
+};
 </script>
 
 <template>
@@ -41,15 +46,30 @@ const handleChangePassword = async () => {
       <form class="member-details-form" @submit.prevent="handleChangePassword">
         <div class="form-group">
           <label for="currentPassword">현재 비밀번호</label>
-          <input v-model="changePassword.currentPassword" type="password" id="currentPassword" placeholder="현재 비밀번호를 입력하세요." />
+          <input
+            v-model="changePassword.currentPassword"
+            type="password"
+            id="currentPassword"
+            placeholder="현재 비밀번호를 입력하세요."
+          />
         </div>
         <div class="form-group">
           <label for="newPassword">새 비밀번호</label>
-          <input v-model="changePassword.newPassword" type="password" id="newPassword" placeholder="새 비밀번호를 입력하세요." />
+          <input
+            v-model="changePassword.newPassword"
+            type="password"
+            id="newPassword"
+            placeholder="새 비밀번호를 입력하세요."
+          />
         </div>
         <div class="form-group">
           <label for="newPasswordCheck">새 비밀번호 확인</label>
-          <input v-model="changePassword.newPasswordCheck" type="password" id="newPasswordCheck" placeholder="새 비밀번호를 다시 입력하세요." />
+          <input
+            v-model="changePassword.newPasswordCheck"
+            type="password"
+            id="newPasswordCheck"
+            placeholder="새 비밀번호를 다시 입력하세요."
+          />
         </div>
         <div class="button-group">
           <button type="submit">비밀번호 변경</button>
