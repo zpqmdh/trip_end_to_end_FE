@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, isReactive } from "vue";
 import { localAxios } from "@/util/http-commons";
-import { decodedTokenFunc } from "@/util/auth";
+import { logout, decodedTokenFunc } from "@/util/auth";
 import { useRouter } from "vue-router";
 
 const loginedId = decodedTokenFunc();
@@ -73,8 +73,10 @@ const handleDelete = async () => {
   // 회원 탈퇴
   try {
     const id = loginedId;
-    const response = await local.put(`/members/delete`, loginedId);
+    const response = await local.put(`/members/delete`, id);
     alert(response.data);
+    logout();
+    router.push({ name: "main" });
   } catch (error) {
     alert("탈퇴에 실패하였습니다.");
     console.error("탈퇴에 실패하였습니다.");

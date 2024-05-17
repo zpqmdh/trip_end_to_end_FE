@@ -26,9 +26,14 @@ const handleChangePassword = async () => {
       changePassword.value
     );
     alert("비밀번호 변경이 완료되었습니다.");
-    router.push({ name: "mypage" });
+    router.push({ name: "member-mypage" });
   } catch (error) {
-    console.error("비밀번호 변경에 실패하였습니다.", error);
+    if (error.response && error.response.status === 403) {
+      alert("탈퇴된 아이디입니다.");
+    } else {
+      alert("로그인에 실패하였습니다.");
+    }
+    console.error("로그인에 실패하였습니다.", error);
   }
 };
 </script>
