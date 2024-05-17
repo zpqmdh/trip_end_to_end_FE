@@ -6,19 +6,55 @@ import { ko } from "date-fns/locale";
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
 import SearchBar from "@/components/plan_board/item/SearchBar.vue";
+import { format } from "date-fns";
+
 const center = { lat: 36.355387, lng: 127.29964 };
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 
 let startDate = ref(new Date());
 let endDate = ref(new Date());
+let content = ref(null);
+let subject = ref(null);
+
 const locale = ref(ko);
 const inputFormat = ref("yyyy-MM-dd");
+
+const planBoardObject = {
+  memberId: "",
+  subject: "",
+  content: "",
+  startDate: startDate.value,
+  endDate: endDate.value,
+  theNumberOfMembers: "",
+  thumbnail: "",
+};
+
+const testasdf = () => {
+  planBoardObject.subject = subject.value;
+  planBoardObject.content = content.value.getHTML();
+  planBoardObject.startDate = format(startDate.value, inputFormat.value);
+  planBoardObject.endDate = format(endDate.value, inputFormat.value);
+
+  console.log(planBoardObject);
+};
 </script>
 <template>
   <div>
-    <input type="text" class="border-0 mb-3" placeholder="제목..." />
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-8">
+          <input
+            id="title"
+            v-model="subject"
+            class="form-control"
+            type="text"
+            placeholder="제목 ..."
+          />
+        </div>
+      </div>
+    </div>
     <hr />
-    <div class="row mx-3">
+    <div class="row mx-5">
       <div class="col-md-4">
         <SearchBar />
         <GoogleMap :api-key="VITE_GOOGLE_MAP_KEY" style="height: 500px" :center="center" :zoom="15">
@@ -63,9 +99,15 @@ const inputFormat = ref("yyyy-MM-dd");
       </div>
 
       <div class="col-md-4">
-        <QuillEditor theme="snow" />
+        <QuillEditor theme="snow" ref="content" />
       </div>
     </div>
+
+    <button @click="testasdf" type="submit">테스트</button>
   </div>
 </template>
-<style scoped></style>
+<style scoped>
+#title {
+  margin: 35px 0px;
+}
+</style>
