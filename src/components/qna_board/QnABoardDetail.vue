@@ -8,7 +8,7 @@ const local = localAxios();
 
 console.log(route.params.id);
 const getQnADetail = (id) => {
-  local.get("qna/" + id).then(({ data }) => {
+  local.get("/qna/" + id).then(({ data }) => {
     console.log(data);
   });
 };

@@ -3,17 +3,17 @@ defineProps({ article: Object });
 </script>
 <template>
   <tr class="text-center">
-    <td>{{ article.articleNo }}</td>
+    <td>{{ article.qnaBoardId }}</td>
     <td>
       <router-link
         :to="{
           name: 'qna-detail',
-          params: { id: article.articleNo },
+          params: { id: article.qnaBoardId },
         }"
         >{{ article.subject }}</router-link
       >
     </td>
-    <td>{{ article.userId }}</td>
+    <td>{{ article.memberId }}</td>
     <td>{{ article.hit }}</td>
     <td>{{ article.registerTime }}</td>
   </tr>
