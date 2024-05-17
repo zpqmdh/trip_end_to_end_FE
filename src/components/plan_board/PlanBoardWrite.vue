@@ -15,37 +15,57 @@ const locale = ref(ko);
 const inputFormat = ref("yyyy-MM-dd");
 </script>
 <template>
-  <input type="text" class="border-0" placeholder="제목..." />
-  <hr />
-  <SearchBar />
+  <div>
+    <input type="text" class="border-0 mb-3" placeholder="제목..." />
+    <hr />
+    <div class="row mx-3">
+      <div class="col-md-4">
+        <SearchBar />
+        <GoogleMap :api-key="VITE_GOOGLE_MAP_KEY" style="height: 500px" :center="center" :zoom="15">
+          <Marker :options="{ position: center }" />
+        </GoogleMap>
+      </div>
+      <div class="col-md-4 d-flex align-items-center flex-column">
+        <div class="mb-3">
+          <div class="d-flex">
+            <div class="mb-3">
+              <span>시작 날짜</span>
+              <Datepicker
+                v-model="startDate"
+                :locale="locale"
+                :weekStartsOn="0"
+                :inputFormat="inputFormat"
+                :clearable="true"
+              />
+            </div>
+            <div>
+              <span>종료 날짜</span>
+              <Datepicker
+                v-model="endDate"
+                :locale="locale"
+                :weekStartsOn="0"
+                :inputFormat="inputFormat"
+                :clearable="true"
+              />
+            </div>
+          </div>
+        </div>
 
-  <GoogleMap
-    :api-key="VITE_GOOGLE_MAP_KEY"
-    style="width: 50%; height: 500px"
-    :center="center"
-    :zoom="15"
-    ><Marker :options="{ position: center }" />
-  </GoogleMap>
-  <div>
-    <span>시작 날짜</span>
-    <Datepicker
-      v-model="startDate"
-      :locale="locale"
-      :weekStartsOn="0"
-      :inputFormat="inputFormat"
-      :clearable="true"
-    />
+        <div class="mt-3">
+          <input
+            id="search-tag"
+            class="form-control"
+            type="search"
+            placeholder="검색어"
+            aria-label="검색어"
+          />
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <QuillEditor theme="snow" />
+      </div>
+    </div>
   </div>
-  <div>
-    <span>종료 날짜</span>
-    <Datepicker
-      v-model="endDate"
-      :locale="locale"
-      :weekStartsOn="0"
-      :inputFormat="inputFormat"
-      :clearable="true"
-    />
-  </div>
-  <QuillEditor theme="snow" />
 </template>
 <style scoped></style>
