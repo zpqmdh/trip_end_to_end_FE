@@ -80,7 +80,6 @@ const handleSignup = async () => {
           required
         />
       </div>
-
       <button type="submit">Sign Up</button>
     </form>
   </div>
