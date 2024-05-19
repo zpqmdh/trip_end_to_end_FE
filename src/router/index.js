@@ -12,7 +12,7 @@ const router = createRouter({
     {
       path: "/chat",
       name: "chat",
-      component: () => import("@/views/Chatbot.vue"),
+      component: () => import("@/components/common/ChatBot.vue"),
     },
     {
       path: "/landmark",
