@@ -10,19 +10,23 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.0.0",
     "@vueup/vue-quill": "^1.2.0",
     "axios": "^1.6.8",
     "bootstrap": "^5.3.3",
     "date-fns": "^3.6.0",
     "jwt-decode": "^4.0.0",
     "pinia": "^2.1.7",
-    "socket.io-client": "^4.7.5",
+    "sockjs-client": "^1.6.1",
     "sweetalert2": "^11.11.0",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",
     "vue3-datepicker": "^0.4.0",
     "vue3-google-map": "^0.20.0",
-    "vue3-quill": "^0.3.1"
+    "vue3-quill": "^0.3.1",
+    "vue3-websocket": "^2.1.2",
+    "webstomp-client": "^1.2.6",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
