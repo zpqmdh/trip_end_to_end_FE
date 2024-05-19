@@ -10,6 +10,16 @@ const router = createRouter({
       component: TheMainView,
     },
     {
+      path: "/chat",
+      name: "chat",
+      component: () => import("@/views/Chatbot.vue"),
+    },
+    {
+      path: "/landmark",
+      name: "landmark",
+      component: () => import("@/views/LandMark.vue"),
+    },
+    {
       path: "/member",
       name: "member",
       component: () => import("@/views/TheMemberView.vue"),
