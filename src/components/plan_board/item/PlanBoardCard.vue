@@ -1,9 +1,5 @@
 <script setup>
-import { onMounted } from "vue";
 defineProps({ planArticle: Object });
-onMounted(() => {
-  console.log(planArticle);
-});
 </script>
 <template>
   <div class="card" style="width: 18rem">
