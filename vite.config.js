@@ -8,13 +8,13 @@ import VueDevTools from "vite-plugin-vue-devtools";
 export default defineConfig({
   plugins: [vue(), VueDevTools()],
   server: {
-    proxy: {
-      "/api": {
-        target: "http://localhost:5000",
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, "/flask-api"),
-      },
-    },
+    // proxy: {
+    //   "/chat": {
+    //     target: "http://localhost:5000",
+    //     changeOrigin: true,
+    //     rewrite: (path) => path.replace(/^\/chat/, "/flask-api"),
+    //   },
+    // },
   },
   resolve: {
     alias: {
