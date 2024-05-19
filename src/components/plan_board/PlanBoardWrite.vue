@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { GoogleMap, Marker, InfoWindow } from "vue3-google-map";
+import { GoogleMap, Marker } from "vue3-google-map";
 import Datepicker from "vue3-datepicker";
 import { ko } from "date-fns/locale";
 import { QuillEditor } from "@vueup/vue-quill";
@@ -260,6 +260,8 @@ const searchTag = () => {};
       </div>
       <!-- Section 2 -->
       <div class="col-md-6">
+        <!-- Thumbnail -->
+        <input type="file" @change="onFileChange" />
         <!-- Date -->
         <div class="mb-3">
           <div class="d-flex">
