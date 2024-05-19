@@ -21,6 +21,8 @@
     "vue": "^3.4.21",
     "vue-router": "^4.3.0",
     "vue3-datepicker": "^0.4.0",
+    "vue3-dnd": "^2.1.0",
+    "vue3-dropzone": "^2.2.1",
     "vue3-google-map": "^0.20.0",
     "vue3-quill": "^0.3.1"
   },
