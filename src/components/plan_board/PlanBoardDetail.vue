@@ -44,8 +44,6 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     console.log(planBoardObject.value);
     console.log(planBoardObject.value.planBoard.thumbnail);
-    planBoardObject.value.planBoard.thumbnail =
-      "/@fs" + planBoardObject.value.planBoard.thumbnail;
   });
 };
 
