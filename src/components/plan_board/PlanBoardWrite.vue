@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { GoogleMap, Marker } from "vue3-google-map";
+import { GoogleMap, Marker, InfoWindow } from "vue3-google-map";
 import Datepicker from "vue3-datepicker";
 import { ko } from "date-fns/locale";
 import { QuillEditor } from "@vueup/vue-quill";
@@ -46,8 +46,10 @@ const searchOption = ref({
 
 const mapRef = ref(null);
 const locations = ref([]);
+const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
+const showModal = ref(false); // 모달 표시 여부를 제어할 ref
 
-const testasdf = () => {
+const insertArticle = () => {
   planBoardObject.planBoard.memberId = "1";
   planBoardObject.planBoard.subject = subject.value;
   planBoardObject.planBoard.content = content.value.getHTML();
@@ -56,7 +58,7 @@ const testasdf = () => {
     inputFormat.value
   );
   planBoardObject.planBoard.endDate = format(endDate.value, inputFormat.value);
-  planBoardObject.planBoard.theNumberOfMembers = "3";
+  planBoardObject.planBoard.theNumberOfMembers = theNumberOfMembers.value;
   local.post("/shareplan/insert", planBoardObject).then(({ data }) => {
     console.log(data);
     router.push({ name: "share-plan-list" });
@@ -86,7 +88,6 @@ onMounted(() => {
             )
           );
         });
-
         gmap.fitBounds(bounds);
       });
     }
@@ -139,6 +140,31 @@ const search = () => {
     locations.value = data.attractionInfoList;
   });
 };
+
+const showDetail = (location) => {
+  local
+    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
+    .then(({ data }) => {
+      selectedLocation.value = data;
+      selectedLocation.value.title = location.title;
+      selectedLocation.value.image = location.firstImage
+        ? location.firstImage
+        : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
+      selectedLocation.value.addr = location.addr1 + " " + location.addr2;
+      console.log(selectedLocation.value);
+      showModal.value = true;
+    });
+};
+
+const getDataFromPlan = () => {
+  // TODO: 완료된 여행에서 정보 불러오기
+  // FLow
+  /*
+  1. 로그인한 유저가 작성한 Plan 계획 select로 띄우기
+  2. 선택하면 해당 여행 정보 불러와서 date, map에 정보 띄우기
+  */
+};
+const searchTag = () => {};
 </script>
 <template>
   <div>
@@ -146,18 +172,19 @@ const search = () => {
       <div class="row justify-content-center">
         <div class="col-12 col-md-8">
           <input
-            id="title"
+            id="subject"
             v-model="subject"
             class="form-control"
             type="text"
             placeholder="제목 ..."
+            required
           />
         </div>
       </div>
     </div>
     <hr />
     <div class="row mx-5">
-      <!-- search bar start-->
+      <!-- search bar start -->
       <form class="d-flex my-5 mx-5" role="search">
         <select
           id="search-area"
@@ -208,8 +235,9 @@ const search = () => {
           검색
         </button>
       </form>
-      <!-- search bar end-->
-      <div class="col-md-6">
+      <!-- Section 1 -->
+      <!-- Map -->
+      <div class="col-md-6 my-5">
         <GoogleMap
           ref="mapRef"
           :api-key="VITE_GOOGLE_MAP_KEY"
@@ -226,8 +254,13 @@ const search = () => {
               },
             }"
             :key="location.contentId"
+            @click="showDetail(location)"
           />
         </GoogleMap>
+      </div>
+      <!-- Section 2 -->
+      <div class="col-md-6">
+        <!-- Date -->
         <div class="mb-3">
           <div class="d-flex">
             <div class="mb-3">
@@ -252,11 +285,24 @@ const search = () => {
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-6">
+        <!-- The Number Of Members-->
+        <div>
+          <label>동행인 수 </label>
+          <input
+            v-model="theNumberOfMembers"
+            class="form-control"
+            type="search"
+            placeholder="1"
+          />
+        </div>
         <div>
           <QuillEditor theme="snow" ref="content" />
         </div>
+        <!-- 여행 (plan) 에서 가져오기 -->
+        <button @click="getDataFromPlan" type="submit">
+          여행에서 불러오기
+        </button>
+        <!-- tag 검색하기 -->
         <div class="mt-3">
           <input
             id="search-tag"
@@ -264,15 +310,65 @@ const search = () => {
             type="search"
             placeholder="검색어"
             aria-label="검색어"
+            @change="searchTag"
           />
+        </div>
+        <button @click="insertArticle" type="submit">테스트</button>
+      </div>
+    </div>
+
+    <!-- Attraction Description Modal -->
+    <div
+      v-if="showModal"
+      class="modal fade show d-block"
+      tabindex="-1"
+      role="dialog"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ selectedLocation.title }}</h5>
+          </div>
+          <div class="modal-body">
+            <img :src="selectedLocation.image" />
+            <p>주소 : {{ selectedLocation.addr }}</p>
+            <p>{{ selectedLocation.overview }}</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="showModal = false"
+            >
+              닫기
+            </button>
+          </div>
         </div>
       </div>
     </div>
-    <button @click="testasdf" type="submit">테스트</button>
   </div>
 </template>
 <style scoped>
 #title {
   margin: 35px 0px;
+}
+.modal-backdrop {
+  position: relative;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  background-color: #000;
+  opacity: 0.5;
+}
+
+.modal.show.d-block {
+  display: block;
+}
+
+.modal-body img {
+  display: block;
+  margin: 0 auto;
+  max-width: 80%;
+  height: auto;
 }
 </style>
