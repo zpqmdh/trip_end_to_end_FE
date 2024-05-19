@@ -8,6 +8,7 @@ import "@vueup/vue-quill/dist/vue-quill.snow.css";
 import { format } from "date-fns";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
+import { decodedTokenFunc } from "@/util/auth";
 
 const local = localAxios();
 const router = useRouter();
@@ -19,12 +20,10 @@ const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 let startDate = ref(new Date());
 let endDate = ref(new Date());
 let content = ref(null);
-let subject = ref(null);
-let theNumberOfMembers = ref(null);
 const locale = ref(ko);
 const inputFormat = ref("yyyy-MM-dd");
 
-const planBoardObject = {
+const planBoardObject = ref({
   planBoard: {
     memberId: "",
     subject: "",
@@ -35,7 +34,7 @@ const planBoardObject = {
     thumbnail: "",
   },
   tagList: [],
-};
+});
 
 const searchOption = ref({
   sido: 0,
@@ -49,23 +48,45 @@ const locations = ref([]);
 const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
 const showModal = ref(false); // 모달 표시 여부를 제어할 ref
 
-const insertArticle = () => {
-  planBoardObject.planBoard.memberId = "1";
-  planBoardObject.planBoard.subject = subject.value;
-  planBoardObject.planBoard.content = content.value.getHTML();
-  planBoardObject.planBoard.startDate = format(
+const insertArticle = async () => {
+  planBoardObject.value.planBoard.content = content.value.getHTML();
+  planBoardObject.value.planBoard.startDate = format(
     startDate.value,
     inputFormat.value
   );
-  planBoardObject.planBoard.endDate = format(endDate.value, inputFormat.value);
-  planBoardObject.planBoard.theNumberOfMembers = theNumberOfMembers.value;
-  local.post("/shareplan/insert", planBoardObject).then(({ data }) => {
-    console.log(data);
-    router.push({ name: "share-plan-list" });
+  planBoardObject.value.planBoard.endDate = format(
+    endDate.value,
+    inputFormat.value
+  );
+  const formData = new FormData();
+  formData.append("thumbnail", thumbnailFile.value);
+  local
+    .post("/shareplan/upload/thumbnail", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then(({ data }) => {
+      console.log(data);
+      planBoardObject.value.planBoard.thumbnail = data;
+      console.log(planBoardObject.value);
+      local
+        .post("/shareplan/insert", planBoardObject.value)
+        .then(({ data }) => {
+          console.log(data);
+          router.push({ name: "share-plan-list" });
+        });
+    })
+    .catch(({ data }) => {
+      console.log(data);
+    });
+};
+const getMemberId = () => {
+  const loginedId = decodedTokenFunc();
+  local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    planBoardObject.value.planBoard.memberId = data.memberId;
   });
 };
-
 onMounted(() => {
+  getMemberId();
   local.get("/shareplan/map/sido").then(({ data }) => {
     makeOption(data);
   });
@@ -74,12 +95,9 @@ onMounted(() => {
     (isReady) => {
       if (!isReady) return;
       const gmap = mapRef.value.map;
-
       watch(locations, (newLocations) => {
         if (newLocations.length === 0) return;
-
         const bounds = new google.maps.LatLngBounds();
-
         newLocations.forEach((location) => {
           bounds.extend(
             new google.maps.LatLng(
@@ -164,7 +182,39 @@ const getDataFromPlan = () => {
   2. 선택하면 해당 여행 정보 불러와서 date, map에 정보 띄우기
   */
 };
-const searchTag = () => {};
+
+const tagName = ref("");
+const tagResults = ref([]);
+const searchTag = () => {
+  if (tagName.value.length == 0 || tagName == null) {
+    tagResults.value = null;
+    return;
+  }
+  local.get(`/shareplan/tag/${tagName.value}`).then(({ data }) => {
+    console.log(data);
+    tagResults.value = data;
+  });
+};
+
+const addTag = (tag) => {
+  planBoardObject.value.tagList.push(tag);
+};
+const removeTag = (tag) => {
+  const index = planBoardObject.value.tagList.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
+  if (index !== -1) {
+    planBoardObject.value.tagList.splice(index, 1);
+  }
+};
+
+const thumbnailFile = ref(null);
+
+// 파일 선택 시 이벤트 핸들러
+const onThumbnailChange = (event) => {
+  const file = event.target.files[0];
+  thumbnailFile.value = file;
+};
 </script>
 <template>
   <div>
@@ -173,7 +223,7 @@ const searchTag = () => {};
         <div class="col-12 col-md-8">
           <input
             id="subject"
-            v-model="subject"
+            v-model="planBoardObject.planBoard.subject"
             class="form-control"
             type="text"
             placeholder="제목 ..."
@@ -261,7 +311,7 @@ const searchTag = () => {};
       <!-- Section 2 -->
       <div class="col-md-6">
         <!-- Thumbnail -->
-        <input type="file" @change="onFileChange" />
+        <input type="file" id="thumbnailInput" @change="onThumbnailChange" />
         <!-- Date -->
         <div class="mb-3">
           <div class="d-flex">
@@ -291,7 +341,7 @@ const searchTag = () => {};
         <div>
           <label>동행인 수 </label>
           <input
-            v-model="theNumberOfMembers"
+            v-model="planBoardObject.planBoard.theNumberOfMembers"
             class="form-control"
             type="search"
             placeholder="1"
@@ -308,14 +358,48 @@ const searchTag = () => {};
         <div class="mt-3">
           <input
             id="search-tag"
+            type="text"
             class="form-control"
-            type="search"
-            placeholder="검색어"
-            aria-label="검색어"
-            @change="searchTag"
+            style="width: 50%; text-align: center"
+            placeholder="Tag"
+            v-model="tagName"
+            @input.prevent="searchTag"
           />
+          <div class="text-center mb-4">
+            <div
+              v-for="tag in tagResults"
+              :key="tag.tagTypeId"
+              class="d-inline-block"
+            >
+              <button
+                class="btn btn-outline-secondary m-1"
+                @click="addTag(tag)"
+              >
+                {{ tag.name }} <i class="bi bi-x" @click="removeTag(tag)"></i>
+              </button>
+            </div>
+          </div>
         </div>
-        <button @click="insertArticle" type="submit">테스트</button>
+
+        <!-- Selected Tags -->
+        <div>
+          <div
+            v-for="selectedTag in planBoardObject.tagList"
+            :key="selectedTag.tagTypeId"
+            class="d-inline-block"
+          >
+            <button
+              class="btn btn-outline-secondary m-1"
+              @click="removeTag(selectedTag)"
+            >
+              {{ selectedTag.name }}
+            </button>
+          </div>
+        </div>
+        <!-- Insert Article Button -->
+        <div class="mt-3">
+          <button @click="insertArticle" type="submit">테스트</button>
+        </div>
       </div>
     </div>
 

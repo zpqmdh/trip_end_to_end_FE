@@ -43,6 +43,9 @@ const getDetail = () => {
     planBoardObject.value.likeList = data.likeList;
     planBoardObject.value.tagList = data.tagList;
     console.log(planBoardObject.value);
+    console.log(planBoardObject.value.planBoard.thumbnail);
+    planBoardObject.value.planBoard.thumbnail =
+      "/@fs" + planBoardObject.value.planBoard.thumbnail;
   });
 };
 
@@ -153,7 +156,7 @@ const deleteComment = (commentId) => {
           <!-- 존재하는 댓글 -->
           <template v-if="comment.deleted == 0">
             <div v-if="editingComment !== comment.commentId">
-              <p>작성자: {{ comment.memberId }}</p>
+              <p>작성자: {{ comment.nickname }}</p>
               <p>{{ comment.registerTime }}</p>
               <p>{{ comment.content }}</p>
               <div class="comment-actions">

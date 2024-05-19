@@ -17,6 +17,19 @@ const getArticleList = async () => {
 onMounted(() => {
   getArticleList();
 });
+
+const tagName = ref("");
+const tagResults = ref([]);
+const searchTag = () => {
+  if (tagName.value.length == 0 || tagName == null) {
+    tagResults.value = null;
+    return;
+  }
+  local.get(`/shareplan/tag/${tagName.value}`).then(({ data }) => {
+    console.log(data);
+    tagResults.value = data;
+  });
+};
 </script>
 <template>
   <div class="container">
@@ -30,15 +43,24 @@ onMounted(() => {
     </div>
     <form class="text-center mb-4">
       <div class="form-row align-items-center justify-content-center">
-        <div class="col-7">
+        <div class="d-flex mb-4">
           <label class="mr-sm-2" for="inlineFormCustomSelect">태그 검색</label>
-          <input type="text" class="form-control" placeholder="Tag" />
-        </div>
-        <div class="col-auto my-1">
-          <button type="submit" class="btn btn-primary">검색</button>
+          <input
+            type="text"
+            class="form-control"
+            style="width: 50%; text-align: center"
+            placeholder="Tag"
+            v-model="tagName"
+            @input.prevent="searchTag"
+          />
         </div>
       </div>
     </form>
+    <div class="text-center mb-4">
+      <div v-for="tag in tagResults" :key="tag.name" class="d-inline-block">
+        <button class="btn btn-outline-secondary m-1">{{ tag.name }}</button>
+      </div>
+    </div>
     <div class="row">
       <div
         class="col-md-4 mb-4"

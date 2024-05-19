@@ -1,10 +1,9 @@
 <script setup>
-import { usePlanBoardStore } from "@/stores/plan-board.js";
-const planBoardStore = usePlanBoardStore();
-
-const { setArticle } = planBoardStore;
-
+import { onMounted } from "vue";
 defineProps({ planArticle: Object });
+onMounted(() => {
+  console.log(planArticle);
+});
 </script>
 <template>
   <div class="card" style="width: 18rem">
@@ -18,7 +17,10 @@ defineProps({ planArticle: Object });
       <h5 class="card-title">{{ planArticle.subject }}</h5>
       <button type="button">
         <router-link
-          :to="{ name: 'share-plan-detail', params: { id: planArticle.planBoardId } }"
+          :to="{
+            name: 'share-plan-detail',
+            params: { id: planArticle.planBoardId },
+          }"
           class="text-black text-decoration-none"
           >자세히 보기</router-link
         >
