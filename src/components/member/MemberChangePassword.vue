@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons";
 import { decodedTokenFunc } from "@/util/auth";
+import MemberMyPageSidebar from "./MemberMyPageSidebar.vue";
 
 const local = localAxios();
 const router = useRouter();
@@ -28,27 +29,16 @@ const handleChangePassword = async () => {
     alert("비밀번호 변경이 완료되었습니다.");
     router.push({ name: "member-mypage" });
   } catch (error) {
-    if (error.response && error.response.status === 403) {
-      alert("탈퇴된 아이디입니다.");
-    } else {
-      alert("로그인에 실패하였습니다.");
-    }
-    console.error("로그인에 실패하였습니다.", error);
+    console.error("비밀번호 변경에 실패하였습니다.", error);
   }
 };
 </script>
 
 <template>
   <div class="mypage-container">
-    <div class="sidebar">
-      <ul>
-        <li><router-link to="#">내 정보 관리</router-link></li>
-        <li><router-link to="#">나의 여행 계획</router-link></li>
-        <li><router-link to="#">내가 쓴 글</router-link></li>
-      </ul>
-    </div>
+    <MemberMyPageSidebar />
     <div class="content">
-      <form class="member-details-form" @submit.prevent="handleChangePassword">
+      <form @submit.prevent="handleChangePassword">
         <div class="form-group">
           <label for="currentPassword">현재 비밀번호</label>
           <input
@@ -89,56 +79,15 @@ const handleChangePassword = async () => {
   display: flex;
 }
 
-.sidebar {
-  width: 20%;
-  padding: 20px;
-  border-right: 1px solid #ccc;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar ul li {
-  margin-bottom: 10px;
-}
-
 .content {
   width: 80%;
   padding: 20px;
 }
 
-.profile-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.profile-image {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  margin-right: 20px;
-}
-
-.profile-details input {
-  margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 100%;
-}
-
-.member-details-form {
-  display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 20px;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;
+  width: 40%;
 }
 
 .form-group label {
@@ -149,6 +98,7 @@ const handleChangePassword = async () => {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  margin-bottom: 20px;
 }
 
 .button-group {
@@ -162,20 +112,11 @@ const handleChangePassword = async () => {
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  margin-top: 5px;
 }
 
 .button-group button:nth-child(1) {
-  background-color: #007bff;
-  color: white;
-}
-
-.button-group button:nth-child(2) {
-  background-color: #ffc107;
-  color: white;
-}
-
-.button-group button:nth-child(3) {
-  background-color: #dc3545;
+  background-color: #577b8d;
   color: white;
 }
 </style>

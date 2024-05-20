@@ -3,10 +3,51 @@ import { ref, onMounted, isReactive } from "vue";
 import { localAxios } from "@/util/http-commons";
 import { logout, decodedTokenFunc } from "@/util/auth";
 import { useRouter } from "vue-router";
+import MemberMyPageSidebarVue from "./MemberMyPageSidebar.vue";
 
 const loginedId = decodedTokenFunc();
 const router = useRouter();
 const local = localAxios();
+const file = ref(null);
+const fileNames = ref([]);
+const isDragActive = ref(false);
+const checkNoInput = ref("");
+
+function handleFileChange(event) {
+  file.value = event.target.files[0];
+  fileNames.value = [file.value.name];
+  checkNoInput.value = "";
+  landmarks.value = null;
+}
+
+function triggerFileInput() {
+  const fileInput = document.querySelector('input[type="file"]');
+  fileInput.click();
+}
+
+function handleDragEnter() {
+  isDragActive.value = true;
+}
+
+function handleDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "copy";
+}
+
+function handleDragLeave() {
+  isDragActive.value = false;
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  isDragActive.value = false;
+  if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+    file.value = event.dataTransfer.files[0];
+    fileNames.value = [file.value.name];
+    console.log(file);
+    checkNoInput.value = "";
+  }
+}
 const member = ref({
   memberId: "",
   id: loginedId,
@@ -86,16 +127,43 @@ const handleDelete = async () => {
 
 <template>
   <div class="mypage-container">
-    <div class="sidebar">
-      <ul>
-        <li><router-link to="#">내 정보 관리</router-link></li>
-        <li><router-link to="#">나의 여행 계획</router-link></li>
-        <li><router-link to="#">내가 쓴 글</router-link></li>
-      </ul>
-    </div>
+    <MemberMyPageSidebarVue />
     <div class="content">
       <div class="profile-header">
         <img :src="member.image" alt="Profile Image" class="profile-image" />
+        <div
+          class="dnd-dropzone p-4 text-center mb-2"
+          @dragenter.prevent="handleDragEnter"
+          @dragover.prevent="handleDragOver"
+          @dragleave.prevent="handleDragLeave"
+          @drop.prevent="handleDrop"
+          :class="{ 'drag-over': isDragActive }"
+        >
+          <input
+            type="file"
+            @change="handleFileChange"
+            class="d-none"
+            ref="fileInput"
+          />
+          <div v-if="fileNames.length == 0">
+            <p class="mb-0">프로필 사진을 등록하세요</p>
+          </div>
+          <div
+            v-if="fileNames.length > 0"
+            class="d-flex justify-content-center"
+          >
+            <p class="mb-0"><strong>파일명:</strong></p>
+            <ul class="list-inline mb-0">
+              <p v-for="(name, index) in fileNames" :key="index" class="mb-0">
+                {{ name }}
+              </p>
+            </ul>
+          </div>
+          <p>
+            Drag & Drop or
+            <a href="#" @click.prevent="triggerFileInput">upload</a>
+          </p>
+        </div>
         <div class="profile-details">
           <input v-model="member.nickname" type="text" placeholder="닉네임" />
           <input v-model="member.mbti" type="text" placeholder="MBTI" />
@@ -156,7 +224,9 @@ const handleDelete = async () => {
           <button type="button" @click="handlePasswordChange">
             비밀번호 변경
           </button>
-          <button type="button" @click="handleDelete">회원탈퇴</button>
+          <button type="button" class="btn btn-secondary" @click="handleDelete">
+            회원탈퇴
+          </button>
         </div>
       </form>
     </div>
@@ -165,22 +235,8 @@ const handleDelete = async () => {
 
 <style scoped>
 .mypage-container {
+  margin-top: 50px;
   display: flex;
-}
-
-.sidebar {
-  width: 20%;
-  padding: 20px;
-  border-right: 1px solid #ccc;
-}
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar ul li {
-  margin-bottom: 10px;
 }
 
 .content {
@@ -198,7 +254,7 @@ const handleDelete = async () => {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  margin-right: 20px;
+  margin-right: 15px;
 }
 
 .profile-details input {
@@ -233,7 +289,7 @@ const handleDelete = async () => {
 .button-group {
   grid-column: span 2;
   display: flex;
-  justify-content: space-between;
+  justify-content: left;
 }
 
 .button-group button {
@@ -244,17 +300,33 @@ const handleDelete = async () => {
 }
 
 .button-group button:nth-child(1) {
-  background-color: #007bff;
+  background-color: #5698ad;
   color: white;
+  margin-right: 5px;
 }
 
 .button-group button:nth-child(2) {
-  background-color: #ffc107;
+  background-color: #577b8d;
   color: white;
+  margin-left: 5px;
+  margin-right: 5px;
 }
 
 .button-group button:nth-child(3) {
-  background-color: #dc3545;
-  color: white;
+  /* background-color: #dc3545; */
+  /* color: white; */
+  margin-left: 5px;
+  margin-right: 5px;
+}
+
+.dnd-dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 5px;
+  padding: 20px;
+  margin-right: 15px;
+  height: 100px;
+}
+.dnd-dropzone.drag-over {
+  background-color: #e0f7ff;
 }
 </style>

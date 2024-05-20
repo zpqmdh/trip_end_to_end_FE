@@ -35,6 +35,11 @@ const router = createRouter({
           component: () => import("@/components/member/MemberMyPage.vue"),
         },
         {
+          path: "myboard",
+          name: "member-myboard",
+          component: () => import("@/components/member/MemberMyBoard.vue"),
+        },
+        {
           path: "signup",
           name: "member-signup",
           component: () => import("@/components/member/MemberSignUp.vue"),
@@ -169,7 +174,13 @@ const router = createRouter({
   ],
 });
 
-const passedPaths = ["/", "/main", "/member/login", "/member/signup"]; // 보호된 경로 배열
+const passedPaths = [
+  "/",
+  "/main",
+  "/member/login",
+  "/member/signup",
+  "/member/findpassword",
+]; // 보호된 경로 배열
 
 router.beforeEach((to, from, next) => {
   if (passedPaths.includes(to.path)) {
