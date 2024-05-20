@@ -7,31 +7,68 @@ import PlanBoardCard from "./item/PlanBoardCard.vue";
 const local = localAxios();
 const router = useRouter();
 
-const planArticleList = ref();
+const planArticleList = ref([]);
+const filteredArticleList = ref([]);
+const filteredTag = ref([]);
+const tagName = ref("");
+const tagResults = ref([]);
+
 const getArticleList = async () => {
-  local.get("/shareplan/list").then(({ data }) => {
-    planArticleList.value = data.articles;
-    console.log(planArticleList.value);
-  });
+  const { data } = await local.get("/shareplan/list");
+  planArticleList.value = data.articles;
+  filteredArticleList.value = data.articles;
 };
 
 onMounted(() => {
   getArticleList();
 });
 
-const tagName = ref("");
-const tagResults = ref([]);
 const searchTag = () => {
-  if (tagName.value.length == 0 || tagName == null) {
-    tagResults.value = null;
+  if (!tagName.value.trim()) {
+    tagResults.value = [];
     return;
   }
   local.get(`/shareplan/tag/${tagName.value}`).then(({ data }) => {
-    console.log(data);
     tagResults.value = data;
   });
 };
+
+const filterTag = (tag) => {
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
+  if (tagIndex === -1) {
+    filteredTag.value.push(tag);
+  } else {
+    filteredTag.value.splice(tagIndex, 1);
+  }
+
+  filteredArticleList.value = planArticleList.value.filter((article) => {
+    return filteredTag.value.every((filter) => {
+      return article.tagList.some(
+        (item) => item.tagTypeId === filter.tagTypeId
+      );
+    });
+  });
+};
+
+const removeTag = (tag) => {
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
+  if (tagIndex !== -1) {
+    filteredTag.value.splice(tagIndex, 1);
+    filteredArticleList.value = planArticleList.value.filter((article) => {
+      return filteredTag.value.every((filter) => {
+        return article.tagList.some(
+          (item) => item.tagTypeId === filter.tagTypeId
+        );
+      });
+    });
+  }
+};
 </script>
+
 <template>
   <div class="container">
     <h1 class="text-center">🚗 다녀온 여행 공유</h1>
@@ -43,29 +80,58 @@ const searchTag = () => {
       </button>
     </div>
     <form class="text-center mb-4">
-      <div class="form-row align-items-center justify-content-center">
-        <div class="d-flex mb-4">
+      <div class="form-row justify-content-center">
+        <div class="d-flex flex-column align-items-center mb-4">
           <label class="mr-sm-2" for="inlineFormCustomSelect">태그 검색</label>
           <input
             type="text"
             class="form-control"
-            style="width: 50%; text-align: center"
+            style="width: 30%; text-align: center"
             placeholder="Tag"
-            v-model="tagName"
+            v-model.trim="tagName"
             @input.prevent="searchTag"
           />
         </div>
       </div>
     </form>
     <div class="text-center mb-4">
-      <div v-for="tag in tagResults" :key="tag.name" class="d-inline-block">
-        <button class="btn btn-outline-secondary m-1">{{ tag.name }}</button>
+      <div
+        v-for="tag in tagResults"
+        :key="tag.tagTypeId"
+        class="d-inline-block"
+      >
+        <button
+          class="btn btn-outline-secondary m-1"
+          @click.prevent="filterTag(tag)"
+          :class="{ active: filteredTag.includes(tag) }"
+        >
+          {{ tag.name }}
+        </button>
+      </div>
+    </div>
+    <!-- New section to display search results -->
+    <div class="text-center mb-4">
+      <div v-if="filteredTag.length > 0">
+        <h3>검색 결과</h3>
+        <div
+          v-for="tag in filteredTag"
+          :key="tag.tagTypeId"
+          class="d-inline-block"
+        >
+          <button
+            class="btn btn-outline-secondary m-1"
+            @click.prevent="removeTag(tag)"
+            :class="{ active: filteredTag.includes(tag) }"
+          >
+            {{ tag.name }}
+          </button>
+        </div>
       </div>
     </div>
     <div class="row">
       <div
         class="col-md-4 mb-4"
-        v-for="planArticle in planArticleList"
+        v-for="planArticle in filteredArticleList"
         :key="planArticle.planBoardId"
       >
         <PlanBoardCard :planArticle="planArticle" />
@@ -73,4 +139,10 @@ const searchTag = () => {
     </div>
   </div>
 </template>
-<style scoped></style>
+
+<style scoped>
+.active {
+  background-color: #007bff;
+  color: #fff;
+}
+</style>
