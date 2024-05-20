@@ -11,7 +11,11 @@
           <span>회원님의 여행을 책임지는 AI 어시스턴트입니다</span>
         </div>
         <div class="chat-box" ref="chatBox">
-          <div v-for="(message, index) in messages" :key="index" :class="message.type">
+          <div
+            v-for="(message, index) in messages"
+            :key="index"
+            :class="message.type"
+          >
             <div class="message-bubble">{{ message.content }}</div>
           </div>
           <div v-if="loading" class="loading">
@@ -27,7 +31,9 @@
             v-model="userInput"
             @keydown.enter="sendMessage"
           />
-          <button @click="sendMessage" class="btn btn-outline-secondary">Send</button>
+          <button @click="sendMessage" class="btn btn-outline-secondary">
+            Send
+          </button>
         </div>
       </div>
     </div>
@@ -170,12 +176,6 @@ input[type="text"] {
   height: 50px;
 }
 
-/* .loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 10px;
-} */
 .loading img {
   width: 160px; /* 원하는 크기로 조절 */
   height: 100px; /* 원하는 크기로 조절 */
