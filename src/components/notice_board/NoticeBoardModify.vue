@@ -24,7 +24,7 @@ const getMember = () => {
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
     // 관리자 아님 -> 수정 권한 없음
     if (data.type != 3) {
-      alert("공지사항 작성 권한이 없습니다.");
+      alert("공지사항 수정 권한이 없습니다.");
       router.push({ name: "notice-list" });
     }
   });
@@ -40,7 +40,10 @@ const getDetail = (id) => {
 const updateArticle = () => {
   const id = notice.value.noticeBoardId;
   local.put("/notice/" + id, notice.value).then(({ data }) => {
-    router.push({ name: "notice-detail", params: { id: notice.value.noticeBoardId } });
+    router.push({
+      name: "notice-detail",
+      params: { id: notice.value.noticeBoardId },
+    });
   });
 };
 
@@ -92,7 +95,12 @@ const resetInput = () => {
           ></textarea>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" v-model="isFixedBoolean" id="isFixed" />
+          <input
+            class="form-check-input"
+            type="checkbox"
+            v-model="isFixedBoolean"
+            id="isFixed"
+          />
           <label class="form-check-label" for="isFixed">고정하기</label>
         </div>
         <div class="col-auto text-center">
@@ -104,7 +112,11 @@ const resetInput = () => {
           >
             등록하기
           </button>
-          <button type="reset" class="btn btn-outline-danger mb-3" @click="resetInput">
+          <button
+            type="reset"
+            class="btn btn-outline-danger mb-3"
+            @click="resetInput"
+          >
             초기화
           </button>
         </div>
