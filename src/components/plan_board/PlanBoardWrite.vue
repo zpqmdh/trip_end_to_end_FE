@@ -76,13 +76,13 @@ const insertArticle = async () => {
     .then(({ data }) => {
       console.log(data);
     });
+  router.push({ name: "share-plan-list" });
 };
 
 const getMemberId = () => {
   const logined = decodedTokenFunc();
   loginedId.value = logined;
   local.get(`/members/detail/${loginedId.value}`).then(({ data }) => {
-    memberId.value = data.memberId;
     planBoardObject.value.planBoard.memberId = data.memberId;
   });
 };
@@ -178,15 +178,20 @@ const showDetail = (location) => {
 const plans = ref([]);
 const selectedPlan = ref("");
 
+const planObject = ref({});
+
 const getDataListPlan = () => {
   local.get(`/plans/list/${loginedId.value}`).then(({ data }) => {
-    console.log(data);
     plans.value = data;
   });
 };
 const getPlanDetail = (planId) => {
   local.get(`/plans/detail/${planId}`).then(({ data }) => {
-    console.log(data);
+    planObject.value = data;
+    startDate.value = new Date(planObject.value.planDto.startDate);
+    endDate.value = new Date(planObject.value.planDto.endDate);
+    planBoardObject.value.planBoard.theNumberOfMembers =
+      planObject.value.memberIds.length;
   });
 };
 

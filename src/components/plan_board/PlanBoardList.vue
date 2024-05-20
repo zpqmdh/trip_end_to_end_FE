@@ -11,6 +11,7 @@ const planArticleList = ref();
 const getArticleList = async () => {
   local.get("/shareplan/list").then(({ data }) => {
     planArticleList.value = data.articles;
+    console.log(planArticleList.value);
   });
 };
 
