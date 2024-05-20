@@ -43,8 +43,9 @@ const searchOption = ref({
   keyword: "",
 });
 
-const memberId = ref("");
+const loginedId = ref("");
 const thumbnail = ref("");
+
 const mapRef = ref(null);
 const locations = ref([]);
 const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
@@ -60,7 +61,6 @@ const insertArticle = async () => {
     endDate.value,
     inputFormat.value
   );
-  console.log(planBoardObject.value);
   const formData = new FormData();
   formData.append(
     "planBoardForm",
@@ -77,9 +77,11 @@ const insertArticle = async () => {
       console.log(data);
     });
 };
+
 const getMemberId = () => {
-  const loginedId = decodedTokenFunc();
-  local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+  const logined = decodedTokenFunc();
+  loginedId.value = logined;
+  local.get(`/members/detail/${loginedId.value}`).then(({ data }) => {
     memberId.value = data.memberId;
     planBoardObject.value.planBoard.memberId = data.memberId;
   });
@@ -173,18 +175,24 @@ const showDetail = (location) => {
     });
 };
 
-const getDataFromPlan = () => {
-  // TODO: 완료된 여행에서 정보 불러오기
-  // FLow
-  local.get(`/plans/list/${memberId.value}`).then(({ data }) => {
+const plans = ref([]);
+const selectedPlan = ref("");
+
+const getDataListPlan = () => {
+  local.get(`/plans/list/${loginedId.value}`).then(({ data }) => {
+    console.log(data);
+    plans.value = data;
+  });
+};
+const getPlanDetail = (planId) => {
+  local.get(`/plans/detail/${planId}`).then(({ data }) => {
     console.log(data);
   });
-  /*
-  1. 로그인한 유저가 작성한 Plan 계획 select로 띄우기
-  2. 선택하면 해당 여행 정보 불러와서 date, map에 정보 띄우기
-  */
 };
 
+watch(selectedPlan, (newPlanId) => {
+  getPlanDetail(newPlanId);
+});
 const tagName = ref("");
 const tagResults = ref([]);
 const searchTag = () => {
@@ -347,13 +355,26 @@ const onThumbnailChange = (event) => {
             placeholder="1"
           />
         </div>
+        <!-- Write Content -->
         <div>
           <QuillEditor theme="snow" ref="content" />
         </div>
         <!-- 여행 (plan) 에서 가져오기 -->
-        <button @click="getDataFromPlan" type="submit">
+        <button @click="getDataListPlan" type="submit">
           여행에서 불러오기
         </button>
+        <div>
+          <select v-if="plans.length > 0" v-model="selectedPlan">
+            <option value="" disabled selected>여행을 선택하세요</option>
+            <option
+              v-for="plan in plans"
+              :key="plan.planId"
+              :value="plan.planId"
+            >
+              {{ plan.title }}
+            </option>
+          </select>
+        </div>
         <!-- tag 검색하기 -->
         <div class="mt-3">
           <input
