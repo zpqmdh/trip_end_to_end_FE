@@ -8,6 +8,7 @@ import "@vueup/vue-quill/dist/vue-quill.snow.css";
 import { format } from "date-fns";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
+import { decodedTokenFunc } from "@/util/auth";
 
 const local = localAxios();
 const router = useRouter();
@@ -19,12 +20,10 @@ const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 let startDate = ref(new Date());
 let endDate = ref(new Date());
 let content = ref(null);
-let subject = ref(null);
-let theNumberOfMembers = ref(null);
 const locale = ref(ko);
 const inputFormat = ref("yyyy-MM-dd");
 
-const planBoardObject = {
+const planBoardObject = ref({
   planBoard: {
     memberId: "",
     subject: "",
@@ -35,7 +34,7 @@ const planBoardObject = {
     thumbnail: "",
   },
   tagList: [],
-};
+});
 
 const searchOption = ref({
   sido: 0,
@@ -46,24 +45,48 @@ const searchOption = ref({
 
 const mapRef = ref(null);
 const locations = ref([]);
+const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
+const showModal = ref(false); // 모달 표시 여부를 제어할 ref
 
-const testasdf = () => {
-  planBoardObject.planBoard.memberId = "1";
-  planBoardObject.planBoard.subject = subject.value;
-  planBoardObject.planBoard.content = content.value.getHTML();
-  planBoardObject.planBoard.startDate = format(
+const insertArticle = async () => {
+  planBoardObject.value.planBoard.content = content.value.getHTML();
+  planBoardObject.value.planBoard.startDate = format(
     startDate.value,
     inputFormat.value
   );
-  planBoardObject.planBoard.endDate = format(endDate.value, inputFormat.value);
-  planBoardObject.planBoard.theNumberOfMembers = "3";
-  local.post("/shareplan/insert", planBoardObject).then(({ data }) => {
-    console.log(data);
-    router.push({ name: "share-plan-list" });
+  planBoardObject.value.planBoard.endDate = format(
+    endDate.value,
+    inputFormat.value
+  );
+  const formData = new FormData();
+  formData.append("thumbnail", thumbnailFile.value);
+  local
+    .post("/shareplan/upload/thumbnail", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    .then(({ data }) => {
+      console.log(data);
+      planBoardObject.value.planBoard.thumbnail = data;
+      console.log(planBoardObject.value);
+      local
+        .post("/shareplan/insert", planBoardObject.value)
+        .then(({ data }) => {
+          console.log(data);
+          router.push({ name: "share-plan-list" });
+        });
+    })
+    .catch(({ data }) => {
+      console.log(data);
+    });
+};
+const getMemberId = () => {
+  const loginedId = decodedTokenFunc();
+  local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    planBoardObject.value.planBoard.memberId = data.memberId;
   });
 };
-
 onMounted(() => {
+  getMemberId();
   local.get("/shareplan/map/sido").then(({ data }) => {
     makeOption(data);
   });
@@ -72,12 +95,9 @@ onMounted(() => {
     (isReady) => {
       if (!isReady) return;
       const gmap = mapRef.value.map;
-
       watch(locations, (newLocations) => {
         if (newLocations.length === 0) return;
-
         const bounds = new google.maps.LatLngBounds();
-
         newLocations.forEach((location) => {
           bounds.extend(
             new google.maps.LatLng(
@@ -86,7 +106,6 @@ onMounted(() => {
             )
           );
         });
-
         gmap.fitBounds(bounds);
       });
     }
@@ -139,6 +158,63 @@ const search = () => {
     locations.value = data.attractionInfoList;
   });
 };
+
+const showDetail = (location) => {
+  local
+    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
+    .then(({ data }) => {
+      selectedLocation.value = data;
+      selectedLocation.value.title = location.title;
+      selectedLocation.value.image = location.firstImage
+        ? location.firstImage
+        : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
+      selectedLocation.value.addr = location.addr1 + " " + location.addr2;
+      console.log(selectedLocation.value);
+      showModal.value = true;
+    });
+};
+
+const getDataFromPlan = () => {
+  // TODO: 완료된 여행에서 정보 불러오기
+  // FLow
+  /*
+  1. 로그인한 유저가 작성한 Plan 계획 select로 띄우기
+  2. 선택하면 해당 여행 정보 불러와서 date, map에 정보 띄우기
+  */
+};
+
+const tagName = ref("");
+const tagResults = ref([]);
+const searchTag = () => {
+  if (tagName.value.length == 0 || tagName == null) {
+    tagResults.value = null;
+    return;
+  }
+  local.get(`/shareplan/tag/${tagName.value}`).then(({ data }) => {
+    console.log(data);
+    tagResults.value = data;
+  });
+};
+
+const addTag = (tag) => {
+  planBoardObject.value.tagList.push(tag);
+};
+const removeTag = (tag) => {
+  const index = planBoardObject.value.tagList.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
+  if (index !== -1) {
+    planBoardObject.value.tagList.splice(index, 1);
+  }
+};
+
+const thumbnailFile = ref(null);
+
+// 파일 선택 시 이벤트 핸들러
+const onThumbnailChange = (event) => {
+  const file = event.target.files[0];
+  thumbnailFile.value = file;
+};
 </script>
 <template>
   <div>
@@ -146,18 +222,19 @@ const search = () => {
       <div class="row justify-content-center">
         <div class="col-12 col-md-8">
           <input
-            id="title"
-            v-model="subject"
+            id="subject"
+            v-model="planBoardObject.planBoard.subject"
             class="form-control"
             type="text"
             placeholder="제목 ..."
+            required
           />
         </div>
       </div>
     </div>
     <hr />
     <div class="row mx-5">
-      <!-- search bar start-->
+      <!-- search bar start -->
       <form class="d-flex my-5 mx-5" role="search">
         <select
           id="search-area"
@@ -208,8 +285,9 @@ const search = () => {
           검색
         </button>
       </form>
-      <!-- search bar end-->
-      <div class="col-md-6">
+      <!-- Section 1 -->
+      <!-- Map -->
+      <div class="col-md-6 my-5">
         <GoogleMap
           ref="mapRef"
           :api-key="VITE_GOOGLE_MAP_KEY"
@@ -226,8 +304,15 @@ const search = () => {
               },
             }"
             :key="location.contentId"
+            @click="showDetail(location)"
           />
         </GoogleMap>
+      </div>
+      <!-- Section 2 -->
+      <div class="col-md-6">
+        <!-- Thumbnail -->
+        <input type="file" id="thumbnailInput" @change="onThumbnailChange" />
+        <!-- Date -->
         <div class="mb-3">
           <div class="d-flex">
             <div class="mb-3">
@@ -252,27 +337,124 @@ const search = () => {
             </div>
           </div>
         </div>
-      </div>
-      <div class="col-md-6">
+        <!-- The Number Of Members-->
+        <div>
+          <label>동행인 수 </label>
+          <input
+            v-model="planBoardObject.planBoard.theNumberOfMembers"
+            class="form-control"
+            type="search"
+            placeholder="1"
+          />
+        </div>
         <div>
           <QuillEditor theme="snow" ref="content" />
         </div>
+        <!-- 여행 (plan) 에서 가져오기 -->
+        <button @click="getDataFromPlan" type="submit">
+          여행에서 불러오기
+        </button>
+        <!-- tag 검색하기 -->
         <div class="mt-3">
           <input
             id="search-tag"
+            type="text"
             class="form-control"
-            type="search"
-            placeholder="검색어"
-            aria-label="검색어"
+            style="width: 50%; text-align: center"
+            placeholder="Tag"
+            v-model="tagName"
+            @input.prevent="searchTag"
           />
+          <div class="text-center mb-4">
+            <div
+              v-for="tag in tagResults"
+              :key="tag.tagTypeId"
+              class="d-inline-block"
+            >
+              <button
+                class="btn btn-outline-secondary m-1"
+                @click="addTag(tag)"
+              >
+                {{ tag.name }} <i class="bi bi-x" @click="removeTag(tag)"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Tags -->
+        <div>
+          <div
+            v-for="selectedTag in planBoardObject.tagList"
+            :key="selectedTag.tagTypeId"
+            class="d-inline-block"
+          >
+            <button
+              class="btn btn-outline-secondary m-1"
+              @click="removeTag(selectedTag)"
+            >
+              {{ selectedTag.name }}
+            </button>
+          </div>
+        </div>
+        <!-- Insert Article Button -->
+        <div class="mt-3">
+          <button @click="insertArticle" type="submit">테스트</button>
         </div>
       </div>
     </div>
-    <button @click="testasdf" type="submit">테스트</button>
+
+    <!-- Attraction Description Modal -->
+    <div
+      v-if="showModal"
+      class="modal fade show d-block"
+      tabindex="-1"
+      role="dialog"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ selectedLocation.title }}</h5>
+          </div>
+          <div class="modal-body">
+            <img :src="selectedLocation.image" />
+            <p>주소 : {{ selectedLocation.addr }}</p>
+            <p>{{ selectedLocation.overview }}</p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              @click="showModal = false"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <style scoped>
 #title {
   margin: 35px 0px;
+}
+.modal-backdrop {
+  position: relative;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  background-color: #000;
+  opacity: 0.5;
+}
+
+.modal.show.d-block {
+  display: block;
+}
+
+.modal-body img {
+  display: block;
+  margin: 0 auto;
+  max-width: 80%;
+  height: auto;
 }
 </style>

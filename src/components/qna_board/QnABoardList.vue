@@ -17,7 +17,9 @@ const word = ref("");
 
 const getArticleList = () => {
   local
-    .get(`/qna/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`)
+    .get(
+      `/qna/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`
+    )
     .then(({ data }) => {
       articles.value = data.articles;
       currentPage.value = data.pageNavigation.currentPage;
@@ -52,7 +54,7 @@ const onPageChange = (val) => {
       <tbody>
         <QnABoardArticleItem
           v-for="article in articles"
-          :key="article.articleNo"
+          :key="article.qnaBoardId"
           :article="article"
         ></QnABoardArticleItem>
       </tbody>

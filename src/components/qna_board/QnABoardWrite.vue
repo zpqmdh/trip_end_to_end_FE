@@ -84,9 +84,7 @@ const resetInput = () => {
             v-model="qnaBoardDto.secret"
             id="flexCheckDefault"
           />
-          <label class="form-check-label" for="flexCheckDefault">
-            비밀글로 등록하기
-          </label>
+          <label class="form-check-label" for="flexCheckDefault"> 비밀글로 등록하기 </label>
         </div>
         <div class="col-lg-4">
           <input
@@ -108,11 +106,7 @@ const resetInput = () => {
           >
             등록하기
           </button>
-          <button
-            type="reset"
-            class="btn btn-outline-danger mb-3"
-            @click="resetInput"
-          >
+          <button type="reset" class="btn btn-outline-danger mb-3" @click="resetInput">
             초기화
           </button>
         </div>
