@@ -11,7 +11,6 @@ const loginMember = ref({
   id: "",
   password: "",
 });
-const findComplete = ref("");
 
 const handleLogin = async () => {
   try {
@@ -38,15 +37,11 @@ const handleLogin = async () => {
 };
 
 const handleFindPassword = async () => {
-  findComplete.value = "회원님의 이메일로 비밀번호 설정 링크가 발송되었습니다!";
-};
-
-const handleMoveToLogin = async () => {
   // 비밀번호 변경
-  router.push({ name: "member-login" });
+  router.push({ name: "member-findpassword" });
 };
 
-const handleMoveToSignup = async () => {
+const moveToSignup = async () => {
   router.push({ name: "member-signup" });
 };
 </script>
@@ -54,51 +49,40 @@ const handleMoveToSignup = async () => {
 <template>
   <div class="login-page">
     <form @submit.prevent="handleLogin" class="login-form">
-      <div v-if="!findComplete">
-        <h2 class="login-title">비밀번호 찾기</h2>
-        <div class="form-group">
-          <label for="id" class="mb-2">아이디</label>
-          <input
-            v-model="loginMember.id"
-            type="text"
-            id="id"
-            class="form-control"
-            required
-          />
-        </div>
-        <div class="form-group">
-          <label for="email" class="mb-2">이메일</label>
-          <input
-            v-model="loginMember.password"
-            type="password"
-            id="password"
-            class="form-control"
-            required
-          />
-        </div>
-        <button
-          type="submit"
-          class="btn btn-primary"
-          @click="handleFindPassword"
-        >
-          비밀번호 찾기
-        </button>
+      <h2 class="login-title">비밀번호 찾기</h2>
+      <div class="form-group">
+        <label for="id" class="mb-2">아이디</label>
+        <input
+          v-model="loginMember.id"
+          type="text"
+          id="id"
+          class="form-control"
+          required
+        />
       </div>
-      <div v-if="findComplete">
-        {{ findComplete }}
+      <div class="form-group">
+        <label for="email" class="mb-2">이메일</label>
+        <input
+          v-model="loginMember.password"
+          type="password"
+          id="password"
+          class="form-control"
+          required
+        />
       </div>
+      <button type="submit" class="btn btn-primary">비밀번호 찾기</button>
       <div class="links">
         <button
           type="button"
           class="btn btn-secondary"
-          @click="handleMoveToLogin"
+          @click="handleFindPassword"
         >
           로그인 페이지로
         </button>
         <button
           type="button"
           class="btn btn-secondary"
-          @click="handleMoveToSignup"
+          @click="handleFindPassword"
         >
           회원가입 페이지로
         </button>

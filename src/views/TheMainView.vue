@@ -47,6 +47,7 @@ body {
   position: absolute;
   top: 50%;
   left: 65%;
+  width: 60%;
   transform: translate(-50%, -50%);
   color: #000;
 }
