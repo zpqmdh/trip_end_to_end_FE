@@ -1,19 +1,32 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { localAxios } from "@/util/http-commons.js";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 const local = localAxios();
 const route = useRoute();
+const router = useRouter();
 
 const notice = ref({});
+
 onMounted(() => {
   getDetail(route.params.id);
 });
+
 const getDetail = (id) => {
   local.get("/notice/" + id).then(({ data }) => {
     console.log(data);
     notice.value = data;
+  });
+};
+
+const deleteArticle = () => {
+  const flag = confirm("정말 삭제하시겠습니까?");
+  if (!flag) return;
+  const id = route.params.id;
+  local.delete("/notice/" + id).then(({ data }) => {
+    console.log(data);
+    router.push({ name: "notice-list" });
   });
 };
 </script>
@@ -30,9 +43,13 @@ const getDetail = (id) => {
       <span class="time">🕒 {{ notice.registerTime }}</span>
     </div>
     <div class="content">{{ notice.content }}</div>
-    <RouterLink :to="{ name: 'notice-list' }" class="back-link"
-      >목록으로</RouterLink
+    <RouterLink :to="{ name: 'notice-list' }" class="back-link">목록으로</RouterLink>
+    <RouterLink
+      :to="{ name: 'notice-modify', params: { id: notice.noticeBoardId } }"
+      class="back-link"
+      >수정하기</RouterLink
     >
+    <button @click.prevent="deleteArticle">삭제</button>
   </div>
 </template>
 

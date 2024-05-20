@@ -4,12 +4,13 @@ import NoticePageNavigation from "./item/NoticePageNavigation.vue";
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
+import { decodedTokenFunc } from "@/util/auth";
 
 const route = useRoute();
 const local = localAxios();
 
 const articles = ref([]);
-
+const member = ref({});
 const currentPage = ref(1);
 const totalPage = ref(0);
 const key = ref("");
@@ -27,7 +28,16 @@ const getArticleList = () => {
     });
 };
 
+const getMember = () => {
+  const loginedId = decodedTokenFunc();
+  local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    console.log(data);
+    member.value = data;
+  });
+};
+
 onMounted(() => {
+  getMember();
   getArticleList();
 });
 
@@ -38,7 +48,7 @@ const onPageChange = (val) => {
 </script>
 <template>
   <div class="container">
-    <h1>❔ 공지사항</h1>
+    <h1>📢 공지사항</h1>
     <table class="table table-hover">
       <thead>
         <tr class="text-center">
@@ -57,6 +67,9 @@ const onPageChange = (val) => {
         ></NoticeBoardArticleItem>
       </tbody>
     </table>
+    <div v-show="member.type == 3">
+      <RouterLink :to="{ name: 'notice-write' }" class="back-link">작성</RouterLink>
+    </div>
     <NoticePageNavigation
       :current-page="currentPage"
       :total-page="totalPage"

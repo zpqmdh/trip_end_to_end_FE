@@ -18,6 +18,7 @@ const toggleChat = () => {
   // 채널 이름 입력받고 연결
   if (!chatObject.value.showChat && chatObject.value.currentChannel === null) {
     chatObject.value.currentChannel = prompt("Enter channel name:");
+    if (chatObject.value.currentChannel === null) return;
     connect();
   }
   chatObject.value.showChat = !chatObject.value.showChat;
