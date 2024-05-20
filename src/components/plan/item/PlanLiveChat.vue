@@ -8,7 +8,7 @@
               id="disconnect"
               class="btn btn-default"
               type="submit"
-              :disabled="chatObject.disconnectDisabled"
+              :disabled="!chatObject.connected"
               @click.prevent="disconnect"
             >
               나가기
@@ -19,14 +19,6 @@
       <div class="col-md-6">
         <form class="form-inline">
           <div class="form-group">
-            <label for="name">What is your name?</label>
-            <input
-              type="text"
-              id="name"
-              v-model="chatObject.nickname"
-              class="form-control"
-              placeholder="Your name here..."
-            />
             <label for="content">Type the content</label>
             <input
               type="text"
@@ -36,12 +28,7 @@
               placeholder="Your content here..."
             />
           </div>
-          <button
-            id="send"
-            class="btn btn-default"
-            type="button"
-            @click.prevent="sendMessage"
-          >
+          <button id="send" class="btn btn-default" type="button" @click.prevent="sendMessage">
             Send
           </button>
         </form>
@@ -56,10 +43,14 @@
         >
           <thead>
             <tr>
-              <th>Greetings</th>
+              <th>Messages</th>
             </tr>
           </thead>
-          <tbody id="greetings"></tbody>
+          <tbody>
+            <tr v-for="(message, index) in chatObject.messages" :key="index">
+              <td>{{ message }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -68,8 +59,8 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
+import { localAxios } from "@/util/http-commons.js";
 
 const local = localAxios();
 const chatObject = ref({
@@ -78,86 +69,101 @@ const chatObject = ref({
   content: "",
   currentChannel: "default",
   connected: false,
-  conversationDisplay: false,
-  greetings: [],
+  conversationDisplay: "none",
+  messages: [],
 });
 
 const setConnected = (connected) => {
-  console.log("check");
   chatObject.value.connected = connected;
   chatObject.value.conversationDisplay = connected ? "block" : "none";
-  chatObject.value.greetings = []; // Clear greetings
+  chatObject.value.messages = []; // Clear messages
 };
 
 const connect = () => {
-  chatObject.value.stompClient.activate();
+  const socket = new SockJS("http://localhost/tete-chat");
+  chatObject.value.stompClient = Stomp.over(socket);
+  chatObject.value.stompClient.connect(
+    {},
+    (frame) => {
+      setConnected(true);
+      console.log("Connected: " + frame);
+      chatObject.value.stompClient.subscribe(
+        `/topic/${chatObject.value.currentChannel}`,
+        (message) => {
+          showMessage(JSON.parse(message.body));
+        }
+      );
+      chatObject.value.stompClient.send(
+        `/app/chat.addUser/${chatObject.value.currentChannel}`,
+        {},
+        JSON.stringify({ nickname: chatObject.value.nickname, content: "JOIN", type: "JOIN" })
+      );
+    },
+    (error) => {
+      console.error("Error: " + error);
+    }
+  );
 };
 
 const disconnect = () => {
   if (chatObject.value.stompClient) {
-    chatObject.value.stompClient.deactivate();
-    setConnected(false);
-    console.log("Disconnected");
+    chatObject.value.stompClient.send(
+      `/app/chat.leaveUser/${chatObject.value.currentChannel}`,
+      {},
+      JSON.stringify({ nickname: chatObject.value.nickname, content: "LEAVE", type: "LEAVE" })
+    );
+    chatObject.value.stompClient.disconnect(() => {
+      setConnected(false);
+      console.log("Disconnected");
+    });
   }
 };
 
 const sendMessage = () => {
   if (chatObject.value.content && chatObject.value.stompClient) {
-    chatObject.value.stompClient.publish({
-      destination: `/app/chat.sendMessage/${chatObject.value.currentChannel}`,
-      body: JSON.stringify({
+    chatObject.value.stompClient.send(
+      `/app/chat.sendMessage/${chatObject.value.currentChannel}`,
+      {},
+      JSON.stringify({
         nickname: chatObject.value.nickname,
         content: chatObject.value.content,
-      }),
-    });
+        type: "SEND",
+      })
+    );
     chatObject.value.content = "";
   }
 };
 
-const showGreeting = (message) => {
-  const greetings = document.getElementById("greetings");
-  const tr = document.createElement("tr");
-  const td = document.createElement("td");
-  td.appendChild(document.createTextNode(message));
-  tr.appendChild(td);
-  greetings.appendChild(tr);
+const showMessage = (message) => {
+  let displayMessage;
+  switch (message.type) {
+    case "JOIN":
+      displayMessage = `${message.nickname}님이 입장하셨습니다.`;
+      break;
+    case "LEAVE":
+      displayMessage = `${message.nickname}님이 퇴장하셨습니다.`;
+      break;
+    case "SEND":
+      displayMessage = `${message.nickname}: ${message.content}`;
+      break;
+    default:
+      displayMessage = `알 수 없는 메시지 타입: ${message.type}`;
+  }
+  chatObject.value.messages.push(displayMessage);
 };
 
-const getMemberNickname = () => {
+const getMember = async () => {
   const loginedId = decodedTokenFunc();
-  local.get(`/members/detail/${loginedId}`).then(({ data }) => {
-    chatObject.value.nickname = data.nickname;
-  });
+  const response = await local.get(`/members/detail/${loginedId}`);
+  chatObject.value.nickname = response.data.nickname;
+
+  // 채널 이름 입력받고 연결
+  chatObject.value.currentChannel = prompt("Enter channel name:");
+  connect();
 };
 
 onMounted(() => {
-  chatObject.value.currentChannel = prompt("Enter channel name:");
-  getMemberNickname();
-  chatObject.value.stompClient = new StompJs.Client({
-    brokerURL: "ws://localhost/tete-chat",
-    connectHeaders: {},
-    debug: (str) => {
-      console.log(str);
-    },
-    reconnectDelay: 5000,
-    heartbeatIncoming: 4000,
-    heartbeatOutgoing: 4000,
-    onConnect: (frame) => {
-      setConnected(true);
-      console.log("Connected: " + frame);
-      chatObject.value.stompClient.subscribe(
-        `/topic/${chatObject.value.currentChannel}`,
-        (greeting) => {
-          showGreeting(JSON.parse(greeting.body).content);
-        }
-      );
-    },
-    onStompError: (frame) => {
-      console.error(frame.headers["message"]);
-      console.error("Additional details: " + frame.body);
-    },
-  });
-  connect();
+  getMember();
 });
 </script>
 
