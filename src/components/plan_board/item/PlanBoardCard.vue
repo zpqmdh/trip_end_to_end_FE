@@ -30,7 +30,7 @@ defineProps({ planArticle: Object });
           :key="tag.planBoardTagId"
           class="tag-btn"
         >
-          #{{ tag.tagName }}
+          #{{ tag.name }}
         </button>
       </div>
     </div>

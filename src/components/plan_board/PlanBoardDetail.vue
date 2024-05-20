@@ -174,6 +174,10 @@ const clickLike = () => {
               />
             </div>
           </div>
+          <!-- 동행인 수 -->
+          <div>
+            동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
+          </div>
           <!-- Content -->
           <div
             class="content-box"
@@ -207,9 +211,20 @@ const clickLike = () => {
         :key="tag.planBoardTagId"
         class="tag-btn"
       >
-        #{{ tag.tagName }}
+        #{{ tag.name }}
       </button>
     </div>
+    <!-- Modify Plan Board Article -->
+    <button class="btn btn-primary margin-left-auto">
+      <router-link
+        :to="{
+          name: 'share-plan-modify',
+          params: { id: planBoardObject.planBoard.planBoardId },
+        }"
+        class="text-white"
+        >게시글 수정하기</router-link
+      >
+    </button>
     <!-- Comment Section -->
     <div class="comment-section">
       <h4>댓글</h4>

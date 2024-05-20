@@ -212,7 +212,12 @@ const searchTag = () => {
 };
 
 const addTag = (tag) => {
-  planBoardObject.value.tagList.push(tag);
+  const exists = planBoardObject.value.tagList.some(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
+  if (!exists) {
+    planBoardObject.value.tagList.push(tag);
+  }
 };
 const removeTag = (tag) => {
   const index = planBoardObject.value.tagList.findIndex(
@@ -362,7 +367,7 @@ const onThumbnailChange = (event) => {
         </div>
         <!-- Write Content -->
         <div>
-          <QuillEditor theme="snow" ref="content" />
+          <QuillEditor toolbar="essential" theme="snow" ref="content" />
         </div>
         <!-- 여행 (plan) 에서 가져오기 -->
         <button @click="getDataListPlan" type="submit">
