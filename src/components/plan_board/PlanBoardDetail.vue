@@ -25,34 +25,47 @@ const updateComment = ref({
   commentId: -1,
   content: "",
 });
+const newLike = ref({
+  memberId: "",
+  planBoardId: "",
+});
 
+const memberId = ref("");
+const isClickedLike = ref(false);
 onMounted(() => {
-  getDetail();
-
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    memberId.value = data.memberId;
     newComment.value.memberId = data.memberId;
+    newLike.value.memberId = data.memberId;
   });
+  getDetail();
 });
 
 const getDetail = () => {
   local.get(`/shareplan/${route.params.id}`).then(({ data }) => {
+    // comment, like 에 planBoardId 추가
     newComment.value.planBoardId = data.planBoard.planBoardId;
+    newLike.value.planBoardId = data.planBoard.planBoardId;
+
     planBoardObject.value.planBoard = data.planBoard;
     planBoardObject.value.commentList = data.commentList;
     planBoardObject.value.likeList = data.likeList;
     planBoardObject.value.tagList = data.tagList;
-    console.log(planBoardObject.value);
-    console.log(planBoardObject.value.planBoard.thumbnail);
+    const like = planBoardObject.value.likeList.find((like) => like.memberId === memberId.value);
+    if (like) {
+      // 로그인 상태의 유저가 해당 게시글에 좋아요를 누른 상태
+      isClickedLike.value = like;
+    } else {
+      isClickedLike.value = null;
+    }
   });
 };
 
+/* Comment */
 const addComment = () => {
   local
-    .post(
-      `/shareplan/insert/${newComment.value.planBoardId}/comment`,
-      newComment.value
-    )
+    .post(`/shareplan/insert/${newComment.value.planBoardId}/comment`, newComment.value)
     .then(() => {
       getDetail();
       newComment.value.content = "";
@@ -80,6 +93,25 @@ const deleteComment = (commentId) => {
   local.delete(`/shareplan/comment/${commentId}`).then(() => {
     getDetail();
   });
+};
+
+/* Like */
+const clickLike = () => {
+  if (isClickedLike.value) {
+    // 좋아요 버튼 누름 -> 삭제
+    local.delete(`/shareplan/like/${isClickedLike.value.planLikeId}`).then(({ data }) => {
+      console.log(data);
+      getDetail();
+    });
+  } else {
+    // 좋아요 버튼 누르지 않음 -> 누르기
+    local
+      .post(`/shareplan/insert/${newLike.value.planBoardId}/like`, newLike.value)
+      .then(({ data }) => {
+        console.log(data);
+        getDetail();
+      });
+  }
 };
 </script>
 
@@ -124,12 +156,17 @@ const deleteComment = (commentId) => {
             </div>
           </div>
           <!-- Content -->
-          <div
-            class="content-box"
-            v-html="planBoardObject.planBoard.content"
-          ></div>
+          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
         </div>
       </div>
+    </div>
+    <!-- Like Section -->
+    <div>
+      <button @click="clickLike" class="like-button">
+        <img v-show="isClickedLike" src="@/assets/img/like-on.png" class="like-icon" />
+        <img v-show="!isClickedLike" src="@/assets/img/like-off.png" class="like-icon" />
+        <span> {{ planBoardObject.likeList.length }}</span>
+      </button>
     </div>
     <!-- Comment Section -->
     <div class="comment-section">
@@ -141,16 +178,10 @@ const deleteComment = (commentId) => {
           class="form-control"
           rows="3"
         ></textarea>
-        <button @click="addComment" class="btn btn-primary mt-2">
-          댓글 달기
-        </button>
+        <button @click="addComment" class="btn btn-primary mt-2">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
-        <div
-          v-for="comment in planBoardObject.commentList"
-          :key="comment.id"
-          class="comment-item"
-        >
+        <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
           <!-- 존재하는 댓글 -->
           <template v-if="comment.deleted == 0">
             <div v-if="editingComment !== comment.commentId">
@@ -158,36 +189,20 @@ const deleteComment = (commentId) => {
               <p>{{ comment.registerTime }}</p>
               <p>{{ comment.content }}</p>
               <div class="comment-actions">
-                <button
-                  @click="replyToComment(comment.commentId)"
-                  class="btn btn-secondary btn-sm"
-                >
+                <button @click="replyToComment(comment.commentId)" class="btn btn-secondary btn-sm">
                   답글 달기
                 </button>
-                <button
-                  @click="startEditingComment(comment)"
-                  class="btn btn-warning btn-sm"
-                >
+                <button @click="startEditingComment(comment)" class="btn btn-warning btn-sm">
                   수정
                 </button>
-                <button
-                  @click="deleteComment(comment.commentId)"
-                  class="btn btn-danger btn-sm"
-                >
+                <button @click="deleteComment(comment.commentId)" class="btn btn-danger btn-sm">
                   삭제
                 </button>
               </div>
             </div>
             <div v-else>
-              <textarea
-                v-model="updateComment.content"
-                class="form-control"
-                rows="2"
-              ></textarea>
-              <button
-                @click="saveEditComment(comment.commentId)"
-                class="btn btn-primary mt-2"
-              >
+              <textarea v-model="updateComment.content" class="form-control" rows="2"></textarea>
+              <button @click="saveEditComment(comment.commentId)" class="btn btn-primary mt-2">
                 저장
               </button>
             </div>
@@ -251,5 +266,15 @@ const deleteComment = (commentId) => {
 .comment-item {
   border-bottom: 1px solid #ddd;
   padding: 10px 0;
+}
+
+.like-button {
+  border: none;
+  background-color: white;
+}
+.like-icon {
+  width: 35px;
+  height: 35px;
+  margin-right: 3px;
 }
 </style>
