@@ -17,9 +17,7 @@ const word = ref("");
 
 const getArticleList = () => {
   local
-    .get(
-      `/notice/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`
-    )
+    .get(`/notice/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`)
     .then(({ data }) => {
       articles.value = data.articles;
       currentPage.value = data.pageNavigation.currentPage;
