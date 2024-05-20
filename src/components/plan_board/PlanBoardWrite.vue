@@ -42,7 +42,7 @@ const searchOption = ref({
   contentTypeId: 0,
   keyword: "",
 });
-
+const thumbnail = ref("");
 const mapRef = ref(null);
 const locations = ref([]);
 const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
@@ -50,32 +50,22 @@ const showModal = ref(false); // 모달 표시 여부를 제어할 ref
 
 const insertArticle = async () => {
   planBoardObject.value.planBoard.content = content.value.getHTML();
-  planBoardObject.value.planBoard.startDate = format(
-    startDate.value,
-    inputFormat.value
-  );
-  planBoardObject.value.planBoard.endDate = format(
-    endDate.value,
-    inputFormat.value
-  );
+  planBoardObject.value.planBoard.startDate = format(startDate.value, inputFormat.value);
+  planBoardObject.value.planBoard.endDate = format(endDate.value, inputFormat.value);
+  console.log(planBoardObject.value);
   const formData = new FormData();
-  formData.append("thumbnail", thumbnailFile.value);
+  formData.append(
+    "planBoardForm",
+    new Blob([JSON.stringify(planBoardObject.value)], {
+      type: "application/json",
+    })
+  );
+  formData.append("thumbnail", thumbnail.value);
   local
-    .post("/shareplan/upload/thumbnail", formData, {
+    .post("/shareplan/insert", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     })
     .then(({ data }) => {
-      console.log(data);
-      planBoardObject.value.planBoard.thumbnail = data;
-      console.log(planBoardObject.value);
-      local
-        .post("/shareplan/insert", planBoardObject.value)
-        .then(({ data }) => {
-          console.log(data);
-          router.push({ name: "share-plan-list" });
-        });
-    })
-    .catch(({ data }) => {
       console.log(data);
     });
 };
@@ -100,10 +90,7 @@ onMounted(() => {
         const bounds = new google.maps.LatLngBounds();
         newLocations.forEach((location) => {
           bounds.extend(
-            new google.maps.LatLng(
-              parseFloat(location.latitude),
-              parseFloat(location.longitude)
-            )
+            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
           );
         });
         gmap.fitBounds(bounds);
@@ -160,18 +147,16 @@ const search = () => {
 };
 
 const showDetail = (location) => {
-  local
-    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
-    .then(({ data }) => {
-      selectedLocation.value = data;
-      selectedLocation.value.title = location.title;
-      selectedLocation.value.image = location.firstImage
-        ? location.firstImage
-        : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
-      selectedLocation.value.addr = location.addr1 + " " + location.addr2;
-      console.log(selectedLocation.value);
-      showModal.value = true;
-    });
+  local.get(`/shareplan/map/attractiondescription/${location.contentId}`).then(({ data }) => {
+    selectedLocation.value = data;
+    selectedLocation.value.title = location.title;
+    selectedLocation.value.image = location.firstImage
+      ? location.firstImage
+      : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
+    selectedLocation.value.addr = location.addr1 + " " + location.addr2;
+    console.log(selectedLocation.value);
+    showModal.value = true;
+  });
 };
 
 const getDataFromPlan = () => {
@@ -200,20 +185,16 @@ const addTag = (tag) => {
   planBoardObject.value.tagList.push(tag);
 };
 const removeTag = (tag) => {
-  const index = planBoardObject.value.tagList.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const index = planBoardObject.value.tagList.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (index !== -1) {
     planBoardObject.value.tagList.splice(index, 1);
   }
 };
 
-const thumbnailFile = ref(null);
-
 // 파일 선택 시 이벤트 핸들러
 const onThumbnailChange = (event) => {
   const file = event.target.files[0];
-  thumbnailFile.value = file;
+  thumbnail.value = file;
 };
 </script>
 <template>
@@ -276,12 +257,7 @@ const onThumbnailChange = (event) => {
           aria-label="검색어"
           v-model="searchOption.keyword"
         />
-        <button
-          id="btn-search"
-          class="btn btn-outline-success"
-          type="button"
-          @click="search"
-        >
+        <button id="btn-search" class="btn btn-outline-success" type="button" @click="search">
           검색
         </button>
       </form>
@@ -351,9 +327,7 @@ const onThumbnailChange = (event) => {
           <QuillEditor theme="snow" ref="content" />
         </div>
         <!-- 여행 (plan) 에서 가져오기 -->
-        <button @click="getDataFromPlan" type="submit">
-          여행에서 불러오기
-        </button>
+        <button @click="getDataFromPlan" type="submit">여행에서 불러오기</button>
         <!-- tag 검색하기 -->
         <div class="mt-3">
           <input
@@ -366,15 +340,8 @@ const onThumbnailChange = (event) => {
             @input.prevent="searchTag"
           />
           <div class="text-center mb-4">
-            <div
-              v-for="tag in tagResults"
-              :key="tag.tagTypeId"
-              class="d-inline-block"
-            >
-              <button
-                class="btn btn-outline-secondary m-1"
-                @click="addTag(tag)"
-              >
+            <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
+              <button class="btn btn-outline-secondary m-1" @click="addTag(tag)">
                 {{ tag.name }} <i class="bi bi-x" @click="removeTag(tag)"></i>
               </button>
             </div>
@@ -388,10 +355,7 @@ const onThumbnailChange = (event) => {
             :key="selectedTag.tagTypeId"
             class="d-inline-block"
           >
-            <button
-              class="btn btn-outline-secondary m-1"
-              @click="removeTag(selectedTag)"
-            >
+            <button class="btn btn-outline-secondary m-1" @click="removeTag(selectedTag)">
               {{ selectedTag.name }}
             </button>
           </div>
@@ -404,12 +368,7 @@ const onThumbnailChange = (event) => {
     </div>
 
     <!-- Attraction Description Modal -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      role="dialog"
-    >
+    <div v-if="showModal" class="modal fade show d-block" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -421,13 +380,7 @@ const onThumbnailChange = (event) => {
             <p>{{ selectedLocation.overview }}</p>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              @click="showModal = false"
-            >
-              닫기
-            </button>
+            <button type="button" class="btn btn-secondary" @click="showModal = false">닫기</button>
           </div>
         </div>
       </div>
