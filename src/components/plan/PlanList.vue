@@ -1,5 +1,27 @@
-<script setup></script>
+<script setup>
+import PlanListOnGoing from "./item/PlanListOnGoing.vue";
+import PlanListFinished from "./item/PlanListFinished.vue";
+import { useRouter } from "vue-router";
+const router = useRouter();
+const handleAddPlan = async () => {
+  router.push({ name: "plan-write" });
+};
+</script>
 <template>
-  <div>Plan List</div>
+  <button class="add-button btn" @click="handleAddPlan">여행 계획 추가</button>
+  <div class="row contrainer">
+    <PlanListOnGoing class="col-12" />
+    <PlanListFinished class="col-12" />
+  </div>
 </template>
-<style scoped></style>
+<style scoped>
+.add-button {
+  margin-top: 50px;
+  margin-left: 135px;
+  color: white;
+  background-color: #577b8d;
+}
+.contrainer {
+  margin-top: 30px;
+}
+</style>
