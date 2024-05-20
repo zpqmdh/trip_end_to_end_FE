@@ -14,6 +14,11 @@ let member = ref({
 const getMemberId = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    // 관리자 아님 -> 작성 권한 없음
+    if (data.type != 3) {
+      alert("공지사항 작성 권한이 없습니다.");
+      router.push({ name: "notice-list" });
+    }
     member.value.memberId = data.memberId;
     member.value.nickname = data.nickname;
   });
@@ -30,6 +35,7 @@ onMounted(() => {
 });
 const insertArticle = () => {
   noticeBoardDto.value.memberId = member.value.memberId;
+  noticeBoardDto.value.isFixed = noticeBoardDto.value.isFixed ? 1 : 0;
   local.post("/notice/insert", noticeBoardDto.value).then(({ data }) => {
     console.log(data);
     router.push({ name: "notice-list" });
@@ -65,6 +71,15 @@ const insertArticle = () => {
             v-model="noticeBoardDto.content"
           ></textarea>
         </div>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            v-model="noticeBoardDto.isFixed"
+            id="isFixed"
+          />
+          <label class="form-check-label" for="isFixed"> 고정하기 </label>
+        </div>
         <div class="col-auto text-center">
           <button
             type="button"
@@ -74,11 +89,7 @@ const insertArticle = () => {
           >
             등록하기
           </button>
-          <button
-            type="reset"
-            class="btn btn-outline-danger mb-3"
-            @click="resetInput"
-          >
+          <button type="reset" class="btn btn-outline-danger mb-3" @click="resetInput">
             초기화
           </button>
         </div>
