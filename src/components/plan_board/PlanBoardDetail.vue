@@ -131,32 +131,34 @@ const clickLike = () => {
   <div class="container">
     <!-- Main Section -->
     <div class="row mx-5">
-      <!-- title -->
+      <!-- Title -->
       <h3 class="header">{{ planBoardObject.planBoard.subject }}</h3>
       <hr />
-      <!-- register time-->
+      <!-- Register Time -->
       <div class="register-time">
         {{ planBoardObject.planBoard.registerTime }}
       </div>
       <!-- Section 1 -->
       <div class="col-md-6">
-        <!-- thumbnail-->
+        <!-- Thumbnail -->
         <img
           id="thumbnail"
           :src="
             `http://localhost/products/` + planBoardObject.planBoard.thumbnail
           "
+          class="thumbnail"
+          alt="Thumbnail"
         />
       </div>
       <!-- Section 2 -->
       <div class="col-md-6">
         <div class="mb-3">
-          <!-- Date -->
+          <!-- Dates -->
           <div class="d-flex">
             <div class="mb-3">
               <span>시작 날짜</span>
               <input
-                class="mx-1"
+                class="date-input"
                 type="text"
                 v-model="planBoardObject.planBoard.startDate"
                 readonly
@@ -165,12 +167,16 @@ const clickLike = () => {
             <div>
               <span>종료 날짜</span>
               <input
-                class="mx-1"
+                class="date-input"
                 type="text"
                 v-model="planBoardObject.planBoard.endDate"
                 readonly
               />
             </div>
+          </div>
+          <!-- 동행인 수 -->
+          <div>
+            동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
           </div>
           <!-- Content -->
           <div
@@ -181,21 +187,44 @@ const clickLike = () => {
       </div>
     </div>
     <!-- Like Section -->
-    <div>
+    <div class="like-section">
       <button @click="clickLike" class="like-button">
         <img
           v-show="isClickedLike"
           src="@/assets/img/like-on.png"
           class="like-icon"
+          alt="Liked"
         />
         <img
           v-show="!isClickedLike"
           src="@/assets/img/like-off.png"
           class="like-icon"
+          alt="Like"
         />
         <span> {{ planBoardObject.likeList.length }}</span>
       </button>
     </div>
+    <!-- Tag Section -->
+    <div class="tag-section">
+      <button
+        v-for="tag in planBoardObject.tagList"
+        :key="tag.planBoardTagId"
+        class="tag-btn"
+      >
+        #{{ tag.name }}
+      </button>
+    </div>
+    <!-- Modify Plan Board Article -->
+    <button class="btn btn-primary margin-left-auto">
+      <router-link
+        :to="{
+          name: 'share-plan-modify',
+          params: { id: planBoardObject.planBoard.planBoardId },
+        }"
+        class="text-white"
+        >게시글 수정하기</router-link
+      >
+    </button>
     <!-- Comment Section -->
     <div class="comment-section">
       <h4>댓글</h4>
@@ -216,7 +245,7 @@ const clickLike = () => {
           :key="comment.id"
           class="comment-item"
         >
-          <!-- 존재하는 댓글 -->
+          <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
             <div v-if="editingComment !== comment.commentId">
               <p>작성자: {{ comment.nickname }}</p>
@@ -257,7 +286,7 @@ const clickLike = () => {
               </button>
             </div>
           </template>
-          <!-- 삭제된 댓글 -->
+          <!-- Deleted Comments -->
           <template v-if="comment.deleted == 1">
             <div v-if="comment.depth != 0" class="col-1"></div>
             <div class="col">
@@ -274,57 +303,84 @@ const clickLike = () => {
 </template>
 
 <style scoped>
+/* Header */
 .header {
   text-align: center;
-  margin-top: 10px;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
-#thumbnail {
-  width: 50%;
+/* Thumbnail */
+.thumbnail {
+  width: 100%;
   height: auto;
-  display: block;
-  margin: auto;
 }
 
+/* Content Box */
 .content-box {
   background-color: #f0f0f0;
-  min-height: 100px;
-  padding: 10px;
-  overflow: auto;
+  min-height: 200px;
+  padding: 15px;
+  border-radius: 10px;
 }
 
-.register-time {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+/* Like Section */
+.like-section {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.like-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.like-icon {
+  width: 25px;
+  height: auto;
+  margin-right: 5px;
+}
+
+/* Tag Section */
+.tag-section {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.tag-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 20px;
+  padding: 5px 15px;
+  margin-right: 10px;
   margin-bottom: 10px;
+  cursor: pointer;
 }
 
+/* Comment Section */
 .comment-section {
   margin-top: 20px;
 }
 
 .comment-form textarea {
   width: 100%;
-}
-
-.comment-actions {
-  display: flex;
-  gap: 10px;
+  resize: vertical;
 }
 
 .comment-item {
   border-bottom: 1px solid #ddd;
-  padding: 10px 0;
+  padding: 15px 0;
 }
 
-.like-button {
-  border: none;
-  background-color: white;
+.comment-actions button {
+  margin-right: 10px;
 }
-.like-icon {
-  width: 35px;
-  height: 35px;
-  margin-right: 3px;
+
+@media (max-width: 768px) {
+  .header {
+    font-size: 1.5rem;
+  }
 }
 </style>
