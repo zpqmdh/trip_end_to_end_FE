@@ -1,35 +1,31 @@
 <script setup>
-defineProps({ planArticle: Object });
+const prop = defineProps({ planArticle: Object });
+if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
+  prop.planArticle.planBoard.thumbnail =
+    "http://localhost/products/" + prop.planArticle.planBoard.thumbnail;
+}
 </script>
 <template>
   <div class="card">
-    <img
-      class="card-img-top"
-      :src="`http://localhost/products/` + planArticle.planBoard.thumbnail"
-      alt="Card image cap"
-    />
+    <img class="card-img-top" :src="prop.planArticle.planBoard.thumbnail" alt="Card image cap" />
     <div class="card-body">
-      <h5 class="card-title">{{ planArticle.planBoard.subject }}</h5>
-      <div class="card-info">{{ planArticle.planBoard.registerTime }}</div>
+      <h5 class="card-title">{{ prop.planArticle.planBoard.subject }}</h5>
+      <div class="card-info">{{ prop.planArticle.planBoard.registerTime }}</div>
       <div class="card-info">
-        🗓️ {{ planArticle.planBoard.startDate }} -
-        {{ planArticle.planBoard.endDate }}
+        🗓️ {{ prop.planArticle.planBoard.startDate }} -
+        {{ prop.planArticle.planBoard.endDate }}
       </div>
       <router-link
         :to="{
           name: 'share-plan-detail',
-          params: { id: planArticle.planBoard.planBoardId },
+          params: { id: prop.planArticle.planBoard.planBoardId },
         }"
         class="btn btn-primary"
       >
         자세히 보기
       </router-link>
       <div>
-        <button
-          v-for="tag in planArticle.tagList"
-          :key="tag.planBoardTagId"
-          class="tag-btn"
-        >
+        <button v-for="tag in prop.planArticle.tagList" :key="tag.planBoardTagId" class="tag-btn">
           #{{ tag.name }}
         </button>
       </div>
@@ -48,7 +44,7 @@ defineProps({ planArticle: Object });
 .card-img-top {
   width: 100%;
   height: 200px;
-  object-fit: cover;
+  object-fit: contain;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
 }
