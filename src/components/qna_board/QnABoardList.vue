@@ -2,10 +2,11 @@
 import QnABoardArticleItem from "@/components/qna_board/item/QnABoardArticleItem.vue";
 import QnAPageNavigation from "@/components/qna_board/item/QnAPageNavigation.vue";
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 
 const route = useRoute();
+const router = useRouter();
 const local = localAxios();
 
 const articles = ref([]);
@@ -37,10 +38,21 @@ const onPageChange = (val) => {
   currentPage.value = val;
   getArticleList();
 };
+
+const moveWrite = () => {
+  router.push({ name: "qna-write" });
+};
 </script>
 <template>
   <div class="container">
-    <h1>❔ 문의 게시판</h1>
+    <div class="d-flex justify-content-center mt-3">
+      <h1>❓ 문의 게시판</h1>
+    </div>
+    <div>
+      <div class="d-flex justify-content-end">
+        <button id="btn-mv-write" class="btn" @click="moveWrite">글쓰기</button>
+      </div>
+    </div>
     <table class="table table-hover">
       <thead>
         <tr class="text-center">
@@ -66,4 +78,16 @@ const onPageChange = (val) => {
     ></QnAPageNavigation>
   </div>
 </template>
-<style scoped></style>
+<style scoped>
+#btn-mv-write {
+  border-color: #97654c;
+  background-color: #fff;
+  color: #97654c;
+  margin-right: 20px;
+}
+#btn-mv-write:hover {
+  background-color: #97654c;
+  color: white;
+  margin-right: 20px;
+}
+</style>
