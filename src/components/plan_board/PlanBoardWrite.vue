@@ -76,7 +76,7 @@ const insertArticle = async () => {
     .then(({ data }) => {
       console.log(data);
     });
-  router.push({ name: "share-plan-list" });
+  router.replace({ name: "share-plan-list" });
 };
 
 const getMemberId = () => {
@@ -182,7 +182,7 @@ const planObject = ref({});
 const showPlan = ref(false);
 
 const getDataListPlan = () => {
-  local.get(`/plans/list/${loginedId.value}`).then(({ data }) => {
+  local.get(`/plans/list/all/${loginedId.value}`).then(({ data }) => {
     addPlanByCheckingDate(data);
     showPlan.value = !showPlan.value;
   });

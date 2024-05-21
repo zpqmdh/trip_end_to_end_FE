@@ -259,11 +259,14 @@ const moveModify = () => {
       </button>
     </div>
     <!-- Modify Plan Board Article -->
-    <div class="d-flex justify-content-end">
-      <button id="btn-mv-modify" class="btn" @click="moveModify">
-        게시글 수정하기
-      </button>
-    </div>
+    <template v-if="planBoardObject.planBoard.memberID === memberId">
+      <div class="d-flex justify-content-end">
+        <button id="btn-mv-modify" class="btn" @click="moveModify">
+          게시글 수정하기
+        </button>
+      </div>
+    </template>
+
     <hr />
     <!-- Comment Section -->
     <div class="comment-section">
