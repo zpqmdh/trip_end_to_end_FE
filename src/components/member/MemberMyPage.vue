@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, isReactive } from "vue";
+import { ref, onMounted, isReactive, onUpdated } from "vue";
 import { localAxios } from "@/util/http-commons";
 import { logout, decodedTokenFunc } from "@/util/auth";
 import { useRouter } from "vue-router";
@@ -17,7 +17,6 @@ function handleFileChange(event) {
   file.value = event.target.files[0];
   fileNames.value = [file.value.name];
   checkNoInput.value = "";
-  landmarks.value = null;
 }
 
 function triggerFileInput() {
@@ -74,8 +73,9 @@ const loadMemberDetails = async () => {
     console.log(id);
     const response = await local.get(`/members/detail/${id}`);
     const data = response.data;
-
+    console.log(data);
     member.value = {
+      memberId: data.memberId,
       nickname: data.nickname,
       mbti: data.mbti,
       name: data.name,
@@ -101,8 +101,19 @@ const handleUpdate = async () => {
   // 회원 정보 수정
   try {
     const id = loginedId;
-    const response = await local.put(`/members/update/${id}`, member.value);
+    const formData = new FormData();
+    formData.append(
+      "updateMember",
+      new Blob([JSON.stringify(member.value)], {
+        type: "application/json",
+      })
+    );
+    formData.append("image", file.value);
+    const response = await local.put(`/members/update/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     alert(response.data);
+    loadMemberDetails();
   } catch (error) {
     console.error("회원 정보 수정에 실패하였습니다.");
   }
