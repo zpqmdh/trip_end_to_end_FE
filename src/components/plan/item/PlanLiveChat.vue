@@ -78,6 +78,7 @@ const disconnect = () => {
       console.log("Disconnected");
     });
     chatObject.value.showChat = !chatObject.value.showChat;
+    chatObject.value.currentChannel = null;
   }
 };
 
