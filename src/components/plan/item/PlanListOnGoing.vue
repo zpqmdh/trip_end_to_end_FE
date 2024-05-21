@@ -58,9 +58,9 @@ onMounted(() => {
   background-color: #f5f5f5;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  width: 40%;
-  margin: 0 auto;
-  margin-left: 150px;
+  width: 30%;
+  margin: 0 20px;
+  /* margin-left: 150px; */
 }
 
 .title {
