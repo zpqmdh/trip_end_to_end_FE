@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { GoogleMap, Marker } from "vue3-google-map";
 import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
@@ -7,6 +8,12 @@ import { decodedTokenFunc } from "@/util/auth";
 const route = useRoute();
 const router = useRouter();
 const local = localAxios();
+
+const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
+const center = { lat: 36.355387, lng: 127.29964 };
+const zoom = ref(13);
+const mapRef = ref(null);
+const locations = ref([]);
 
 const planBoardObject = ref({
   planBoard: {},
@@ -56,9 +63,12 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
-        "http://localhost/products/" + planBoardObject.value.planBoard.thumbnail;
+        "http://localhost/products/" +
+        planBoardObject.value.planBoard.thumbnail;
     }
-    const like = planBoardObject.value.likeList.find((like) => like.memberId === memberId.value);
+    const like = planBoardObject.value.likeList.find(
+      (like) => like.memberId === memberId.value
+    );
     if (like) {
       // 로그인 상태의 유저가 해당 게시글에 좋아요를 누른 상태
       isClickedLike.value = like;
@@ -71,7 +81,10 @@ const getDetail = () => {
 /* Comment */
 const addComment = () => {
   local
-    .post(`/shareplan/insert/${newComment.value.planBoardId}/comment`, newComment.value)
+    .post(
+      `/shareplan/insert/${newComment.value.planBoardId}/comment`,
+      newComment.value
+    )
     .then(() => {
       getDetail();
       newComment.value.content = "";
@@ -108,21 +121,29 @@ const clickLike = () => {
     console.log("qwe");
     console.log(newLike.value);
     local
-      .post(`/shareplan/insert/${newLike.value.planBoardId}/like`, newLike.value)
+      .post(
+        `/shareplan/insert/${newLike.value.planBoardId}/like`,
+        newLike.value
+      )
       .then(({ data }) => {
         console.log(data);
         getDetail();
       });
   } else {
-    local.delete(`/shareplan/like/${isClickedLike.value.planLikeId}`).then(({ data }) => {
-      console.log(data);
-      getDetail();
-    });
+    local
+      .delete(`/shareplan/like/${isClickedLike.value.planLikeId}`)
+      .then(({ data }) => {
+        console.log(data);
+        getDetail();
+      });
   }
 };
 
 const moveModify = () => {
-  router.push({ name: "share-plan-modify", params: { id: planBoardObject.planBoard.planBoardId } });
+  router.push({
+    name: "share-plan-modify",
+    params: { id: planBoardObject.planBoard.planBoardId },
+  });
 };
 </script>
 
@@ -136,28 +157,50 @@ const moveModify = () => {
       <!-- Sub-Title -->
       <div class="sub-header">
         <!-- Register Time -->
-        <div>🗓️ {{ planBoardObject.planBoard.registerTime }}</div>
+        <div>📆 {{ planBoardObject.planBoard.registerTime }}</div>
         <!-- hit -->
         <div>👀 {{ planBoardObject.planBoard.hit }}</div>
       </div>
 
       <!-- Section 1 -->
       <div class="col-md-6">
-        <!-- Thumbnail -->
-        <img
-          id="thumbnail"
-          :src="planBoardObject.planBoard.thumbnail"
-          class="thumbnail"
-          alt="Thumbnail"
-        />
+        <!-- Map Section -->
+        <div>
+          <GoogleMap
+            ref="mapRef"
+            :api-key="VITE_GOOGLE_MAP_KEY"
+            style="height: 800px"
+            :center="center"
+            :zoom="zoom"
+          >
+            <Marker
+              v-for="location in locations"
+              :options="{
+                position: {
+                  lat: parseFloat(location.latitude),
+                  lng: parseFloat(location.longitude),
+                },
+              }"
+              :key="location.contentId"
+              @click="showDetail(location)"
+            />
+          </GoogleMap>
+        </div>
       </div>
       <!-- Section 2 -->
       <div class="col-md-6">
         <div class="mb-3">
+          <!-- Thumbnail -->
+          <img
+            id="thumbnail"
+            :src="planBoardObject.planBoard.thumbnail"
+            class="thumbnail"
+            alt="Thumbnail"
+          />
           <!-- Dates -->
           <div class="d-flex justify-content-around mb-3">
             <div>
-              <label>시작 날짜</label>
+              <label>🗓️ 시작 날짜</label>
               <input
                 class="form-control"
                 type="text"
@@ -166,7 +209,7 @@ const moveModify = () => {
               />
             </div>
             <div>
-              <label>종료 날짜</label>
+              <label>🗓️ 종료 날짜</label>
               <input
                 class="form-control"
                 type="text"
@@ -176,30 +219,54 @@ const moveModify = () => {
             </div>
           </div>
           <!-- 동행인 수 -->
-          <div>동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
+          <div>
+            👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
+          </div>
           <!-- Content -->
-          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
+          <div
+            class="content-box"
+            v-html="planBoardObject.planBoard.content"
+          ></div>
         </div>
       </div>
     </div>
     <!-- Like Section -->
     <div class="like-section">
       <button @click="clickLike" class="like-button">
-        <img v-show="isClickedLike" src="@/assets/img/like-on.png" class="like-icon" alt="Liked" />
-        <img v-show="!isClickedLike" src="@/assets/img/like-off.png" class="like-icon" alt="Like" />
+        <img
+          v-show="isClickedLike"
+          src="@/assets/img/like-on.png"
+          class="like-icon"
+          alt="Liked"
+        />
+        <img
+          v-show="!isClickedLike"
+          src="@/assets/img/like-off.png"
+          class="like-icon"
+          alt="Like"
+        />
         <h5>{{ planBoardObject.likeList.length }}</h5>
       </button>
     </div>
     <!-- Tag Section -->
     <div class="tag-section">
-      <button v-for="tag in planBoardObject.tagList" :key="tag.planBoardTagId" class="tag-btn">
+      <button
+        v-for="tag in planBoardObject.tagList"
+        :key="tag.planBoardTagId"
+        class="tag-btn"
+      >
         #{{ tag.name }}
       </button>
     </div>
     <!-- Modify Plan Board Article -->
-    <div class="d-flex justify-content-end">
-      <button id="btn-mv-modify" class="btn" @click="moveModify">게시글 수정하기</button>
-    </div>
+    <template v-if="planBoardObject.planBoard.memberID === memberId">
+      <div class="d-flex justify-content-end">
+        <button id="btn-mv-modify" class="btn" @click="moveModify">
+          게시글 수정하기
+        </button>
+      </div>
+    </template>
+
     <hr />
     <!-- Comment Section -->
     <div class="comment-section">
@@ -214,7 +281,11 @@ const moveModify = () => {
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
-        <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
+        <div
+          v-for="comment in planBoardObject.commentList"
+          :key="comment.id"
+          class="comment-item"
+        >
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
             <div v-if="editingComment !== comment.commentId">
@@ -222,20 +293,36 @@ const moveModify = () => {
               <p>{{ comment.registerTime }}</p>
               <p>{{ comment.content }}</p>
               <div class="comment-actions">
-                <button @click="replyToComment(comment.commentId)" class="btn btn-secondary btn-sm">
+                <button
+                  @click="replyToComment(comment.commentId)"
+                  class="btn btn-secondary btn-sm"
+                >
                   답글 달기
                 </button>
-                <button @click="startEditingComment(comment)" class="btn btn-warning btn-sm">
+                <button
+                  @click="startEditingComment(comment)"
+                  class="btn btn-warning btn-sm"
+                >
                   수정
                 </button>
-                <button @click="deleteComment(comment.commentId)" class="btn btn-danger btn-sm">
+                <button
+                  @click="deleteComment(comment.commentId)"
+                  class="btn btn-danger btn-sm"
+                >
                   삭제
                 </button>
               </div>
             </div>
             <div v-else>
-              <textarea v-model="updateComment.content" class="form-control" rows="2"></textarea>
-              <button @click="saveEditComment(comment.commentId)" class="btn btn-primary mt-2">
+              <textarea
+                v-model="updateComment.content"
+                class="form-control"
+                rows="2"
+              ></textarea>
+              <button
+                @click="saveEditComment(comment.commentId)"
+                class="btn btn-primary mt-2"
+              >
                 저장
               </button>
             </div>

@@ -7,17 +7,23 @@ const emit = defineEmits(["pageChange"]);
 const navigationSize = parseInt(import.meta.env.VITE_ARTICLE_NAVIGATION_SIZE);
 
 const startPage = computed(() => {
-  return parseInt((props.currentPage - 1) / navigationSize) * navigationSize + 1;
+  return (
+    parseInt((props.currentPage - 1) / navigationSize) * navigationSize + 1
+  );
 });
 
 const endPage = computed(() => {
   let lastPage =
-    parseInt((props.currentPage - 1) / navigationSize) * navigationSize + navigationSize;
+    parseInt((props.currentPage - 1) / navigationSize) * navigationSize +
+    navigationSize;
   return props.totalPage < lastPage ? props.totalPage : lastPage;
 });
 
 const endRange = computed(() => {
-  return parseInt((props.totalPage - 1) / navigationSize) * navigationSize < props.currentPage;
+  return (
+    parseInt((props.totalPage - 1) / navigationSize) * navigationSize <
+    props.currentPage
+  );
 });
 
 function range(start, end) {
@@ -38,7 +44,11 @@ function onPageChange(pg) {
         <a class="page-link" @click="onPageChange(1)">최신</a>
       </li>
       <li class="page-item">
-        <a class="page-link" @click="onPageChange(startPage == 1 ? 1 : startPage - 1)">이전</a>
+        <a
+          class="page-link"
+          @click="onPageChange(startPage == 1 ? 1 : startPage - 1)"
+          >이전</a
+        >
       </li>
       <template v-for="pg in range(startPage, endPage)" :key="pg">
         <li :class="currentPage === pg ? 'page-item active' : 'page-item'">
@@ -46,7 +56,11 @@ function onPageChange(pg) {
         </li>
       </template>
       <li class="page-item">
-        <a class="page-link" @click="onPageChange(endRange ? totalPage : endPage + 1)">다음</a>
+        <a
+          class="page-link"
+          @click="onPageChange(endRange ? totalPage : endPage + 1)"
+          >다음</a
+        >
       </li>
       <li class="page-item">
         <a class="page-link" @click="onPageChange(totalPage)">마지막</a>
@@ -58,5 +72,17 @@ function onPageChange(pg) {
 <style scoped>
 a {
   cursor: pointer;
+}
+.page-link {
+  color: #577b8d;
+}
+.page-item a {
+  background-color: white;
+  color: #577b8d;
+}
+
+.page-item.active a {
+  background-color: #577b8d;
+  color: white;
 }
 </style>
