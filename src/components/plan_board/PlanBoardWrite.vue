@@ -172,8 +172,22 @@ const showPlan = ref(false);
 
 const getDataListPlan = () => {
   local.get(`/plans/list/${loginedId.value}`).then(({ data }) => {
-    plans.value = data;
+    addPlanByCheckingDate(data);
     showPlan.value = !showPlan.value;
+  });
+};
+const addPlanByCheckingDate = (data) => {
+  let today = new Date();
+  let year = today.getFullYear();
+  let month = ("0" + (today.getMonth() + 1)).slice(-2);
+  let day = ("0" + today.getDate()).slice(-2);
+
+  let dateString = `${year}-${month}-${day}`;
+  const todayDate = new Date(dateString);
+  data.forEach((plan) => {
+    if (new Date(plan.endDate) < todayDate) {
+      plans.value.push(plan);
+    }
   });
 };
 const getPlanDetail = (planId) => {
