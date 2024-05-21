@@ -1,5 +1,5 @@
 <template>
-  <PlanLiveChat />
+  <PlanLiveChat :planDto="planDto" />
   <div class="container">
     <div class="map">
       <!-- 지도 부분 -->
@@ -44,12 +44,7 @@
           aria-label="검색어"
           v-model="searchOption.keyword"
         />
-        <button
-          id="btn-search"
-          class="btn btn-outline-success"
-          type="button"
-          @click="search"
-        >
+        <button id="btn-search" class="btn btn-outline-success" type="button" @click="search">
           검색
         </button>
       </form>
@@ -94,11 +89,7 @@
           <div class="modal-content">
             <span class="close" @click="showMemberModal = false">&times;</span>
             <h2>멤버 검색</h2>
-            <input
-              type="text"
-              v-model="newMemberId"
-              placeholder="Enter member ID"
-            />
+            <input type="text" v-model="newMemberId" placeholder="Enter member ID" />
             <button @click="addMember">추가</button>
           </div>
         </div>
@@ -117,11 +108,7 @@
       </div>
       <div class="schedule-section">
         <label>여행 일정</label>
-        <div
-          v-for="(date, index1) in scheduleDates"
-          :key="index1"
-          class="day-schedule"
-        >
+        <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
           <input type="text" v-model="scheduleDates[index1].date" />
           <table>
             <thead>
@@ -135,17 +122,11 @@
                 <template v-for="(loc, index3) in location" :key="index3">
                   <template v-if="loc.planScheduleId == date.planScheduleId">
                     <td>
-                      <input
-                        type="text"
-                        v-model="planLocations[index2][index3].time"
-                      />
+                      <input type="text" v-model="planLocations[index2][index3].time" />
                     </td>
                     <tr>
                       <td>
-                        <input
-                          type="text"
-                          v-model="planLocations[index2][index3].title"
-                        />
+                        <input type="text" v-model="planLocations[index2][index3].title" />
                       </td>
                     </tr>
                   </template>
@@ -450,10 +431,7 @@ onMounted(() => {
         const bounds = new google.maps.LatLngBounds();
         newLocations.forEach((location) => {
           bounds.extend(
-            new google.maps.LatLng(
-              parseFloat(location.latitude),
-              parseFloat(location.longitude)
-            )
+            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
           );
         });
         gmap.fitBounds(bounds);
