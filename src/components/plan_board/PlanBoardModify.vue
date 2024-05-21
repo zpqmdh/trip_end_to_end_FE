@@ -136,7 +136,7 @@ const onThumbnailChange = (event) => {
           <input class="form-control" type="file" id="thumbnailInput" @change="onThumbnailChange" />
         </div>
         <!-- Dates -->
-        <div class="d-flex justify-content-between mb-3">
+        <div class="d-flex justify-content-around mb-3">
           <div>
             <label>시작 날짜</label>
             <input

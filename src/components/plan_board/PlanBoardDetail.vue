@@ -1,10 +1,11 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
 
 const route = useRoute();
+const router = useRouter();
 const local = localAxios();
 
 const planBoardObject = ref({
@@ -119,6 +120,10 @@ const clickLike = () => {
     });
   }
 };
+
+const moveModify = () => {
+  router.push({ name: "share-plan-modify", params: { id: planBoardObject.planBoard.planBoardId } });
+};
 </script>
 
 <template>
@@ -128,10 +133,14 @@ const clickLike = () => {
       <!-- Title -->
       <h3 class="header">{{ planBoardObject.planBoard.subject }}</h3>
       <hr />
-      <!-- Register Time -->
-      <div class="register-time">
-        {{ planBoardObject.planBoard.registerTime }}
+      <!-- Sub-Title -->
+      <div class="sub-header">
+        <!-- Register Time -->
+        <div>🗓️ {{ planBoardObject.planBoard.registerTime }}</div>
+        <!-- hit -->
+        <div>👀 {{ planBoardObject.planBoard.hit }}</div>
       </div>
+
       <!-- Section 1 -->
       <div class="col-md-6">
         <!-- Thumbnail -->
@@ -146,20 +155,20 @@ const clickLike = () => {
       <div class="col-md-6">
         <div class="mb-3">
           <!-- Dates -->
-          <div class="d-flex">
-            <div class="mb-3">
-              <span>시작 날짜</span>
+          <div class="d-flex justify-content-around mb-3">
+            <div>
+              <label>시작 날짜</label>
               <input
-                class="date-input"
+                class="form-control"
                 type="text"
                 v-model="planBoardObject.planBoard.startDate"
                 readonly
               />
             </div>
             <div>
-              <span>종료 날짜</span>
+              <label>종료 날짜</label>
               <input
-                class="date-input"
+                class="form-control"
                 type="text"
                 v-model="planBoardObject.planBoard.endDate"
                 readonly
@@ -178,7 +187,7 @@ const clickLike = () => {
       <button @click="clickLike" class="like-button">
         <img v-show="isClickedLike" src="@/assets/img/like-on.png" class="like-icon" alt="Liked" />
         <img v-show="!isClickedLike" src="@/assets/img/like-off.png" class="like-icon" alt="Like" />
-        <span> {{ planBoardObject.likeList.length }}</span>
+        <h5>{{ planBoardObject.likeList.length }}</h5>
       </button>
     </div>
     <!-- Tag Section -->
@@ -188,27 +197,21 @@ const clickLike = () => {
       </button>
     </div>
     <!-- Modify Plan Board Article -->
-    <button class="btn btn-primary margin-left-auto">
-      <router-link
-        :to="{
-          name: 'share-plan-modify',
-          params: { id: planBoardObject.planBoard.planBoardId },
-        }"
-        class="text-white"
-        >게시글 수정하기</router-link
-      >
-    </button>
+    <div class="d-flex justify-content-end">
+      <button id="btn-mv-modify" class="btn" @click="moveModify">게시글 수정하기</button>
+    </div>
+    <hr />
     <!-- Comment Section -->
     <div class="comment-section">
       <h4>댓글</h4>
-      <div class="comment-form">
+      <div class="comment-form d-flex justify-content-center">
         <textarea
           v-model="newComment.content"
           placeholder="댓글을 입력하세요..."
           class="form-control"
           rows="3"
         ></textarea>
-        <button @click="addComment" class="btn btn-primary mt-2">댓글 달기</button>
+        <button @click="addComment" class="btn">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
         <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
@@ -275,6 +278,15 @@ const clickLike = () => {
   border-radius: 10px;
 }
 
+.sub-header {
+  text-align: end;
+}
+
+#btn-mv-modify {
+  background-color: #97654c;
+  color: white;
+  margin-right: 20px;
+}
 /* Like Section */
 .like-section {
   text-align: center;
@@ -288,7 +300,7 @@ const clickLike = () => {
 }
 
 .like-icon {
-  width: 25px;
+  width: 40px;
   height: auto;
   margin-right: 5px;
 }
@@ -300,14 +312,19 @@ const clickLike = () => {
 }
 
 .tag-btn {
-  background-color: #007bff;
+  background-color: #577b8d;
   color: white;
-  border: none;
+  border-color: white;
   border-radius: 20px;
   padding: 5px 15px;
   margin-right: 10px;
   margin-bottom: 10px;
   cursor: pointer;
+}
+.tag-btn:hover {
+  background-color: white;
+  color: #577b8d;
+  border-color: #577b8d;
 }
 
 /* Comment Section */
@@ -316,8 +333,14 @@ const clickLike = () => {
 }
 
 .comment-form textarea {
-  width: 100%;
+  width: 80%;
   resize: vertical;
+}
+.comment-form button {
+  margin-left: 10px;
+  background-color: #5698ad;
+  color: white;
+  border-color: white;
 }
 
 .comment-item {

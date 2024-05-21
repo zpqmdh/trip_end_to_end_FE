@@ -34,9 +34,7 @@ const searchTag = () => {
 };
 
 const filterTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (tagIndex === -1) {
     filteredTag.value.push(tag);
   } else {
@@ -45,27 +43,25 @@ const filterTag = (tag) => {
 
   filteredArticleList.value = planArticleList.value.filter((article) => {
     return filteredTag.value.every((filter) => {
-      return article.tagList.some(
-        (item) => item.tagTypeId === filter.tagTypeId
-      );
+      return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
     });
   });
 };
 
 const removeTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (tagIndex !== -1) {
     filteredTag.value.splice(tagIndex, 1);
     filteredArticleList.value = planArticleList.value.filter((article) => {
       return filteredTag.value.every((filter) => {
-        return article.tagList.some(
-          (item) => item.tagTypeId === filter.tagTypeId
-        );
+        return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
       });
     });
   }
+};
+
+const moveWrite = () => {
+  router.push({ name: "share-plan-write" });
 };
 </script>
 
@@ -73,11 +69,7 @@ const removeTag = (tag) => {
   <div class="container">
     <h1 class="text-center">🚗 다녀온 여행 공유</h1>
     <div class="text-center mb-4">
-      <button class="btn btn-primary">
-        <router-link :to="{ name: 'share-plan-write' }" class="text-white"
-          >게시글 작성하기</router-link
-        >
-      </button>
+      <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">게시글 작성하기</button>
     </div>
     <form class="text-center mb-4">
       <div class="form-row justify-content-center">
@@ -95,11 +87,7 @@ const removeTag = (tag) => {
       </div>
     </form>
     <div class="text-center mb-4">
-      <div
-        v-for="tag in tagResults"
-        :key="tag.tagTypeId"
-        class="d-inline-block"
-      >
+      <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
         <button
           class="btn btn-outline-secondary m-1"
           @click.prevent="filterTag(tag)"
@@ -112,12 +100,8 @@ const removeTag = (tag) => {
     <!-- New section to display search results -->
     <div class="text-center mb-4">
       <div v-if="filteredTag.length > 0">
-        <h3>검색 결과</h3>
-        <div
-          v-for="tag in filteredTag"
-          :key="tag.tagTypeId"
-          class="d-inline-block"
-        >
+        <h5>검색 결과</h5>
+        <div v-for="tag in filteredTag" :key="tag.tagTypeId" class="d-inline-block">
           <button
             class="btn btn-outline-secondary m-1"
             @click.prevent="removeTag(tag)"
@@ -141,8 +125,19 @@ const removeTag = (tag) => {
 </template>
 
 <style scoped>
+#btn-go-write {
+  background-color: #577b8d;
+  border-color: white;
+  color: white;
+}
+#btn-go-write:hover {
+  background-color: white;
+  border-color: #577b8d;
+  color: #577b8d;
+}
 .active {
-  background-color: #007bff;
+  background-color: #5698ad;
   color: #fff;
+  border: none;
 }
 </style>

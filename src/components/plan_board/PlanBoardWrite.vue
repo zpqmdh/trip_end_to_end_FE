@@ -280,9 +280,7 @@ const onThumbnailChange = (event) => {
           aria-label="검색어"
           v-model="searchOption.keyword"
         />
-        <button id="btn-search" class="btn btn-outline-success" type="button" @click="search">
-          검색
-        </button>
+        <button id="btn-search" class="btn" type="button" @click="search">검색</button>
       </form>
       <!-- Map and Details -->
       <div class="row my-5">
@@ -321,7 +319,7 @@ const onThumbnailChange = (event) => {
             />
           </div>
           <!-- Date -->
-          <div class="mb-3 d-flex justify-content-between">
+          <div class="mb-3 d-flex justify-content-around">
             <div>
               <span>시작 날짜</span>
               <Datepicker
@@ -362,7 +360,7 @@ const onThumbnailChange = (event) => {
           </div>
           <!-- 여행 (plan) 에서 가져오기 -->
           <div class="mb-3">
-            <button @click="getDataListPlan" type="submit" class="btn btn-dark w-100">
+            <button id="btn-get" @click="getDataListPlan" type="submit" class="btn w-100">
               여행에서 불러오기
             </button>
             <select
@@ -408,7 +406,9 @@ const onThumbnailChange = (event) => {
           </div>
           <!-- Insert Article Button -->
           <div class="text-center">
-            <button @click="insertArticle" type="submit" class="btn btn-primary w-100">등록</button>
+            <button id="btn-insert" @click="insertArticle" type="submit" class="btn w-100">
+              등록
+            </button>
           </div>
         </div>
       </div>
@@ -435,6 +435,36 @@ const onThumbnailChange = (event) => {
 </template>
 
 <style scoped>
+#btn-search {
+  background-color: white;
+  border-color: #5698ad;
+  color: #5698ad;
+}
+#btn-search:hover {
+  background-color: #5698ad;
+  color: white;
+}
+
+#btn-get {
+  border-color: #97654c;
+  color: #97654c;
+}
+#btn-get:hover {
+  background-color: #97654c;
+  color: white;
+}
+
+#btn-insert {
+  background-color: #5698ad;
+  border-color: white;
+  color: white;
+}
+#btn-insert:hover {
+  background-color: white;
+  border-color: #5698ad;
+  color: #5698ad;
+}
+
 #title {
   margin: 35px 0px;
 }
