@@ -321,9 +321,8 @@ onMounted(() => {
   );
 });
 </script>
-
 <template>
-  <PlanLiveChat />
+  <PlanLiveChat :planDto="planDto" />
   <div class="container">
     <div class="map">
       <!-- 지도 부분 -->
@@ -637,7 +636,6 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
 <style scoped>
 html,
 body {

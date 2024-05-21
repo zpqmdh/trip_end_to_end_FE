@@ -1,11 +1,19 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { decodedTokenFunc } from "@/util/auth";
 import { localAxios } from "@/util/http-commons.js";
 import { onBeforeRouteLeave } from "vue-router";
 
+const props = defineProps({
+  planDto: {
+    type: Object,
+    required: true,
+    default: () => ({}),
+  },
+});
 const local = localAxios();
 const chatObject = ref({
+  showToggle: true,
   stompClient: null,
   nickname: "",
   content: "",
@@ -14,6 +22,25 @@ const chatObject = ref({
   showChat: false,
   messages: [],
 });
+
+const checkDate = () => {
+  if (!props.planDto || !props.planDto.endDate) {
+    console.error("planDto or planDto.endDate is missing");
+    return;
+  }
+  let today = new Date();
+  let year = today.getFullYear();
+  let month = ("0" + (today.getMonth() + 1)).slice(-2);
+  let day = ("0" + today.getDate()).slice(-2);
+
+  let dateString = `${year}-${month}-${day}`;
+  const todayDate = new Date(dateString);
+
+  if (new Date(props.planDto.endDate) < todayDate) {
+    chatObject.value.showToggle = false; // 종료된 여행 계획이면 실시간 채팅 X
+  }
+};
+
 const toggleChat = () => {
   // 채널 이름 입력받고 연결
   if (!chatObject.value.showChat && chatObject.value.currentChannel === null) {
@@ -23,6 +50,7 @@ const toggleChat = () => {
   }
   chatObject.value.showChat = !chatObject.value.showChat;
 };
+
 const getMessageClass = (messageType) => {
   switch (messageType) {
     case "JOIN":
@@ -35,6 +63,7 @@ const getMessageClass = (messageType) => {
       return "";
   }
 };
+
 const setConnected = (connected) => {
   chatObject.value.connected = connected;
   chatObject.value.messages = []; // Clear messages
@@ -78,6 +107,7 @@ const disconnect = () => {
       console.log("Disconnected");
     });
     chatObject.value.showChat = !chatObject.value.showChat;
+    chatObject.value.currentChannel = null;
   }
 };
 
@@ -125,9 +155,20 @@ const getMember = async () => {
 };
 
 onMounted(() => {
+  if (props.planDto && props.planDto.endDate) {
+    checkDate();
+  }
   getMember();
 });
-
+watch(
+  () => props.planDto,
+  (newVal) => {
+    if (newVal && newVal.endDate) {
+      checkDate();
+    }
+  },
+  { immediate: true }
+);
 onBeforeRouteLeave((to, from, next) => {
   disconnect();
   next();
@@ -136,7 +177,7 @@ onBeforeRouteLeave((to, from, next) => {
 
 <template>
   <div>
-    <div class="livechat-icon" @click="toggleChat">
+    <div class="livechat-icon" @click="toggleChat" v-if="chatObject.showToggle">
       <img src="@/assets/img/livechat-icon.png" alt="LiveChat Icon" />
     </div>
     <div v-if="chatObject.showChat" class="chat-overlay">
