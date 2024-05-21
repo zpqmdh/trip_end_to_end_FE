@@ -160,19 +160,23 @@ const search = () => {
   });
 };
 
-const nicknames = ref([]);
+const memberList = ref([{}]);
 
 const getMemberNicknames = async () => {
-  nicknames.value = new Array(memberIds.value.length).fill(""); // nicknames 배열을 memberIds 길이만큼 초기화
-  const nicknamePromises = memberIds.value.map(async (member, index) => {
+  memberList.value = new Array(memberIds.value.length).fill(""); // nicknames 배열을 memberIds 길이만큼 초기화
+  const memberPromises = memberIds.value.map(async (member, index) => {
     try {
-      const { data } = await local.get(`/plans/getnickname/${member.memberId}`);
-      nicknames.value[index] = data;
+      const { data } = await local.get(`/plans/getMember/${member.memberId}`);
+      memberList.value[index] = data;
+      if (!memberList.value[index].image.startsWith("http")) {
+        memberList.value[index].image =
+          "http://localhost/products/" + memberList.value[index].image;
+      }
     } catch (error) {
       console.error("Error fetching nickname:", error);
     }
   });
-  await Promise.all(nicknamePromises);
+  await Promise.all(memberPromises);
 };
 const loading = ref(true);
 const getPlanDetail = async () => {
@@ -212,6 +216,7 @@ const submitUpdatedDetail = async () => {
     // 업데이트된 planInfo를 서버로 전송
     await local.put(`/plans/update/${planId}`, planInfo.value);
     alert("성공!");
+    router.push({ name: "plan-list" });
   } catch (error) {
     console.error("여행 계획 수정에 실패하였습니다:", error);
   }
@@ -268,7 +273,7 @@ const showDetail = (location) => {
 
 const removeMember = (index) => {
   memberIds.value.splice(index, 1);
-  nicknames.value.splice(index, 1);
+  memberList.value.splice(index, 1);
 };
 
 const removeBookContent = (index) => {
@@ -298,7 +303,7 @@ onMounted(() => {
   });
   getPlanDetail();
   fetchMemberList();
-  console.log(allMemberList);
+  console.log(memberList.value);
   watch(
     () => mapRef.value.ready,
     (isReady) => {
@@ -417,15 +422,17 @@ onMounted(() => {
             class="member-profile"
           >
             <img
-              src="https://png.pngtree.com/png-vector/20191115/ourmid/pngtree-beautiful-profile-line-vector-icon-png-image_1990469.jpg"
+              :src="memberList[index].image"
               alt="프로필 이미지"
               class="profile-image"
             />
-            <p>{{ nicknames[index] }}</p>
-            <button @click="removeMember(index)">X</button>
+            <p>{{ memberList[index].nickname }}</p>
+            <button class="btn btn-remove" @click="removeMember(index)">
+              X
+            </button>
           </div>
           <div class="addMember">
-            <button @click="openMemberModal"></button>
+            <button class="btn btn-link" @click="openMemberModal"></button>
             <p>추가</p>
           </div>
         </div>
@@ -464,8 +471,12 @@ onMounted(() => {
 
       <div class="schedule-section">
         <label>여행 일정</label>
-        <button @click="toggleAll(true)">모두 열기</button>
-        <button @click="toggleAll(false)">모두 닫기</button>
+        <button @click="toggleAll(true)" class="btn btn-light">
+          모두 열기
+        </button>
+        <button @click="toggleAll(false)" class="btn btn-light">
+          모두 닫기
+        </button>
         <div
           v-for="(date, index1) in scheduleDates"
           :key="index1"
@@ -492,6 +503,7 @@ onMounted(() => {
                   <tr>
                     <th>시간</th>
                     <th>방문지</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -512,7 +524,10 @@ onMounted(() => {
                       />
                     </td>
                     <td>
-                      <button @click="removePlanLocation(index1, index2)">
+                      <button
+                        class="btn btn-remove"
+                        @click="removePlanLocation(index1, index2)"
+                      >
                         X
                       </button>
                     </td>
@@ -528,9 +543,13 @@ onMounted(() => {
         <label>예약 내역</label>
         <div v-for="(content, index) in bookContents" :key="index">
           <input type="text" v-model="bookContents[index].content" />
-          <button @click="removeBookContent(index)">X</button>
+          <button class="btn btn-remove" @click="removeBookContent(index)">
+            X
+          </button>
         </div>
-        <button @click="addBookContent">+</button>
+        <button class="btn btn-outline-secondary" @click="addBookContent">
+          +
+        </button>
       </div>
       <div class="payment-section">
         <label>결제 내역</label>
@@ -567,19 +586,26 @@ onMounted(() => {
                     :key="member.memberId"
                     :value="member.memberId"
                   >
-                    {{ nicknames[index] }}
+                    {{ memberList[index].nickname }}
                   </option>
                 </select>
               </td>
               <td>
-                <button @click="removePaymentDetail(index)">X</button>
+                <button
+                  class="btn btn-remove"
+                  @click="removePaymentDetail(index)"
+                >
+                  X
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
-        <button @click="addPaymentDetail">+</button>
+        <button class="btn btn-outline-secondary" @click="addPaymentDetail">
+          +
+        </button>
       </div>
-      <button @click="submitUpdatedDetail">Update</button>
+      <button class="btn btn-link" @click="submitUpdatedDetail">수정</button>
     </div>
   </div>
   <!-- Attraction Description Modal -->
@@ -886,5 +912,56 @@ button:hover {
   border-radius: 50%; /* 원형 버튼 */
   cursor: pointer;
   background-color: #e9e3e3;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.btn-outline-primary {
+  background-color: transparent;
+  color: #007bff;
+  border: 2px solid #007bff;
+}
+
+.btn-outline-secondary {
+  background-color: transparent;
+  color: #6c757d;
+  border: 2px solid #6c757d;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-secondary:hover {
+  background-color: #f0f2f5;
+}
+
+.btn-link {
+  background-color: #577b8d;
+  border: none;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-remove {
+  color: black;
+  text-decoration: none;
+}
+
+button:hover {
+  background: none;
 }
 </style>
