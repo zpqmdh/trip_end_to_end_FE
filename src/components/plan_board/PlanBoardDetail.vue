@@ -53,9 +53,11 @@ const getDetail = () => {
     planBoardObject.value.commentList = data.commentList;
     planBoardObject.value.likeList = data.likeList;
     planBoardObject.value.tagList = data.tagList;
-    const like = planBoardObject.value.likeList.find(
-      (like) => like.memberId === memberId.value
-    );
+    if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
+      planBoardObject.value.planBoard.thumbnail =
+        "http://localhost/products/" + planBoardObject.value.planBoard.thumbnail;
+    }
+    const like = planBoardObject.value.likeList.find((like) => like.memberId === memberId.value);
     if (like) {
       // 로그인 상태의 유저가 해당 게시글에 좋아요를 누른 상태
       isClickedLike.value = like;
@@ -68,10 +70,7 @@ const getDetail = () => {
 /* Comment */
 const addComment = () => {
   local
-    .post(
-      `/shareplan/insert/${newComment.value.planBoardId}/comment`,
-      newComment.value
-    )
+    .post(`/shareplan/insert/${newComment.value.planBoardId}/comment`, newComment.value)
     .then(() => {
       getDetail();
       newComment.value.content = "";
@@ -108,21 +107,16 @@ const clickLike = () => {
     console.log("qwe");
     console.log(newLike.value);
     local
-      .post(
-        `/shareplan/insert/${newLike.value.planBoardId}/like`,
-        newLike.value
-      )
+      .post(`/shareplan/insert/${newLike.value.planBoardId}/like`, newLike.value)
       .then(({ data }) => {
         console.log(data);
         getDetail();
       });
   } else {
-    local
-      .delete(`/shareplan/like/${isClickedLike.value.planLikeId}`)
-      .then(({ data }) => {
-        console.log(data);
-        getDetail();
-      });
+    local.delete(`/shareplan/like/${isClickedLike.value.planLikeId}`).then(({ data }) => {
+      console.log(data);
+      getDetail();
+    });
   }
 };
 </script>
@@ -143,9 +137,7 @@ const clickLike = () => {
         <!-- Thumbnail -->
         <img
           id="thumbnail"
-          :src="
-            `http://localhost/products/` + planBoardObject.planBoard.thumbnail
-          "
+          :src="planBoardObject.planBoard.thumbnail"
           class="thumbnail"
           alt="Thumbnail"
         />
@@ -175,42 +167,23 @@ const clickLike = () => {
             </div>
           </div>
           <!-- 동행인 수 -->
-          <div>
-            동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
-          </div>
+          <div>동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
           <!-- Content -->
-          <div
-            class="content-box"
-            v-html="planBoardObject.planBoard.content"
-          ></div>
+          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
         </div>
       </div>
     </div>
     <!-- Like Section -->
     <div class="like-section">
       <button @click="clickLike" class="like-button">
-        <img
-          v-show="isClickedLike"
-          src="@/assets/img/like-on.png"
-          class="like-icon"
-          alt="Liked"
-        />
-        <img
-          v-show="!isClickedLike"
-          src="@/assets/img/like-off.png"
-          class="like-icon"
-          alt="Like"
-        />
+        <img v-show="isClickedLike" src="@/assets/img/like-on.png" class="like-icon" alt="Liked" />
+        <img v-show="!isClickedLike" src="@/assets/img/like-off.png" class="like-icon" alt="Like" />
         <span> {{ planBoardObject.likeList.length }}</span>
       </button>
     </div>
     <!-- Tag Section -->
     <div class="tag-section">
-      <button
-        v-for="tag in planBoardObject.tagList"
-        :key="tag.planBoardTagId"
-        class="tag-btn"
-      >
+      <button v-for="tag in planBoardObject.tagList" :key="tag.planBoardTagId" class="tag-btn">
         #{{ tag.name }}
       </button>
     </div>
@@ -235,16 +208,10 @@ const clickLike = () => {
           class="form-control"
           rows="3"
         ></textarea>
-        <button @click="addComment" class="btn btn-primary mt-2">
-          댓글 달기
-        </button>
+        <button @click="addComment" class="btn btn-primary mt-2">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
-        <div
-          v-for="comment in planBoardObject.commentList"
-          :key="comment.id"
-          class="comment-item"
-        >
+        <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
             <div v-if="editingComment !== comment.commentId">
@@ -252,36 +219,20 @@ const clickLike = () => {
               <p>{{ comment.registerTime }}</p>
               <p>{{ comment.content }}</p>
               <div class="comment-actions">
-                <button
-                  @click="replyToComment(comment.commentId)"
-                  class="btn btn-secondary btn-sm"
-                >
+                <button @click="replyToComment(comment.commentId)" class="btn btn-secondary btn-sm">
                   답글 달기
                 </button>
-                <button
-                  @click="startEditingComment(comment)"
-                  class="btn btn-warning btn-sm"
-                >
+                <button @click="startEditingComment(comment)" class="btn btn-warning btn-sm">
                   수정
                 </button>
-                <button
-                  @click="deleteComment(comment.commentId)"
-                  class="btn btn-danger btn-sm"
-                >
+                <button @click="deleteComment(comment.commentId)" class="btn btn-danger btn-sm">
                   삭제
                 </button>
               </div>
             </div>
             <div v-else>
-              <textarea
-                v-model="updateComment.content"
-                class="form-control"
-                rows="2"
-              ></textarea>
-              <button
-                @click="saveEditComment(comment.commentId)"
-                class="btn btn-primary mt-2"
-              >
+              <textarea v-model="updateComment.content" class="form-control" rows="2"></textarea>
+              <button @click="saveEditComment(comment.commentId)" class="btn btn-primary mt-2">
                 저장
               </button>
             </div>
