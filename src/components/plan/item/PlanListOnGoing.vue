@@ -59,7 +59,6 @@ onMounted(() => {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 40%;
-  /* max-width: 600px; */
   margin: 0 auto;
   margin-left: 150px;
 }
@@ -100,6 +99,16 @@ onMounted(() => {
 .plan-title {
   font-size: 18px;
   font-weight: 500;
+  background: none;
+  border: none;
+  color: black;
+  cursor: pointer;
+  text-align: left;
+  margin-left: 2%;
+}
+
+.plan-title:hover {
+  text-decoration: underline;
 }
 
 .plan-dates {
