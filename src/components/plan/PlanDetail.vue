@@ -1,3 +1,320 @@
+<script setup>
+import { ref, onMounted, watch } from "vue";
+import { GoogleMap, Marker } from "vue3-google-map";
+import { localAxios } from "@/util/http-commons";
+import { useRoute, useRouter } from "vue-router";
+import PlanLiveChat from "@/components/plan/item/PlanLiveChat.vue";
+
+const local = localAxios();
+const route = useRoute();
+const router = useRouter();
+
+const planInfo = ref("");
+
+const planDto = ref({});
+const memberIds = ref([]);
+const bookContents = ref([]);
+const scheduleDates = ref([]);
+const paymentDetails = ref([]);
+const planLocations = ref([]);
+const selectedDate = ref(""); // 추가된 선택된 날짜를 저장하는 변수
+const planId = route.params.id;
+const center = { lat: 36.355387, lng: 127.29964 };
+const zoom = ref(13);
+const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
+const showMemberModal = ref(false);
+const newMemberId = ref("");
+const allMemberList = ref([]);
+const searchQuery = ref("");
+const filteredMemberList = ref([]);
+
+const mapRef = ref(null);
+const locations = ref([]);
+const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
+const showModal = ref(false); // 모달 표시 여부를 제어할 ref
+
+const fetchMemberList = async () => {
+  try {
+    const { data } = await local.get("/members/list");
+    allMemberList.value = data;
+    filterMembers();
+  } catch (error) {
+    console.error("Error fetching member list:", error);
+  }
+};
+
+const addMember = (member) => {
+  if (member) {
+    memberIds.value.push({
+      memberId: member.memberId,
+      planId: planId,
+    });
+    searchQuery.value = "";
+    filterMembers();
+    getMemberNicknames();
+    showMemberModal.value = false;
+    console.log(memberIds);
+  }
+};
+
+const filterMembers = () => {
+  const query = searchQuery.value.toLowerCase();
+  const existingMemberIds = memberIds.value.map((m) => m.memberId);
+  filteredMemberList.value = allMemberList.value.filter(
+    (member) =>
+      !existingMemberIds.includes(member.memberId) && member.nickname.toLowerCase().includes(query)
+  );
+};
+
+const openMemberModal = () => {
+  searchQuery.value = "";
+  filterMembers(); // 모달을 열 때 필터링을 다시 적용
+  showMemberModal.value = true;
+};
+
+const searchOption = ref({
+  sido: 0,
+  gugun: 0,
+  contentTypeId: 0,
+  keyword: "",
+});
+
+const toggleAccordion = (index) => {
+  scheduleDates.value[index].expanded = !scheduleDates.value[index].expanded;
+};
+
+const toggleAll = (expand) => {
+  scheduleDates.value.forEach((schedule) => {
+    schedule.expanded = expand;
+  });
+};
+
+const beforeEnter = (el) => {
+  el.style.height = "0";
+  el.style.opacity = "0";
+};
+
+const enter = (el, done) => {
+  el.style.height = el.scrollHeight + "px";
+  el.style.opacity = "1";
+  el.style.transition = "height 0.5s ease, opacity 0.5s ease";
+  el.addEventListener("transitionend", done);
+};
+
+const leave = (el, done) => {
+  el.style.height = el.scrollHeight + "px";
+  el.style.opacity = "1";
+  requestAnimationFrame(() => {
+    el.style.height = "0";
+    el.style.opacity = "0";
+    el.style.transition = "height 0.5s ease, opacity 0.5s ease";
+  });
+  el.addEventListener("transitionend", done);
+};
+
+const makeOption = (data) => {
+  let areas = data.sidoList;
+  let sel = document.getElementById("search-area");
+  areas.forEach((area) => {
+    let opt = document.createElement("option");
+    opt.setAttribute("value", area.sidoCode);
+    opt.appendChild(document.createTextNode(area.sidoName));
+    sel.appendChild(opt);
+  });
+};
+
+const getGugun = (sidoCode) => {
+  const url = `/shareplan/map/gugun/${sidoCode}`;
+  local.get(url).then(({ data }) => {
+    makeGugunOption(data);
+  });
+};
+
+const makeGugunOption = (data) => {
+  let guguns = data.gugunList;
+  let sel = document.getElementById("search-gugun");
+  sel.innerHTML = `<option value="0" selected>구군 선택</option>`;
+  guguns.forEach((gugun) => {
+    let opt = document.createElement("option");
+    opt.setAttribute("value", gugun.gugunCode);
+    opt.appendChild(document.createTextNode(gugun.gugunName));
+    sel.appendChild(opt);
+  });
+};
+
+const search = () => {
+  const areaCode = searchOption.value.sido;
+  const gugunCode = searchOption.value.gugun;
+  const contentTypeId = searchOption.value.contentTypeId;
+  const keyword = searchOption.value.keyword;
+
+  let queryString = "";
+  if (areaCode != 0) queryString += `&areaCode=${areaCode}`;
+  if (gugunCode != 0) queryString += `&gugunCode=${gugunCode}`;
+  if (contentTypeId != 0) queryString += `&contentTypeId=${contentTypeId}`;
+  if (keyword.trim() != "") queryString += `&keyword=${keyword}`;
+
+  local.get("/shareplan/map/attractioninfo?" + queryString).then(({ data }) => {
+    locations.value = data.attractionInfoList;
+  });
+};
+
+const nicknames = ref([]);
+
+const getMemberNicknames = async () => {
+  nicknames.value = new Array(memberIds.value.length).fill(""); // nicknames 배열을 memberIds 길이만큼 초기화
+  const nicknamePromises = memberIds.value.map(async (member, index) => {
+    try {
+      const { data } = await local.get(`/plans/getnickname/${member.memberId}`);
+      nicknames.value[index] = data;
+    } catch (error) {
+      console.error("Error fetching nickname:", error);
+    }
+  });
+  await Promise.all(nicknamePromises);
+};
+const loading = ref(true);
+const getPlanDetail = async () => {
+  try {
+    const response = await local.get(`/plans/detail/${planId}`);
+    planInfo.value = response.data;
+
+    planDto.value = {
+      planId: planInfo.value.planDto.planId,
+      memberId: planInfo.value.planDto.memberId,
+      title: planInfo.value.planDto.title,
+      startDate: planInfo.value.planDto.startDate,
+      endDate: planInfo.value.planDto.endDate,
+    };
+    memberIds.value = planInfo.value.memberIds;
+    bookContents.value = planInfo.value.bookContents;
+    scheduleDates.value = planInfo.value.scheduleDates.map((date) => ({
+      ...date,
+      expanded: false,
+    }));
+    paymentDetails.value = planInfo.value.paymentDetails;
+    planLocations.value = planInfo.value.planLocations;
+
+    await getMemberNicknames(); // 닉네임 로드 함수 호출
+    loading.value = false;
+  } catch (error) {
+    console.error("Error fetching plan detail:", error);
+  }
+};
+
+const submitUpdatedDetail = async () => {
+  try {
+    // planDto 내용을 planInfo에 병합
+    console.log(planInfo.value);
+    planInfo.value.planDto = { ...planDto.value };
+
+    // 업데이트된 planInfo를 서버로 전송
+    await local.put(`/plans/update/${planId}`, planInfo.value);
+    alert("성공!");
+  } catch (error) {
+    console.error("여행 계획 수정에 실패하였습니다:", error);
+  }
+};
+
+const addPaymentDetail = () => {
+  paymentDetails.value.push({
+    date: "",
+    content: "",
+    price: "",
+    memberId: "",
+    planId: planId,
+  });
+};
+
+const addBookContent = () => {
+  bookContents.value.push({
+    planId: planId,
+    content: "",
+  });
+};
+
+const addPlanLocation = (date_index, title, latitude, longitude, contentId) => {
+  const scheduleId = scheduleDates.value[date_index].planScheduleId;
+  console.log(scheduleId);
+  planLocations.value[date_index].push({
+    planScheduleId: scheduleId,
+    latitude: latitude,
+    longitude: longitude,
+    contentId: contentId,
+    time: "",
+    title: title,
+  });
+  showModal.value = false;
+  console.log(planLocations.value);
+};
+
+const showDetail = (location) => {
+  local.get(`/shareplan/map/attractiondescription/${location.contentId}`).then(({ data }) => {
+    selectedLocation.value = data;
+    selectedLocation.value.title = location.title;
+    selectedLocation.value.image = location.firstImage
+      ? location.firstImage
+      : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
+    selectedLocation.value.addr = location.addr1 + " " + location.addr2;
+    selectedLocation.value.latitude = location.latitude;
+    selectedLocation.value.longitude = location.longitude;
+    console.log(selectedLocation.value);
+    showModal.value = true;
+  });
+};
+
+const removeMember = (index) => {
+  memberIds.value.splice(index, 1);
+  nicknames.value.splice(index, 1);
+};
+
+const removeBookContent = (index) => {
+  bookContents.value.splice(index, 1);
+};
+
+const removePaymentDetail = (index) => {
+  paymentDetails.value.splice(index, 1);
+};
+
+const removePlanLocation = (date_index, index) => {
+  planLocations.value[date_index].splice(index, 1);
+};
+
+watch(
+  () => planDto.value.startDate,
+  (newStartDate) => {
+    if (newStartDate && planDto.value.endDate < newStartDate) {
+      planDto.value.endDate = newStartDate;
+    }
+  }
+);
+
+onMounted(() => {
+  local.get("/shareplan/map/sido").then(({ data }) => {
+    makeOption(data);
+  });
+  getPlanDetail();
+  fetchMemberList();
+  console.log(allMemberList);
+  watch(
+    () => mapRef.value.ready,
+    (isReady) => {
+      if (!isReady) return;
+      const gmap = mapRef.value.map;
+      watch(locations, (newLocations) => {
+        if (newLocations.length === 0) return;
+        const bounds = new google.maps.LatLngBounds();
+        newLocations.forEach((location) => {
+          bounds.extend(
+            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
+          );
+        });
+        gmap.fitBounds(bounds);
+      });
+    }
+  );
+});
+</script>
 <template>
   <PlanLiveChat :planDto="planDto" />
   <div class="container">
@@ -81,64 +398,107 @@
       </div>
       <div class="members-section">
         <label>참여 멤버</label>
-        <div v-for="(member, index) in memberIds" :key="index">
-          <input type="text" v-model="memberIds[index].memberId" />
+        <div v-if="loading">로딩중</div>
+        <div v-if="!loading" class="members-list">
+          <div v-for="(member, index) in memberIds" :key="index" class="member-profile">
+            <img
+              src="https://png.pngtree.com/png-vector/20191115/ourmid/pngtree-beautiful-profile-line-vector-icon-png-image_1990469.jpg"
+              alt="프로필 이미지"
+              class="profile-image"
+            />
+            <p>{{ nicknames[index] }}</p>
+            <button @click="removeMember(index)">X</button>
+          </div>
+          <div class="addMember">
+            <button @click="openMemberModal"></button>
+            <p>추가</p>
+          </div>
         </div>
-        <button @click="showMemberModal = true">맴버 추가하기</button>
         <div v-if="showMemberModal" class="modal">
           <div class="modal-content">
             <span class="close" @click="showMemberModal = false">&times;</span>
             <h2>멤버 검색</h2>
-            <input type="text" v-model="newMemberId" placeholder="Enter member ID" />
-            <button @click="addMember">추가</button>
+            <input
+              type="text"
+              v-model="searchQuery"
+              @input="filterMembers"
+              placeholder="닉네임 검색"
+            />
+            <ul>
+              <li v-for="member in filteredMemberList" :key="member.memberId">
+                {{ member.nickname }}
+                <button @click="addMember(member)">추가</button>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
+
       <div class="date-section">
         <label>여행 기간</label>
-        <input type="date" v-model="planDto.startDate" />
-        <input type="date" v-model="planDto.endDate" />
+        <div class="date-inputs">
+          <input type="date" v-model="planDto.startDate" />
+          <span class="mt-2">~</span>
+          <input type="date" v-model="planDto.endDate" :min="planDto.startDate" />
+        </div>
       </div>
+
+      <div class="schedule-section">
+        <label>여행 일정</label>
+        <button @click="toggleAll(true)">모두 열기</button>
+        <button @click="toggleAll(false)">모두 닫기</button>
+        <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
+          <div
+            @click="toggleAccordion(index1)"
+            :class="['schedule-date', `color-${(index1 % 4) + 1}`]"
+          >
+            <span class="schedule-date">{{ scheduleDates[index1].date }}</span>
+          </div>
+          <transition name="accordion" @before-enter="beforeEnter" @enter="enter" @leave="leave">
+            <div v-show="scheduleDates[index1].expanded" class="accordion-content">
+              <table class="styled-table">
+                <thead>
+                  <tr>
+                    <th>시간</th>
+                    <th>방문지</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(location, index2) in planLocations[index1]" :key="index2">
+                    <td>
+                      <input type="time" v-model="planLocations[index1][index2].time" />
+                    </td>
+                    <td>
+                      <input type="text" v-model="planLocations[index1][index2].title" />
+                    </td>
+                    <td>
+                      <button @click="removePlanLocation(index1, index2)">X</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </transition>
+        </div>
+      </div>
+
       <div class="booking-section">
         <label>예약 내역</label>
         <div v-for="(content, index) in bookContents" :key="index">
           <input type="text" v-model="bookContents[index].content" />
+          <button @click="removeBookContent(index)">X</button>
         </div>
         <button @click="addBookContent">+</button>
-      </div>
-      <div class="schedule-section">
-        <label>여행 일정</label>
-        <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
-          <input type="text" v-model="scheduleDates[index1].date" />
-          <table>
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>Title</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(location, index2) in planLocations" :key="index2">
-                <template v-for="(loc, index3) in location" :key="index3">
-                  <template v-if="loc.planScheduleId == date.planScheduleId">
-                    <td>
-                      <input type="text" v-model="planLocations[index2][index3].time" />
-                    </td>
-                    <tr>
-                      <td>
-                        <input type="text" v-model="planLocations[index2][index3].title" />
-                      </td>
-                    </tr>
-                  </template>
-                </template>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
       <div class="payment-section">
         <label>결제 내역</label>
         <table>
+          <colgroup>
+            <col style="width: 20%" />
+            <col style="width: 30%" />
+            <col style="width: 25%" />
+            <col style="width: 25%" />
+          </colgroup>
           <thead>
             <tr>
               <th>일자</th>
@@ -150,7 +510,7 @@
           <tbody>
             <tr v-for="(payment, index) in paymentDetails" :key="index">
               <td>
-                <input type="text" v-model="paymentDetails[index].date" />
+                <input type="date" v-model="paymentDetails[index].date" />
               </td>
               <td>
                 <input type="text" v-model="paymentDetails[index].content" />
@@ -159,53 +519,129 @@
                 <input type="text" v-model="paymentDetails[index].price" />
               </td>
               <td>
-                <input type="text" v-model="paymentDetails[index].memberId" />
+                <select v-model="paymentDetails[index].memberId">
+                  <option
+                    v-for="(member, index) in memberIds"
+                    :key="member.memberId"
+                    :value="member.memberId"
+                  >
+                    {{ nicknames[index] }}
+                  </option>
+                </select>
+              </td>
+              <td>
+                <button @click="removePaymentDetail(index)">X</button>
               </td>
             </tr>
           </tbody>
         </table>
         <button @click="addPaymentDetail">+</button>
       </div>
+      <button @click="submitUpdatedDetail">Update</button>
     </div>
-    <button @click="submitUpdatedDetail">Update</button>
+  </div>
+  <!-- Attraction Description Modal -->
+  <div v-if="showModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ selectedLocation.title }}</h5>
+        </div>
+        <div class="modal-body">
+          <img :src="selectedLocation.image" />
+          <p>주소 : {{ selectedLocation.addr }}</p>
+          <p>{{ selectedLocation.overview }}</p>
+        </div>
+        <div class="modal-footer">
+          <select name="selectDate" id="selectDate" v-model="selectedDate">
+            <option v-for="(schedule, index) in scheduleDates" :key="index" :value="index">
+              {{ schedule.date }}
+            </option>
+          </select>
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="
+              addPlanLocation(
+                selectedDate,
+                selectedLocation.title,
+                selectedLocation.latitude,
+                selectedLocation.longitude,
+                selectedLocation.contentId
+              )
+            "
+          >
+            여행 계획에 추가
+          </button>
+          <button type="button" class="btn btn-secondary" @click="showModal = false">닫기</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <style scoped>
+html,
+body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .container {
   display: flex;
   flex-direction: row;
   width: 100%;
-  max-width: 1200px;
-  margin: 20px auto;
+  margin: 100px auto;
   gap: 20px;
+  justify-content: center;
 }
+
 .map {
   flex: 1;
   height: 100%;
 }
+
 .details {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
+
 .title-section,
 .members-section,
-.date-section,
 .booking-section,
 .schedule-section,
 .payment-section {
   margin-bottom: 20px;
 }
+
 .title-section label,
 .members-section label,
-.date-section label,
 .booking-section label,
 .schedule-section label,
 .payment-section label {
   display: block;
   margin-bottom: 10px;
 }
+
+.date-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.date-section .date-inputs {
+  display: flex;
+  gap: 10px;
+}
+
+.date-section label {
+  margin-bottom: 10px;
+}
+
 input[type="text"],
 input[type="date"],
 select,
@@ -215,28 +651,23 @@ select,
   margin-bottom: 10px;
   box-sizing: border-box;
 }
+
 table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 20px;
 }
+
 table th,
 table td {
-  border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
 }
-button {
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
+
 button:hover {
   background: #0056b3;
 }
+
 .modal {
   display: block; /* Hidden by default */
   position: fixed; /* Stay in place */
@@ -249,6 +680,7 @@ button:hover {
   background-color: rgb(0, 0, 0); /* Fallback color */
   background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
 }
+
 .modal-content {
   background-color: #fefefe;
   margin: 15% auto; /* 15% from the top and centered */
@@ -256,292 +688,146 @@ button:hover {
   border: 1px solid #888;
   width: 80%; /* Could be more or less, depending on screen size */
 }
+
 .close {
   color: #aaa;
   float: right;
   font-size: 28px;
   font-weight: bold;
 }
+
 .close:hover,
 .close:focus {
   color: black;
   text-decoration: none;
   cursor: pointer;
 }
-</style>
 
-<script setup>
-import { ref, onMounted, watch } from "vue";
-import { GoogleMap, Marker } from "vue3-google-map";
-import { localAxios } from "@/util/http-commons";
-import { useRoute, useRouter } from "vue-router";
-import PlanLiveChat from "@/components/plan/item/PlanLiveChat.vue";
-
-const local = localAxios();
-const route = useRoute();
-const router = useRouter();
-
-const planInfo = ref("");
-
-const planDto = ref({});
-const memberIds = ref([]);
-const bookContents = ref([]);
-const scheduleDates = ref([]);
-const paymentDetails = ref([]);
-const planLocations = ref([]);
-
-const center = { lat: 36.355387, lng: 127.29964 };
-const zoom = ref(13);
-const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
-const showMemberModal = ref(false);
-const newMemberId = ref("");
-
-const addMember = () => {
-  if (newMemberId.value) {
-    memberIds.value.push({ memberId: newMemberId.value });
-    newMemberId.value = "";
-    showMemberModal.value = false;
-  }
-};
-
-const searchOption = ref({
-  sido: 0,
-  gugun: 0,
-  contentTypeId: 0,
-  keyword: "",
-});
-
-const mapRef = ref(null);
-const locations = ref([]);
-const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
-const showModal = ref(false); // 모달 표시 여부를 제어할 ref
-
-const makeOption = (data) => {
-  let areas = data.sidoList;
-  let sel = document.getElementById("search-area");
-  areas.forEach((area) => {
-    let opt = document.createElement("option");
-    opt.setAttribute("value", area.sidoCode);
-    opt.appendChild(document.createTextNode(area.sidoName));
-    sel.appendChild(opt);
-  });
-};
-
-const getGugun = (sidoCode) => {
-  const url = `/shareplan/map/gugun/${sidoCode}`;
-  local.get(url).then(({ data }) => {
-    makeGugunOption(data);
-  });
-};
-
-const makeGugunOption = (data) => {
-  let guguns = data.gugunList;
-  let sel = document.getElementById("search-gugun");
-  sel.innerHTML = `<option value="0" selected>구군 선택</option>`;
-  guguns.forEach((gugun) => {
-    let opt = document.createElement("option");
-    opt.setAttribute("value", gugun.gugunCode);
-    opt.appendChild(document.createTextNode(gugun.gugunName));
-    sel.appendChild(opt);
-  });
-};
-
-const search = () => {
-  const areaCode = searchOption.value.sido;
-  const gugunCode = searchOption.value.gugun;
-  const contentTypeId = searchOption.value.contentTypeId;
-  const keyword = searchOption.value.keyword;
-
-  let queryString = "";
-  if (areaCode != 0) queryString += `&areaCode=${areaCode}`;
-  if (gugunCode != 0) queryString += `&gugunCode=${gugunCode}`;
-  if (contentTypeId != 0) queryString += `&contentTypeId=${contentTypeId}`;
-  if (keyword.trim() != "") queryString += `&keyword=${keyword}`;
-
-  local.get("/shareplan/map/attractioninfo?" + queryString).then(({ data }) => {
-    locations.value = data.attractionInfoList;
-  });
-};
-
-const planId = route.params.id;
-const getPlanDetail = async () => {
-  try {
-    const response = await local.get(`/plans/detail/${planId}`);
-    planInfo.value = response.data;
-
-    planDto.value = {
-      planId: planInfo.value.planDto.planId,
-      memberId: planInfo.value.planDto.memberId,
-      title: planInfo.value.planDto.title,
-      startDate: planInfo.value.planDto.startDate,
-      endDate: planInfo.value.planDto.endDate,
-    };
-    memberIds.value = planInfo.value.memberIds;
-    bookContents.value = planInfo.value.bookContents;
-    scheduleDates.value = planInfo.value.scheduleDates;
-    paymentDetails.value = planInfo.value.paymentDetails;
-    planLocations.value = planInfo.value.planLocations;
-  } catch (error) {
-    console.error("Error fetching plan detail:", error);
-  }
-};
-
-const submitUpdatedDetail = async () => {
-  try {
-    // planDto 내용을 planInfo에 병합
-    planInfo.value.planDto = { ...planDto.value };
-
-    // 업데이트된 planInfo를 서버로 전송
-    await local.put(`/plans/update/${planId}`, planInfo.value);
-    alert("성공!");
-  } catch (error) {
-    console.error("여행 계획 수정에 실패하였습니다:", error);
-  }
-};
-
-const addPaymentDetail = () => {
-  paymentDetails.value.push({
-    date: "",
-    content: "",
-    price: "",
-    memberId: "",
-    planId: planId,
-  });
-};
-
-const addBookContent = () => {
-  bookContents.value.push({
-    planId: planId,
-    content: "",
-  });
-};
-onMounted(() => {
-  local.get("/shareplan/map/sido").then(({ data }) => {
-    makeOption(data);
-  });
-
-  getPlanDetail();
-  watch(
-    () => mapRef.value.ready,
-    (isReady) => {
-      if (!isReady) return;
-      const gmap = mapRef.value.map;
-      watch(locations, (newLocations) => {
-        if (newLocations.length === 0) return;
-        const bounds = new google.maps.LatLngBounds();
-        newLocations.forEach((location) => {
-          bounds.extend(
-            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
-          );
-        });
-        gmap.fitBounds(bounds);
-      });
-    }
-  );
-});
-</script>
-
-<style scoped>
-.container {
+.members-list {
   display: flex;
-  flex-direction: row;
-  width: 100%;
-  max-width: 1200px;
-  margin: 20px auto;
-  gap: 20px;
-}
-.map {
-  flex: 1;
-  height: 100%;
-}
-.details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.field {
-  display: flex;
-  flex-direction: column;
-}
-.participants {
-  display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
-.participants img {
+
+.member-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.profile-image {
   width: 50px;
   height: 50px;
   border-radius: 50%;
+  object-fit: cover;
 }
-.schedule {
+
+.accordion-enter-active,
+.accordion-leave-active {
+  transition: height 0.5s ease, opacity 0.5s ease;
+}
+
+.accordion-enter,
+.accordion-leave-to {
+  height: 0;
+  opacity: 0;
+}
+
+.accordion-content {
+  overflow: hidden;
+}
+
+.schedule-date {
+  width: 100px;
+}
+
+.schedule-date.color-1 {
+  background-color: #f2f7ff;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-2 {
+  background-color: #fef4f4;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-3 {
+  background-color: #fcfce2;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-4 {
+  background-color: #f5fff4;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.styled-table {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  width: 100%;
+  border-collapse: collapse; /* Collapse borders to have single border */
+}
+
+.styled-table th,
+.styled-table td {
+  padding: 8px; /* Add padding to table cells */
+}
+
+.styled-table th {
+  background-color: #f2f2f2; /* Add background color to table headers */
+  text-align: left; /* Align text to the left in table headers */
+}
+
+.styled-table tr:nth-child(even) {
+  background-color: #f9f9f9; /* Add background color to even rows */
+}
+
+.styled-table th:first-child {
+  border-top-left-radius: 10px; /* Top-left corner */
+}
+
+.styled-table th:last-child {
+  border-top-right-radius: 10px; /* Top-right corner */
+}
+
+.styled-table td:first-child {
+  border-bottom-left-radius: 10px; /* Bottom-left corner */
+}
+
+.styled-table td:last-child {
+  border-bottom-right-radius: 10px; /* Bottom-right corner */
+}
+
+.addMember {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
 }
-.day-schedule {
-  background: #f9f9f9;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-.event {
+
+.addMember button {
   display: flex;
-  justify-content: space-between;
-}
-.payment-info {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.payment {
-  display: flex;
-  justify-content: space-between;
-}
-button {
-  align-self: flex-start;
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
+  width: 50px; /* 원하는 크기로 조정 */
+  height: 50px; /* 원하는 크기로 조정 */
   border: none;
-  border-radius: 5px;
+  background-image: url("https://cdn.icon-icons.com/icons2/3428/PNG/512/users_person_user_account_avatar_profile_add_icon_218731.png");
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%; /* 원형 버튼 */
   cursor: pointer;
-}
-button:hover {
-  background: #0056b3;
-}
-
-.modal {
-  display: block; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgb(0, 0, 0); /* Fallback color */
-  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
-}
-
-.modal-content {
-  background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
-  padding: 20px;
-  border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
-}
-
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: black;
-  text-decoration: none;
-  cursor: pointer;
+  background-color: #e9e3e3;
 }
 </style>
