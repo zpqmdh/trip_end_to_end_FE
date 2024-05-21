@@ -14,6 +14,7 @@ const planBoardObject = ref({
   planBoard: {},
   tagList: [],
 });
+const thumbnail = ref("");
 onMounted(() => {
   getDetail(route.params.id);
 });
@@ -34,7 +35,10 @@ const getDetail = () => {
   local.get(`/shareplan/${route.params.id}`).then(({ data }) => {
     planBoardObject.value.planBoard = data.planBoard;
     planBoardObject.value.tagList = data.tagList;
-    console.log(data);
+    if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
+      planBoardObject.value.planBoard.thumbnail =
+        "http://localhost/products/" + planBoardObject.value.planBoard.thumbnail;
+    }
     getMember(); // 수정 권한 확인
   });
 };
@@ -52,17 +56,13 @@ const searchTag = () => {
   });
 };
 const addTag = (tag) => {
-  const exists = planBoardObject.value.tagList.some(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const exists = planBoardObject.value.tagList.some((t) => t.tagTypeId === tag.tagTypeId);
   if (!exists) {
     planBoardObject.value.tagList.push(tag);
   }
 };
 const removeTag = (tag) => {
-  const index = planBoardObject.value.tagList.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const index = planBoardObject.value.tagList.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (index !== -1) {
     planBoardObject.value.tagList.splice(index, 1);
   }
@@ -70,11 +70,18 @@ const removeTag = (tag) => {
 
 const updateArticle = () => {
   console.log(planBoardObject.value);
+  const formData = new FormData();
+  formData.append(
+    "planBoardForm",
+    new Blob([JSON.stringify(planBoardObject.value)], {
+      type: "application/json",
+    })
+  );
+  formData.append("thumbnail", thumbnail.value);
   local
-    .put(
-      `/shareplan/${planBoardObject.value.planBoard.planBoardId}`,
-      planBoardObject.value
-    )
+    .put(`/shareplan/${planBoardObject.value.planBoard.planBoardId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
     .then(({ data }) => {
       console.log(data);
       router.push({
@@ -82,6 +89,12 @@ const updateArticle = () => {
         params: { id: planBoardObject.value.planBoard.planBoardId },
       });
     });
+};
+
+// 파일 선택 시 이벤트 핸들러
+const onThumbnailChange = (event) => {
+  const file = event.target.files[0];
+  thumbnail.value = file;
 };
 </script>
 
@@ -102,23 +115,26 @@ const updateArticle = () => {
       </div>
       <hr />
       <!-- Register Time -->
-      <div class="col-12 text-muted text-center mb-4">
-        등록 시간: {{ planBoardObject.planBoard.registerTime }}
+      <div class="col-12 text-muted text-end mb-4">
+        {{ planBoardObject.planBoard.registerTime }}
       </div>
       <!-- Section 1 -->
       <div class="col-md-6 mb-3">
         <!-- Thumbnail -->
         <img
           id="thumbnail"
-          :src="
-            `http://localhost/products/` + planBoardObject.planBoard.thumbnail
-          "
+          :src="planBoardObject.planBoard.thumbnail"
           class="thumbnail img-fluid rounded"
           alt="Thumbnail"
         />
       </div>
       <!-- Section 2 -->
       <div class="col-md-6 mb-3">
+        <!-- Thumbnail -->
+        <div class="mb-3">
+          <label for="thumbnailInput" class="form-label">대표 사진 변경하기</label>
+          <input class="form-control" type="file" id="thumbnailInput" @change="onThumbnailChange" />
+        </div>
         <!-- Dates -->
         <div class="d-flex justify-content-between mb-3">
           <div>
@@ -141,9 +157,7 @@ const updateArticle = () => {
           </div>
         </div>
         <!-- 동반인 수 -->
-        <div class="mb-3">
-          동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
-        </div>
+        <div class="mb-3">동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
         <!-- Content -->
         <div class="mb-3">
           <label>내용</label>
