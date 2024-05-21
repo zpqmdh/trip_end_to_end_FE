@@ -87,6 +87,9 @@ const loadMemberDetails = async () => {
       sex: data.sex,
       phoneNumber: data.phoneNumber,
     };
+    if (!member.value.image.startsWith("http")) {
+      member.value.image = "http://localhost/products/" + member.value.image;
+    }
   } catch (error) {
     console.error("회원 정보를 불러오는 데 실패하였습니다.", error);
   }
@@ -139,19 +142,11 @@ const handleDelete = async () => {
           @drop.prevent="handleDrop"
           :class="{ 'drag-over': isDragActive }"
         >
-          <input
-            type="file"
-            @change="handleFileChange"
-            class="d-none"
-            ref="fileInput"
-          />
+          <input type="file" @change="handleFileChange" class="d-none" ref="fileInput" />
           <div v-if="fileNames.length == 0">
             <p class="mb-0">프로필 사진을 등록하세요</p>
           </div>
-          <div
-            v-if="fileNames.length > 0"
-            class="d-flex justify-content-center"
-          >
+          <div v-if="fileNames.length > 0" class="d-flex justify-content-center">
             <p class="mb-0"><strong>파일명:</strong></p>
             <ul class="list-inline mb-0">
               <p v-for="(name, index) in fileNames" :key="index" class="mb-0">
@@ -172,39 +167,19 @@ const handleDelete = async () => {
       <form class="member-details-form">
         <div class="form-group">
           <label for="name">이름</label>
-          <input
-            v-model="member.name"
-            type="text"
-            id="name"
-            placeholder="이름"
-          />
+          <input v-model="member.name" type="text" id="name" placeholder="이름" />
         </div>
         <div class="form-group">
           <label for="birthdate">생년월일</label>
-          <input
-            v-model="member.birthdate"
-            type="date"
-            id="birthdate"
-            placeholder="생년월일"
-          />
+          <input v-model="member.birthdate" type="date" id="birthdate" placeholder="생년월일" />
         </div>
         <div class="form-group">
           <label for="email">이메일</label>
-          <input
-            v-model="member.emailId"
-            type="text"
-            id="email"
-            placeholder="이메일"
-          />
+          <input v-model="member.emailId" type="text" id="email" placeholder="이메일" />
         </div>
         <div class="form-group">
           <label for="area">지역</label>
-          <input
-            v-model="member.area"
-            type="text"
-            id="area"
-            placeholder="지역"
-          />
+          <input v-model="member.area" type="text" id="area" placeholder="지역" />
         </div>
         <div class="form-group">
           <label for="sex">성별</label>
@@ -212,21 +187,12 @@ const handleDelete = async () => {
         </div>
         <div class="form-group">
           <label for="phoneNumber">휴대폰</label>
-          <input
-            v-model="member.phoneNumber"
-            type="text"
-            id="phoneNumber"
-            placeholder="휴대폰"
-          />
+          <input v-model="member.phoneNumber" type="text" id="phoneNumber" placeholder="휴대폰" />
         </div>
         <div class="button-group">
           <button type="button" @click="handleUpdate">회원 정보 수정</button>
-          <button type="button" @click="handlePasswordChange">
-            비밀번호 변경
-          </button>
-          <button type="button" class="btn btn-secondary" @click="handleDelete">
-            회원탈퇴
-          </button>
+          <button type="button" @click="handlePasswordChange">비밀번호 변경</button>
+          <button type="button" class="btn btn-secondary" @click="handleDelete">회원탈퇴</button>
         </div>
       </form>
     </div>

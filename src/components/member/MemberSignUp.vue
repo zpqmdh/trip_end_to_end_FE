@@ -16,7 +16,8 @@ const signupMember = ref({
   birthdate: null,
   emailId: null,
   emailDomain: null,
-  image: null,
+  image:
+    "https://png.pngtree.com/png-vector/20191115/ourmid/pngtree-beautiful-profile-line-vector-icon-png-image_1990469.jpg",
   nickname: null,
   sex: null,
   area: null,
@@ -26,7 +27,18 @@ const signupMember = ref({
 
 const handleSignup = async () => {
   try {
-    const response = await local.post("/members/signup", signupMember.value);
+    const formData = new FormData();
+    formData.append(
+      "signupMember",
+      new Blob([JSON.stringify(signupMember.value)], {
+        type: "application/json",
+      })
+    );
+    formData.append("image", file.value);
+    console.log(formData);
+    const response = await local.post("/members/signup", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     alert(response.data);
     router.push({ name: "main" });
   } catch (error) {
@@ -38,7 +50,6 @@ function handleFileChange(event) {
   file.value = event.target.files[0];
   fileNames.value = [file.value.name];
   checkNoInput.value = "";
-  landmarks.value = null;
 }
 
 function triggerFileInput() {
@@ -77,10 +88,10 @@ function handleDrop(event) {
       <h2 class="signup-title">회원가입</h2>
       <div class="profile-header">
         <img
-          src=""
+          :src="signupMember.image"
           alt="Profile Image"
           class="profile-image"
-          style="margin-right: 30px"
+          style="height: 130px; width: auto; margin-right: 30px"
         />
         <div
           class="dnd-dropzone p-4 text-center mb-2"
@@ -90,19 +101,11 @@ function handleDrop(event) {
           @drop.prevent="handleDrop"
           :class="{ 'drag-over': isDragActive }"
         >
-          <input
-            type="file"
-            @change="handleFileChange"
-            class="d-none"
-            ref="fileInput"
-          />
+          <input type="file" @change="handleFileChange" class="d-none" ref="fileInput" />
           <div v-if="fileNames.length == 0">
             <p class="mb-0">프로필 사진을 등록하세요</p>
           </div>
-          <div
-            v-if="fileNames.length > 0"
-            class="d-flex justify-content-center"
-          >
+          <div v-if="fileNames.length > 0" class="d-flex justify-content-center">
             <p class="mb-0"><strong>파일명:</strong></p>
             <ul class="list-inline mb-0">
               <p v-for="(name, index) in fileNames" :key="index" class="mb-0">
@@ -118,13 +121,7 @@ function handleDrop(event) {
       </div>
       <div class="form-group">
         <label for="id">아이디</label>
-        <input
-          v-model="signupMember.id"
-          type="text"
-          id="id"
-          class="form-control"
-          required
-        />
+        <input v-model="signupMember.id" type="text" id="id" class="form-control" required />
       </div>
       <div class="form-group">
         <label for="password">비밀번호</label>
@@ -138,13 +135,7 @@ function handleDrop(event) {
       </div>
       <div class="form-group">
         <label for="name">이름</label>
-        <input
-          v-model="signupMember.name"
-          type="text"
-          id="name"
-          class="form-control"
-          required
-        />
+        <input v-model="signupMember.name" type="text" id="name" class="form-control" required />
       </div>
       <div class="form-group">
         <label for="nickname">닉네임</label>
@@ -158,22 +149,12 @@ function handleDrop(event) {
       </div>
       <div class="form-group">
         <label for="birthdate">생년월일</label>
-        <input
-          v-model="signupMember.birthdate"
-          type="date"
-          id="birthdate"
-          class="form-control"
-        />
+        <input v-model="signupMember.birthdate" type="date" id="birthdate" class="form-control" />
       </div>
       <div style="display: flex">
         <div class="form-group">
           <label for="emailId">이메일 ID</label>
-          <input
-            v-model="signupMember.emailId"
-            type="text"
-            id="emailId"
-            class="form-control"
-          />
+          <input v-model="signupMember.emailId" type="text" id="emailId" class="form-control" />
         </div>
         <p style="margin: 7% 10px">@</p>
         <div class="form-group">
