@@ -964,4 +964,11 @@ button:hover {
 button:hover {
   background: none;
 }
+
+.modal-body img {
+  display: block;
+  margin: 0 auto;
+  max-width: 80%;
+  height: auto;
+}
 </style>
