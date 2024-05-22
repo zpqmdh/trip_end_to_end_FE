@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
-import { GoogleMap, Marker } from "vue3-google-map";
+import { GoogleMap, Marker, Polyline } from "vue3-google-map";
 import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
@@ -15,9 +15,8 @@ const local = localAxios();
 
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 const center = { lat: 36.355387, lng: 127.29964 };
-const zoom = ref(13);
+const zoom = ref(8);
 const mapRef = ref(null);
-const locations = ref([]);
 
 const planBoardObject = ref({
   planBoard: {},
@@ -79,9 +78,94 @@ const getDetail = () => {
     } else {
       isClickedLike.value = null;
     }
+    getPlanDetail();
   });
 };
 
+const scheduleDates = ref([]);
+const planLocations = ref([]);
+// 지도에 표시할 여행 계획 정보
+const markerLocations = ref([]);
+const polylineColors = ["#0a296d", "#742405", "#97654c", "#054b2a", "#812f00"];
+import redMarkerImage from "@/assets/img/marker-red.png";
+import blueMarkerImage from "@/assets/img/marker-sky.png";
+import greenMarkerImage from "@/assets/img/marker-green.png";
+import orangeMarkerImage from "@/assets/img/marker-orange.png";
+import yellowMarkerImage from "@/assets/img/marker-yellow.png";
+const markerImages = [
+  blueMarkerImage,
+  redMarkerImage,
+  yellowMarkerImage,
+  greenMarkerImage,
+  orangeMarkerImage,
+];
+const getMarkerIcon = (index1) => {
+  return {
+    url: markerImages[index1 % markerImages.length], // 이미지 경로
+    scaledSize: new google.maps.Size(30, 45), // 아이콘 크기 조절
+    labelOrigin: new google.maps.Point(15, 14), // 라벨 위치 조정 (x, y)
+  };
+};
+const getPlanDetail = () => {
+  local
+    .get(`/plans/detail/${planBoardObject.value.planBoard.planId}`)
+    .then(({ data }) => {
+      console.log(data);
+      scheduleDates.value = data.scheduleDates.map((date) => ({
+        ...date,
+        expanded: false,
+      }));
+      planLocations.value = data.planLocations;
+      getMarkerLocations();
+    });
+};
+const getMarkerLocations = () => {
+  markerLocations.value = planLocations.value.map(() => []); // planLocations와 같은 구조로 초기화
+  planLocations.value.forEach((scheduleDate, index) => {
+    const path = scheduleDate
+      .map((location) => {
+        if (location.latitude && location.longitude) {
+          return {
+            lat: parseFloat(location.latitude),
+            lng: parseFloat(location.longitude),
+          };
+        }
+      })
+      .filter(Boolean); // 필터링하여 유효한 좌표만 포함
+    markerLocations.value[index] = path;
+  });
+};
+const printMarkerLocations = (index) => {
+  return markerLocations.value[index];
+};
+const toggleAccordion = (index) => {
+  scheduleDates.value[index].expanded = !scheduleDates.value[index].expanded;
+};
+const toggleAll = (expand) => {
+  scheduleDates.value.forEach((schedule) => {
+    schedule.expanded = expand;
+  });
+};
+const beforeEnter = (el) => {
+  el.style.height = "0";
+  el.style.opacity = "0";
+};
+const enter = (el, done) => {
+  el.style.height = el.scrollHeight + "px";
+  el.style.opacity = "1";
+  el.style.transition = "height 0.5s ease, opacity 0.5s ease";
+  el.addEventListener("transitionend", done);
+};
+const leave = (el, done) => {
+  el.style.height = el.scrollHeight + "px";
+  el.style.opacity = "1";
+  requestAnimationFrame(() => {
+    el.style.height = "0";
+    el.style.opacity = "0";
+    el.style.transition = "height 0.5s ease, opacity 0.5s ease";
+  });
+  el.addEventListener("transitionend", done);
+};
 /* Comment */
 const addComment = () => {
   local
@@ -218,7 +302,7 @@ const deleteArticle = () => {
 <template>
   <div class="container">
     <!-- Main Section -->
-    <div class="row mx-5">
+    <div class="row">
       <!-- Title -->
       <h3 class="header">{{ planBoardObject.planBoard.subject }}</h3>
       <hr />
@@ -244,52 +328,68 @@ const deleteArticle = () => {
           >
         </div>
       </div>
-      <!-- Section 1 -->
-      <div class="col-md-6">
-        <!-- Map Section -->
-        <div>
-          <GoogleMap
-            ref="mapRef"
-            :api-key="VITE_GOOGLE_MAP_KEY"
-            style="height: 800px"
-            :center="center"
-            :zoom="zoom"
-          >
+    </div>
+  </div>
+  <div>
+    <div class="row my-5 d-flex justify-content-between">
+      <!-- Map Section -->
+      <div class="col-md-4" style="margin-left: 20px">
+        <GoogleMap
+          ref="mapRef"
+          :api-key="VITE_GOOGLE_MAP_KEY"
+          style="height: 900px; width: 100%"
+          :center="center"
+          :zoom="zoom"
+        >
+          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
+            <Polyline
+              :options="{
+                path: printMarkerLocations(index1),
+                geodesic: true,
+                strokeColor: polylineColors[index1],
+                strokeOpacity: 1.0,
+                strokeWeight: 5,
+              }"
+            />
             <Marker
-              v-for="location in locations"
+              v-for="(attraction, index2) in scheduleDate"
+              :key="`${attraction.planScheduleId}-${index1}`"
               :options="{
                 position: {
-                  lat: parseFloat(location.latitude),
-                  lng: parseFloat(location.longitude),
+                  lat: parseFloat(planLocations[index1][index2].latitude),
+                  lng: parseFloat(planLocations[index1][index2].longitude),
                 },
+                icon: getMarkerIcon(index1),
+                label: {
+                  text: `${index2 + 1}`,
+                  color: 'black',
+                  fontWeight: 'bold',
+                  fontSize: '20px',
+                },
+                zIndex: 9999,
               }"
-              :key="location.contentId"
-              @click="showDetail(location)"
+              @click="toggleAccordion(index1)"
             />
-          </GoogleMap>
-        </div>
+          </div>
+        </GoogleMap>
       </div>
-      <!-- Section 2 -->
-      <div class="col-md-6">
+      <!-- Plan Details Section -->
+      <div class="col-md-3">
         <div class="mb-3">
-          <!-- Dates -->
-          <div class="d-flex justify-content-around mb-3">
-            <div>
-              <label>🗓️ 시작 날짜</label>
+          <!-- Date -->
+          <div class="date-section">
+            <label>📆 여행 기간</label>
+            <div class="date-inputs">
               <input
-                class="form-control"
-                type="text"
+                type="date"
                 v-model="planBoardObject.planBoard.startDate"
-                readonly
+                disabled
               />
-            </div>
-            <div>
-              <label>🗓️ 종료 날짜</label>
+              <span class="mt-2">~</span>
               <input
-                class="form-control"
-                type="text"
+                type="date"
                 v-model="planBoardObject.planBoard.endDate"
-                readonly
+                disabled
               />
             </div>
           </div>
@@ -301,7 +401,7 @@ const deleteArticle = () => {
             alt="Thumbnail"
           />
           <!-- 동행인 수 -->
-          <div>
+          <div style="margin-bottom: 10px">
             👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
           </div>
           <!-- Content -->
@@ -311,7 +411,77 @@ const deleteArticle = () => {
           ></div>
         </div>
       </div>
+      <div class="col-md-4">
+        <div class="schedule-section">
+          <label>🕘 여행 일정</label>
+          <button @click="toggleAll(true)" class="btn btn-light">
+            모두 열기
+          </button>
+          <button @click="toggleAll(false)" class="btn btn-light">
+            모두 닫기
+          </button>
+          <div
+            v-for="(date, index1) in scheduleDates"
+            :key="index1"
+            class="day-schedule"
+          >
+            <div
+              @click="toggleAccordion(index1)"
+              :class="['schedule-date', `color-${(index1 % 5) + 1}`]"
+            >
+              <span class="schedule-date">{{
+                scheduleDates[index1].date
+              }}</span>
+            </div>
+            <transition
+              name="accordion"
+              @before-enter="beforeEnter"
+              @enter="enter"
+              @leave="leave"
+            >
+              <div
+                v-show="scheduleDates[index1].expanded"
+                class="accordion-content"
+              >
+                <table class="styled-table">
+                  <thead>
+                    <tr>
+                      <th>시간</th>
+                      <th>방문지</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      v-for="(location, index2) in planLocations[index1]"
+                      :key="index2"
+                    >
+                      <td>
+                        <input
+                          type="time"
+                          v-model="planLocations[index1][index2].time"
+                          disabled="true"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          v-model="planLocations[index1][index2].title"
+                          disabled="true"
+                        />
+                      </td>
+                      <td></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </transition>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
+  <div class="container">
     <!-- Like Section -->
     <div class="like-section">
       <button @click="clickLike" class="like-button">
@@ -579,14 +749,14 @@ const deleteArticle = () => {
   width: 100%; /* Ensure the comment item takes up full width */
 }
 .article-profile-image {
-  width: 70px;
-  height: 70px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   margin-right: 10px;
 }
 .profile-image {
-  width: 40px;
-  height: 40px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   margin-right: 10px;
 }
@@ -602,6 +772,133 @@ const deleteArticle = () => {
 
 .comment-actions .btn:hover {
   background-color: #475f6e;
+}
+
+.date-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.date-section .date-inputs {
+  display: flex;
+  gap: 10px;
+}
+
+.date-section label {
+  margin-bottom: 10px;
+}
+input[type="text"],
+input[type="date"],
+input[type="time"],
+select,
+.form-control {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  border: 1px solid rgb(176, 176, 176);
+  border-radius: 10px;
+}
+.schedule-section {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.schedule-section label {
+  margin-bottom: 20px;
+  display: block;
+}
+.accordion-enter-active,
+.accordion-leave-active {
+  transition: height 0.5s ease, opacity 0.5s ease;
+}
+
+.accordion-enter,
+.accordion-leave-to {
+  height: 0;
+  opacity: 0;
+}
+
+.accordion-content {
+  overflow: hidden;
+}
+.schedule-date {
+  width: 100px;
+  margin: 10px 0;
+}
+
+.schedule-date.color-1 {
+  background-color: #f2f7ff;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-2 {
+  background-color: #fef4f4;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-3 {
+  background-color: #fcfce2;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-4 {
+  background-color: #f5fff4;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-5 {
+  background-color: #ffeec0;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+.btn-light {
+  background-color: #e4e4e4;
+  margin-bottom: 5px;
+  margin-right: 10px;
+}
+.styled-table th,
+.styled-table td {
+  padding: 8px; /* Add padding to table cells */
+}
+
+.styled-table th {
+  background-color: #f2f2f2; /* Add background color to table headers */
+  text-align: left;
+}
+
+.styled-table tr:nth-child(even) {
+  background-color: #f9f9f9; /* Add background color to even rows */
+}
+
+.styled-table th:first-child {
+  border-top-left-radius: 10px; /* Top-left corner */
+}
+
+.styled-table th:last-child {
+  border-top-right-radius: 10px; /* Top-right corner */
+}
+
+.styled-table td:first-child {
+  border-bottom-left-radius: 10px; /* Bottom-left corner */
+}
+
+.styled-table td:last-child {
+  border-bottom-right-radius: 10px; /* Bottom-right corner */
 }
 @media (max-width: 768px) {
   .header {
