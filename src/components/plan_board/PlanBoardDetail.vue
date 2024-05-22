@@ -103,9 +103,38 @@ const saveEditComment = (commentId) => {
 };
 
 const deleteComment = (commentId) => {
-  local.delete(`/shareplan/comment/${commentId}`).then(() => {
-    getDetail();
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
   });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local.delete(`/shareplan/comment/${commentId}`).then(() => {
+          swalWithBootstrapButtons.fire({
+            title: "삭제 완료",
+            icon: "success",
+          });
+          getDetail();
+        });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
 
 /* Like */
@@ -268,7 +297,6 @@ const deleteArticle = () => {
       </button>
     </div>
     <!-- Modify Plan Board Article -->
-
     <div class="d-flex justify-content-end">
       <button id="btn-list" class="btn" @click="moveList">목록으로</button>
       <template v-if="planBoardObject.planBoard.memberId === memberId">
@@ -290,13 +318,8 @@ const deleteArticle = () => {
         ></textarea>
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
-      <div class="comment-list mt-4 d-flex justify-content-center">
-        <div
-          v-for="comment in planBoardObject.commentList"
-          :key="comment.id"
-          class="comment-item"
-          style="width: 100%"
-        >
+      <div class="comment-list mt-4">
+        <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
             <div>
@@ -307,7 +330,7 @@ const deleteArticle = () => {
               class="d-flex justify-content-between align-items-center"
             >
               <p>{{ comment.content }}</p>
-              <div class="comment-actions">
+              <div v-if="comment.memberId === memberId" class="comment-actions">
                 <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
                   수정
                 </button>
@@ -459,9 +482,16 @@ const deleteArticle = () => {
   border-color: white;
 }
 
+.comment-list {
+  display: flex;
+  flex-direction: column; /* Ensures comments are displayed vertically */
+  align-items: center;
+}
+
 .comment-item {
   border-bottom: 1px solid #ddd;
   padding: 15px 0;
+  width: 100%; /* Ensure the comment item takes up full width */
 }
 
 .comment-actions {

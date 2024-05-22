@@ -5,6 +5,7 @@ import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import "sweetalert2/src/sweetalert2.scss";
+
 const route = useRoute();
 const router = useRouter();
 const local = localAxios();
@@ -23,6 +24,7 @@ const getQnADetail = (id) => {
     getAuthor();
   });
 };
+
 const getMember = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
@@ -30,11 +32,13 @@ const getMember = () => {
     newComment.value.memberId = data.memberId;
   });
 };
+
 const getAuthor = () => {
   local.get(`/plans/getMember/${article.value.qnaBoardDto.memberId}`).then(({ data }) => {
     author.value = data;
   });
 };
+
 const deleteArticle = () => {
   const swalWithBootstrapButtons = Swal.mixin({
     customClass: {
@@ -92,22 +96,55 @@ const addComment = () => {
       newComment.value.content = "";
     });
 };
+
 const startEditingComment = (comment) => {
   editingComment.value = comment.commentId;
   updateComment.value.commentId = comment.commentId;
   updateComment.value.content = comment.content;
 };
+
 const saveEditComment = (commentId) => {
   local.put(`/qna/comment/${commentId}`, updateComment.value).then(() => {
     getQnADetail(route.params.id);
     editingComment.value = null;
   });
 };
+
 const deleteComment = (commentId) => {
-  local.delete(`/qna/comment/${commentId}`).then(() => {
-    getQnADetail(route.params.id);
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
   });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local.delete(`/qna/comment/${commentId}`).then(() => {
+          swalWithBootstrapButtons.fire({
+            title: "삭제 완료",
+            icon: "success",
+          });
+          getQnADetail(route.params.id);
+        });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
+
 onMounted(() => {
   getQnADetail(route.params.id);
   getMember();
@@ -116,6 +153,7 @@ onMounted(() => {
 const mvList = () => {
   router.push({ name: "qna-list" });
 };
+
 const mvModify = () => {
   router.push({ name: "qna-modify", params: { id: article.value.qnaBoardDto.qnaBoardId } });
 };
@@ -163,13 +201,8 @@ const mvModify = () => {
         ></textarea>
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
-      <div class="comment-list mt-4 d-flex justify-content-center">
-        <div
-          v-for="comment in article.commentList"
-          :key="comment.id"
-          class="comment-item"
-          style="width: 100%"
-        >
+      <div class="comment-list mt-4">
+        <div v-for="comment in article.commentList" :key="comment.id" class="comment-item">
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
             <div>
@@ -180,7 +213,7 @@ const mvModify = () => {
               class="d-flex justify-content-between align-items-center"
             >
               <p>{{ comment.content }}</p>
-              <div class="comment-actions">
+              <div v-if="comment.memberId === member.memberId" class="comment-actions">
                 <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
                   수정
                 </button>
@@ -314,10 +347,16 @@ const mvModify = () => {
   margin-top: 20px;
 }
 
+.comment-form {
+  display: flex;
+  justify-content: center;
+}
+
 .comment-form textarea {
   width: 80%;
   resize: vertical;
 }
+
 .comment-form button {
   margin-left: 10px;
   background-color: #5698ad;
@@ -325,9 +364,16 @@ const mvModify = () => {
   border-color: white;
 }
 
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .comment-item {
   border-bottom: 1px solid #ddd;
   padding: 15px 0;
+  width: 100%;
 }
 
 .comment-actions {
