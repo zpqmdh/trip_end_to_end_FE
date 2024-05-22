@@ -34,7 +34,9 @@ const searchTag = () => {
 };
 
 const filterTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (tagIndex === -1) {
     filteredTag.value.push(tag);
   } else {
@@ -43,18 +45,24 @@ const filterTag = (tag) => {
 
   filteredArticleList.value = planArticleList.value.filter((article) => {
     return filteredTag.value.every((filter) => {
-      return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
+      return article.tagList.some(
+        (item) => item.tagTypeId === filter.tagTypeId
+      );
     });
   });
 };
 
 const removeTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (tagIndex !== -1) {
     filteredTag.value.splice(tagIndex, 1);
     filteredArticleList.value = planArticleList.value.filter((article) => {
       return filteredTag.value.every((filter) => {
-        return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
+        return article.tagList.some(
+          (item) => item.tagTypeId === filter.tagTypeId
+        );
       });
     });
   }
@@ -66,59 +74,81 @@ const moveWrite = () => {
 </script>
 
 <template>
-  <div class="container">
-    <h1 class="text-center">🚗 다녀온 여행 공유</h1>
-    <div class="text-center mb-4">
-      <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">게시글 작성하기</button>
-    </div>
-    <form class="text-center mb-4">
-      <div class="form-row justify-content-center">
-        <div class="d-flex flex-column align-items-center mb-4">
-          <label class="mr-sm-2" for="inlineFormCustomSelect">태그 검색</label>
-          <input
-            type="text"
-            class="form-control"
-            style="width: 30%; text-align: center"
-            placeholder="Tag"
-            v-model.trim="tagName"
-            @input.prevent="searchTag"
-          />
-        </div>
-      </div>
-    </form>
-    <div class="text-center mb-4">
-      <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
-        <button
-          class="btn btn-outline-secondary m-1"
-          @click.prevent="filterTag(tag)"
-          :class="{ active: filteredTag.includes(tag) }"
-        >
-          {{ tag.name }}
-        </button>
-      </div>
-    </div>
-    <!-- New section to display search results -->
-    <div class="text-center mb-4">
-      <div v-if="filteredTag.length > 0">
-        <h5>검색 결과</h5>
-        <div v-for="tag in filteredTag" :key="tag.tagTypeId" class="d-inline-block">
-          <button
-            class="btn btn-outline-secondary m-1"
-            @click.prevent="removeTag(tag)"
-            :class="{ active: filteredTag.includes(tag) }"
-          >
-            {{ tag.name }}
+  <div class="row" style="margin-top: 50px">
+    <div class="col-md-4 d-flex align-items-center position-relative">
+      <div class="fixed-title text-center">
+        <h1>🚗 다녀온 여행 공유</h1>
+        <div class="text-center mb-4">
+          <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">
+            게시글 작성하기
           </button>
         </div>
+        <form class="text-center mb-4">
+          <div class="form-row justify-content-center">
+            <div class="d-flex flex-column align-items-center mb-4">
+              <label class="mr-sm-2" for="inlineFormCustomSelect"
+                >태그 검색</label
+              >
+              <input
+                type="text"
+                class="form-control"
+                style="width: 100%; text-align: center"
+                placeholder="Tag"
+                v-model.trim="tagName"
+                @input.prevent="searchTag"
+              />
+            </div>
+          </div>
+        </form>
+        <div class="text-center mb-4">
+          <div class="tags-container">
+            <div
+              v-for="tag in tagResults"
+              :key="tag.tagTypeId"
+              class="d-inline-block"
+            >
+              <button
+                class="btn btn-outline-secondary m-1"
+                @click.prevent="filterTag(tag)"
+                :class="{ active: filteredTag.includes(tag) }"
+              >
+                {{ tag.name }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- New section to display search results -->
+        <div class="text-center mb-4">
+          <div v-if="filteredTag.length > 0">
+            <h5>검색 결과</h5>
+            <div class="tags-container">
+              <div
+                v-for="tag in filteredTag"
+                :key="tag.tagTypeId"
+                class="d-inline-block"
+              >
+                <button
+                  class="btn btn-outline-secondary m-1"
+                  @click.prevent="removeTag(tag)"
+                  :class="{ active: filteredTag.includes(tag) }"
+                >
+                  {{ tag.name }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="row">
-      <div
-        class="col-md-4 mb-4"
-        v-for="planArticle in filteredArticleList"
-        :key="planArticle.planBoardId"
-      >
-        <PlanBoardCard :planArticle="planArticle" />
+    <div class="col-md-7">
+      <div class="row">
+        <div
+          class="col-md-4 mb-4"
+          v-for="planArticle in filteredArticleList"
+          :key="planArticle.planBoardId"
+        >
+          <PlanBoardCard :planArticle="planArticle" />
+        </div>
       </div>
     </div>
   </div>
@@ -139,5 +169,20 @@ const moveWrite = () => {
   background-color: #5698ad;
   color: #fff;
   border: none;
+}
+.fixed-title {
+  position: absolute;
+  width: calc(100% - 30px); /* Adjusted for padding/margin */
+  max-width: 400px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px;
+}
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 }
 </style>
