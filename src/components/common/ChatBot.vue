@@ -84,8 +84,8 @@ socket.on("response", (data) => {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   cursor: pointer;
 }
 
