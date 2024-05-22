@@ -2,7 +2,8 @@
 import { ref } from "vue";
 import { localAxios } from "@/util/http-commons";
 import { useRouter } from "vue-router";
-
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 const local = localAxios();
 const router = useRouter();
 const file = ref(null);
@@ -35,14 +36,21 @@ const handleSignup = async () => {
       })
     );
     formData.append("image", file.value);
-    console.log(formData);
     const response = await local.post("/members/signup", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    alert(response.data);
-    router.push({ name: "main" });
+    Swal.fire({
+      icon: "success",
+      title: "회원가입 성공 !",
+      text: `${response.data}`,
+    });
+    router.push({ name: "member-login" });
   } catch (error) {
-    alert("회원가입에 실패하였습니다.");
+    Swal.fire({
+      icon: "error",
+      title: "회원가입 실패 !",
+      text: "중복된 아이디가 이미 존재합니다.",
+    });
   }
 };
 
