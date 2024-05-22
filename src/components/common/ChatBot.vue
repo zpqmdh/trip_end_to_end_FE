@@ -72,17 +72,17 @@ const sendMessage = () => {
   }, 100);
 };
 
-socket.on("response", (data) => {
-  const botMessage = { content: data.data, type: "bot" };
-  messages.value.push(botMessage);
+// socket.on("response", (data) => {
+//   const botMessage = { content: data.data, type: "bot" };
+//   messages.value.push(botMessage);
 
-  loading.value = false; // 응답을 받은 후 로딩 상태 해제
+//   loading.value = false; // 응답을 받은 후 로딩 상태 해제
 
-  // Scroll to the bottom of the chat box
-  setTimeout(() => {
-    chatBox.value.scrollTop = chatBox.value.scrollHeight;
-  }, 100);
-});
+//   // Scroll to the bottom of the chat box
+//   setTimeout(() => {
+//     chatBox.value.scrollTop = chatBox.value.scrollHeight;
+//   }, 100);
+// });
 </script>
 
 <style scoped>

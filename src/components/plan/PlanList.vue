@@ -17,11 +17,12 @@ const handleAddPlan = async () => {
 <style scoped>
 .add-button {
   margin-top: 50px;
-  margin-left: 135px;
+  margin-left: 356px;
   color: white;
   background-color: #577b8d;
 }
 .contrainer {
   margin-top: 30px;
+  justify-content: center;
 }
 </style>
