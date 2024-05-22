@@ -5,7 +5,10 @@ import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
+const { VITE_LOCALHOST_URL } = import.meta.env;
 const local = localAxios();
 const route = useRoute();
 const router = useRouter();
@@ -24,7 +27,10 @@ const getMember = () => {
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
     // 관리자 아님 -> 수정 권한 없음
     if (data.memberId != planBoardObject.value.planBoard.memberId) {
-      alert("게시글 수정 권한이 없습니다.");
+      Swal.fire({
+        icon: "error",
+        text: "게시글 수정 권한이 없습니다. ",
+      });
       router.push({ name: "share-plan-list" });
     }
   });
@@ -37,7 +43,7 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
-        "http://localhost/products/" + planBoardObject.value.planBoard.thumbnail;
+        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.thumbnail;
     }
     getMember(); // 수정 권한 확인
   });
@@ -84,6 +90,10 @@ const updateArticle = () => {
     })
     .then(({ data }) => {
       console.log(data);
+      Swal.fire({
+        icon: "success",
+        text: "여행 공유 게시글이 등록되었습니다.",
+      });
       router.push({
         name: "share-plan-detail",
         params: { id: planBoardObject.value.planBoard.planBoardId },

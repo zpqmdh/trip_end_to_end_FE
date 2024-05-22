@@ -18,9 +18,7 @@ const word = ref("");
 
 const getArticleList = () => {
   local
-    .get(
-      `/qna/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`
-    )
+    .get(`/qna/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`)
     .then(({ data }) => {
       articles.value = data.articles;
       currentPage.value = data.pageNavigation.currentPage;
@@ -53,7 +51,7 @@ const moveWrite = () => {
         <button id="btn-mv-write" class="btn" @click="moveWrite">글쓰기</button>
       </div>
     </div>
-    <table class="table table-hover">
+    <table class="table table-hover mt-3">
       <thead>
         <tr class="text-center">
           <th scope="col">글번호</th>

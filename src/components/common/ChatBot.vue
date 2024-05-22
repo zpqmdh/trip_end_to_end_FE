@@ -11,11 +11,7 @@
           <span>회원님의 여행을 책임지는 AI 어시스턴트입니다</span>
         </div>
         <div class="chat-box" ref="chatBox">
-          <div
-            v-for="(message, index) in messages"
-            :key="index"
-            :class="message.type"
-          >
+          <div v-for="(message, index) in messages" :key="index" :class="message.type">
             <div class="message-bubble">{{ message.content }}</div>
           </div>
           <div v-if="loading" class="loading">
@@ -31,9 +27,7 @@
             v-model="userInput"
             @keydown.enter="sendMessage"
           />
-          <button @click="sendMessage" class="btn btn-outline-secondary">
-            Send
-          </button>
+          <button @click="sendMessage" class="btn btn-outline-secondary">Send</button>
         </div>
       </div>
     </div>
@@ -72,17 +66,17 @@ const sendMessage = () => {
   }, 100);
 };
 
-// socket.on("response", (data) => {
-//   const botMessage = { content: data.data, type: "bot" };
-//   messages.value.push(botMessage);
+socket.on("response", (data) => {
+  const botMessage = { content: data.data, type: "bot" };
+  messages.value.push(botMessage);
 
-//   loading.value = false; // 응답을 받은 후 로딩 상태 해제
+  loading.value = false; // 응답을 받은 후 로딩 상태 해제
 
-//   // Scroll to the bottom of the chat box
-//   setTimeout(() => {
-//     chatBox.value.scrollTop = chatBox.value.scrollHeight;
-//   }, 100);
-// });
+  // Scroll to the bottom of the chat box
+  setTimeout(() => {
+    chatBox.value.scrollTop = chatBox.value.scrollHeight;
+  }, 100);
+});
 </script>
 
 <style scoped>
@@ -90,8 +84,8 @@ const sendMessage = () => {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   cursor: pointer;
 }
 

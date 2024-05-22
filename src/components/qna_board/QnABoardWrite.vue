@@ -1,8 +1,10 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 const router = useRouter();
@@ -11,11 +13,12 @@ onMounted(() => {
   getMemberId();
 });
 
-let member = ref({
+const member = ref({
   memberId: "",
   id: "",
   nickname: "",
 });
+
 const getMemberId = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
@@ -28,15 +31,29 @@ const qnaBoardDto = ref({
   memberId: "",
   subject: "",
   content: "",
-  secret: false,
+  secret: "0",
   password: "",
 });
 
+const isSecretBoolean = ref(qnaBoardDto.value.secret === "1");
+
 const insertArticle = () => {
-  qnaBoardDto.value.secret = qnaBoardDto.value.secret ? 1 : 0;
+  qnaBoardDto.value.secret = isSecretBoolean.value ? "1" : "0";
   qnaBoardDto.value.memberId = member.value.memberId;
-  local.post("/qna/insert", qnaBoardDto.value).then(({ data }) => {
-    console.log(data);
+
+  if (isSecretBoolean.value && !/^\d{4}$/.test(qnaBoardDto.value.password)) {
+    Swal.fire({
+      icon: "error",
+      text: "게시글 비밀번호는 4자리 숫자로 설정해주세요.",
+    });
+    return;
+  }
+
+  local.post("/qna/insert", qnaBoardDto.value).then(() => {
+    Swal.fire({
+      icon: "success",
+      text: "게시글이 등록되었습니다.",
+    });
     router.push({ name: "qna-list" });
   });
 };
@@ -44,10 +61,18 @@ const insertArticle = () => {
 const resetInput = () => {
   qnaBoardDto.value.subject = "";
   qnaBoardDto.value.content = "";
-  qnaBoardDto.value.secret = false;
+  qnaBoardDto.value.secret = "0";
   qnaBoardDto.value.password = "";
+  isSecretBoolean.value = false;
 };
+
+watch(isSecretBoolean, (newVal) => {
+  if (!newVal) {
+    qnaBoardDto.value.password = "";
+  }
+});
 </script>
+
 <template>
   <div class="container">
     <div class="row justify-content-center">
@@ -81,7 +106,7 @@ const resetInput = () => {
           <input
             class="form-check-input"
             type="checkbox"
-            v-model="qnaBoardDto.secret"
+            v-model="isSecretBoolean"
             id="flexCheckDefault"
           />
           <label class="form-check-label" for="flexCheckDefault"> 비밀글로 등록하기 </label>
@@ -90,10 +115,11 @@ const resetInput = () => {
           <input
             type="password"
             class="form-control"
+            style="width: 50%; margin-bottom: 10px"
             id="password"
             placeholder="4자리 비밀번호"
-            :required="qnaBoardDto.secret"
-            :disabled="!qnaBoardDto.secret"
+            :required="isSecretBoolean"
+            :disabled="!isSecretBoolean"
             v-model="qnaBoardDto.password"
           />
         </div>
@@ -114,6 +140,7 @@ const resetInput = () => {
     </div>
   </div>
 </template>
+
 <style scoped>
 #title {
   margin: 35px 0px;

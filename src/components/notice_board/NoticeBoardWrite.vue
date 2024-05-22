@@ -3,6 +3,8 @@ import { onMounted, ref } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 const router = useRouter();
@@ -16,7 +18,10 @@ const getMemberId = () => {
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
     // 관리자 아님 -> 작성 권한 없음
     if (data.type != 3) {
-      alert("공지사항 작성 권한이 없습니다.");
+      Swal.fire({
+        icon: "error",
+        text: "공지사항 작성은 관리자만 할 수 있습니다.",
+      });
       router.push({ name: "notice-list" });
     }
     member.value.memberId = data.memberId;
@@ -45,8 +50,8 @@ const insertArticle = () => {
 <template>
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-lg-8 col-md-10 col-sm-12">
-        <h2 class="my-3 py-3 text-center">공지사항</h2>
+      <div class="d-flex justify-content-center mt-3">
+        <h1>📢 공지사항</h1>
       </div>
       <div class="col-lg-8 col-md-10 col-sm-12">
         <div class="mb-3">
@@ -81,20 +86,33 @@ const insertArticle = () => {
           <label class="form-check-label" for="isFixed"> 고정하기 </label>
         </div>
         <div class="col-auto text-center">
-          <button
-            type="button"
-            id="btn-register"
-            class="btn btn-outline-primary mb-3"
-            @click="insertArticle"
-          >
+          <button type="button" id="btn-register" class="btn mb-3" @click="insertArticle">
             등록하기
           </button>
-          <button type="reset" class="btn btn-outline-danger mb-3" @click="resetInput">
-            초기화
-          </button>
+          <button id="btn-reset" type="reset" class="btn mb-3" @click="resetInput">초기화</button>
         </div>
       </div>
     </div>
   </div>
 </template>
-<style scoped></style>
+<style scoped>
+#btn-register {
+  border-color: #577b8d;
+  color: #577b8d;
+  background-color: white;
+  margin-right: 5px;
+}
+#btn-register:hover {
+  background-color: #577b8d;
+  color: white;
+}
+#btn-reset {
+  border-color: #97654c;
+  color: #97654c;
+  background-color: white;
+}
+#btn-reset:hover {
+  background-color: #97654c;
+  color: white;
+}
+</style>

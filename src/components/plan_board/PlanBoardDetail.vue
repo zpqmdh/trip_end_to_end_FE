@@ -4,6 +4,10 @@ import { GoogleMap, Marker } from "vue3-google-map";
 import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
+
+const { VITE_LOCALHOST_URL } = import.meta.env;
 
 const route = useRoute();
 const router = useRouter();
@@ -63,12 +67,9 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
-        "http://localhost/products/" +
-        planBoardObject.value.planBoard.thumbnail;
+        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.thumbnail;
     }
-    const like = planBoardObject.value.likeList.find(
-      (like) => like.memberId === memberId.value
-    );
+    const like = planBoardObject.value.likeList.find((like) => like.memberId === memberId.value);
     if (like) {
       // 로그인 상태의 유저가 해당 게시글에 좋아요를 누른 상태
       isClickedLike.value = like;
@@ -81,18 +82,11 @@ const getDetail = () => {
 /* Comment */
 const addComment = () => {
   local
-    .post(
-      `/shareplan/insert/${newComment.value.planBoardId}/comment`,
-      newComment.value
-    )
+    .post(`/shareplan/insert/${newComment.value.planBoardId}/comment`, newComment.value)
     .then(() => {
       getDetail();
       newComment.value.content = "";
     });
-};
-
-const replyToComment = (commentId) => {
-  console.log(`Reply to comment ${commentId}`);
 };
 
 const startEditingComment = (comment) => {
@@ -109,9 +103,38 @@ const saveEditComment = (commentId) => {
 };
 
 const deleteComment = (commentId) => {
-  local.delete(`/shareplan/comment/${commentId}`).then(() => {
-    getDetail();
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
   });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local.delete(`/shareplan/comment/${commentId}`).then(() => {
+          swalWithBootstrapButtons.fire({
+            title: "삭제 완료",
+            icon: "success",
+          });
+          getDetail();
+        });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
 
 /* Like */
@@ -121,29 +144,63 @@ const clickLike = () => {
     console.log("qwe");
     console.log(newLike.value);
     local
-      .post(
-        `/shareplan/insert/${newLike.value.planBoardId}/like`,
-        newLike.value
-      )
+      .post(`/shareplan/insert/${newLike.value.planBoardId}/like`, newLike.value)
       .then(({ data }) => {
         console.log(data);
         getDetail();
       });
   } else {
-    local
-      .delete(`/shareplan/like/${isClickedLike.value.planLikeId}`)
-      .then(({ data }) => {
-        console.log(data);
-        getDetail();
-      });
+    local.delete(`/shareplan/like/${isClickedLike.value.planLikeId}`).then(({ data }) => {
+      console.log(data);
+      getDetail();
+    });
   }
 };
 
+const moveList = () => {
+  router.push({ name: "share-plan-list" });
+};
 const moveModify = () => {
   router.push({
     name: "share-plan-modify",
-    params: { id: planBoardObject.planBoard.planBoardId },
+    params: { id: planBoardObject.value.planBoard.planBoardId },
   });
+};
+const deleteArticle = () => {
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
+  });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local
+          .delete(`/shareplan/${planBoardObject.value.planBoard.planBoardId}`)
+          .then(({ data }) => {
+            swalWithBootstrapButtons.fire({
+              title: "삭제 완료",
+              icon: "success",
+            });
+            router.push({ name: "share-plan-list" });
+          });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
 </script>
 
@@ -219,53 +276,34 @@ const moveModify = () => {
             </div>
           </div>
           <!-- 동행인 수 -->
-          <div>
-            👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
-          </div>
+          <div>👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
           <!-- Content -->
-          <div
-            class="content-box"
-            v-html="planBoardObject.planBoard.content"
-          ></div>
+          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
         </div>
       </div>
     </div>
     <!-- Like Section -->
     <div class="like-section">
       <button @click="clickLike" class="like-button">
-        <img
-          v-show="isClickedLike"
-          src="@/assets/img/like-on.png"
-          class="like-icon"
-          alt="Liked"
-        />
-        <img
-          v-show="!isClickedLike"
-          src="@/assets/img/like-off.png"
-          class="like-icon"
-          alt="Like"
-        />
+        <img v-show="isClickedLike" src="@/assets/img/like-on.png" class="like-icon" alt="Liked" />
+        <img v-show="!isClickedLike" src="@/assets/img/like-off.png" class="like-icon" alt="Like" />
         <h5>{{ planBoardObject.likeList.length }}</h5>
       </button>
     </div>
     <!-- Tag Section -->
     <div class="tag-section">
-      <button
-        v-for="tag in planBoardObject.tagList"
-        :key="tag.planBoardTagId"
-        class="tag-btn"
-      >
+      <button v-for="tag in planBoardObject.tagList" :key="tag.planBoardTagId" class="tag-btn">
         #{{ tag.name }}
       </button>
     </div>
     <!-- Modify Plan Board Article -->
-    <template v-if="planBoardObject.planBoard.memberID === memberId">
-      <div class="d-flex justify-content-end">
-        <button id="btn-mv-modify" class="btn" @click="moveModify">
-          게시글 수정하기
-        </button>
-      </div>
-    </template>
+    <div class="d-flex justify-content-end">
+      <button id="btn-list" class="btn" @click="moveList">목록으로</button>
+      <template v-if="planBoardObject.planBoard.memberId === memberId">
+        <button id="btn-modify" class="btn" @click="moveModify">수정하기</button>
+        <button id="btn-delete" class="btn" @click="deleteArticle">삭제하기</button>
+      </template>
+    </div>
 
     <hr />
     <!-- Comment Section -->
@@ -281,48 +319,38 @@ const moveModify = () => {
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
-        <div
-          v-for="comment in planBoardObject.commentList"
-          :key="comment.id"
-          class="comment-item"
-        >
+        <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
-            <div v-if="editingComment !== comment.commentId">
-              <p>작성자: {{ comment.nickname }}</p>
-              <p>{{ comment.registerTime }}</p>
+            <div>
+              <p>👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}</p>
+            </div>
+            <div
+              v-if="editingComment !== comment.commentId"
+              class="d-flex justify-content-between align-items-center"
+            >
               <p>{{ comment.content }}</p>
-              <div class="comment-actions">
-                <button
-                  @click="replyToComment(comment.commentId)"
-                  class="btn btn-secondary btn-sm"
-                >
-                  답글 달기
-                </button>
-                <button
-                  @click="startEditingComment(comment)"
-                  class="btn btn-warning btn-sm"
-                >
+              <div v-if="comment.memberId === memberId" class="comment-actions">
+                <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
                   수정
                 </button>
                 <button
                   @click="deleteComment(comment.commentId)"
-                  class="btn btn-danger btn-sm"
+                  class="btn btn-sm"
+                  id="btn-delete"
                 >
                   삭제
                 </button>
               </div>
             </div>
-            <div v-else>
+            <div v-else class="d-flex justify-content-center">
               <textarea
                 v-model="updateComment.content"
                 class="form-control"
+                style="width: 80%; margin-right: 10px"
                 rows="2"
               ></textarea>
-              <button
-                @click="saveEditComment(comment.commentId)"
-                class="btn btn-primary mt-2"
-              >
+              <button @click="saveEditComment(comment.commentId)" class="btn mt-2" id="btn-list">
                 저장
               </button>
             </div>
@@ -369,10 +397,34 @@ const moveModify = () => {
   text-align: end;
 }
 
-#btn-mv-modify {
+#btn-list {
+  border-color: #97654c;
+  color: #97654c;
+  background-color: white;
+  margin-right: 5px;
+}
+#btn-list:hover {
   background-color: #97654c;
   color: white;
-  margin-right: 20px;
+}
+#btn-modify {
+  border-color: #577b8d;
+  color: #577b8d;
+  background-color: white;
+  margin-right: 5px;
+}
+#btn-modify:hover {
+  background-color: #577b8d;
+  color: white;
+}
+#btn-delete {
+  border-color: #666;
+  color: #666;
+  background-color: white;
+}
+#btn-delete:hover {
+  background-color: #666;
+  color: white;
 }
 /* Like Section */
 .like-section {
@@ -430,15 +482,31 @@ const moveModify = () => {
   border-color: white;
 }
 
+.comment-list {
+  display: flex;
+  flex-direction: column; /* Ensures comments are displayed vertically */
+  align-items: center;
+}
+
 .comment-item {
   border-bottom: 1px solid #ddd;
   padding: 15px 0;
+  width: 100%; /* Ensure the comment item takes up full width */
 }
 
-.comment-actions button {
-  margin-right: 10px;
+.comment-actions {
+  display: flex;
+  gap: 10px;
 }
 
+.comment-actions .btn {
+  background-color: #577b8d;
+  color: white;
+}
+
+.comment-actions .btn:hover {
+  background-color: #475f6e;
+}
 @media (max-width: 768px) {
   .header {
     font-size: 1.5rem;

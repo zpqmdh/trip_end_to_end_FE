@@ -4,7 +4,10 @@ import { localAxios } from "@/util/http-commons";
 import { logout, decodedTokenFunc } from "@/util/auth";
 import { useRouter } from "vue-router";
 import MemberMyPageSidebarVue from "./MemberMyPageSidebar.vue";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
+const { VITE_LOCALHOST_URL } = import.meta.env;
 const loginedId = decodedTokenFunc();
 const router = useRouter();
 const local = localAxios();
@@ -43,7 +46,6 @@ function handleDrop(event) {
   if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
     file.value = event.dataTransfer.files[0];
     fileNames.value = [file.value.name];
-    console.log(file);
     checkNoInput.value = "";
   }
 }
@@ -70,7 +72,6 @@ const member = ref({
 const loadMemberDetails = async () => {
   try {
     const id = loginedId;
-    console.log(id);
     const response = await local.get(`/members/detail/${id}`);
     const data = response.data;
     console.log(data);
@@ -88,9 +89,13 @@ const loadMemberDetails = async () => {
       phoneNumber: data.phoneNumber,
     };
     if (!member.value.image.startsWith("http")) {
-      member.value.image = "http://localhost/products/" + member.value.image;
+      member.value.image = `http://${VITE_LOCALHOST_URL}/products/` + member.value.image;
     }
   } catch (error) {
+    Swal.fire({
+      icon: "error",
+      text: "회원 정보를 불러오는 데 실패하였습니다.",
+    });
     console.error("회원 정보를 불러오는 데 실패하였습니다.", error);
   }
 };
@@ -112,10 +117,17 @@ const handleUpdate = async () => {
     const response = await local.put(`/members/update/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    alert(response.data);
+    Swal.fire({
+      icon: "success",
+      text: `${response.data}`,
+    });
     loadMemberDetails();
   } catch (error) {
-    console.error("회원 정보 수정에 실패하였습니다.");
+    Swal.fire({
+      icon: "error",
+      text: "회원 정보 수정에 실패하였습니다.",
+    });
+    console.error("회원 정보 수정에 실패하였습니다.", error);
   }
 };
 
@@ -126,16 +138,48 @@ const handlePasswordChange = async () => {
 
 const handleDelete = async () => {
   // 회원 탈퇴
-  try {
-    const id = loginedId;
-    const response = await local.put(`/members/delete`, id);
-    alert(response.data);
-    logout();
-    router.push({ name: "main" });
-  } catch (error) {
-    alert("탈퇴에 실패하였습니다.");
-    console.error("탈퇴에 실패하였습니다.");
-  }
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
+  });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 탈퇴하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        try {
+          const id = loginedId;
+          local.put(`/members/delete/${id}`).then(({ data }) => {
+            swalWithBootstrapButtons.fire({
+              title: "회원 탈퇴가 완료되었습니다.",
+              icon: "success",
+            });
+            logout();
+            router.push({ name: "main" });
+          });
+        } catch (error) {
+          Swal.fire({
+            icon: "error",
+            text: "회원 탈퇴에 실패하였습니다.",
+          });
+          console.err(error);
+        }
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
 </script>
 
