@@ -289,7 +289,7 @@ onMounted(() => {
           :zoom="zoom"
           @click="addMarker"
         >
-          <div v-for="(scheduleDate, index1) in planLocations">
+          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
             <Polyline
               :options="{
                 path: printMarkerLocations(index1),
@@ -307,7 +307,7 @@ onMounted(() => {
                   lat: parseFloat(planLocations[index1][index2].latitude),
                   lng: parseFloat(planLocations[index1][index2].longitude),
                 },
-                icon: getMarkerIcon(index1, index2),
+                icon: getMarkerIcon(index1),
                 label: {
                   text: `${index2 + 1}`,
                   color: 'black',
@@ -318,19 +318,19 @@ onMounted(() => {
               }"
               @click="toggleAccordion(index1)"
             />
-            <Marker
-              v-for="location in locations"
-              :options="{
-                position: {
-                  lat: parseFloat(location.latitude),
-                  lng: parseFloat(location.longitude),
-                },
-              }"
-              :key="location.contentId"
-              @click="showDetail(location)"
-            />
-            <Marker :options="clickMarker" @click="showAddModal()" />
           </div>
+          <Marker
+            v-for="location in locations"
+            :options="{
+              position: {
+                lat: parseFloat(location.latitude),
+                lng: parseFloat(location.longitude),
+              },
+            }"
+            :key="location.contentId"
+            @click="showDetail(location)"
+          />
+          <Marker :options="clickMarker" @click="showAddModal()" />
         </GoogleMap>
       </div>
     </div>

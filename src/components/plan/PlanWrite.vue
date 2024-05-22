@@ -4,30 +4,59 @@ import { GoogleMap, Marker, Polyline } from "vue3-google-map";
 import { localAxios } from "@/util/http-commons";
 import { useRoute, useRouter } from "vue-router";
 import PlanLiveChat from "@/components/plan/item/PlanLiveChat.vue";
+import { decodedTokenFunc } from "@/util/auth";
+import dayjs from "dayjs"; // dayjs를 사용하여 날짜 조작
+import redMarkerImage from "@/assets/img/marker-red.png";
+import blueMarkerImage from "@/assets/img/marker-sky.png";
+import greenMarkerImage from "@/assets/img/marker-green.png";
+import orangeMarkerImage from "@/assets/img/marker-orange.png";
+import yellowMarkerImage from "@/assets/img/marker-yellow.png";
 
 const local = localAxios();
 const route = useRoute();
 const router = useRouter();
 
 const planInfo = ref("");
+const loginedId = decodedTokenFunc();
 
-const planDto = ref({});
+const memberId = ref("");
+
+const getMemberId = async () => {
+  try {
+    const loginedId = decodedTokenFunc(); // 또는 실제 로그인된 사용자의 ID
+    const { data } = await local.get(`/members/detail/${loginedId}`);
+    memberId.value = data.memberId;
+  } catch (error) {
+    console.error("Error fetching member details:", error);
+  }
+};
+
+const setMemberIdValue = async () => {
+  await getMemberId();
+};
+
+const planDto = ref({
+  planId: "",
+  memberId: memberId.value,
+  title: "",
+  startDate: "",
+  endDate: "",
+});
+
 const memberIds = ref([]);
 const bookContents = ref([]);
 const scheduleDates = ref([]);
 const paymentDetails = ref([]);
 const planLocations = ref([]);
 const selectedDate = ref(""); // 추가된 선택된 날짜를 저장하는 변수
-const planId = route.params.id;
+
 const center = { lat: 36.35538, lng: 127.8 };
 const zoom = ref(8);
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 const showMemberModal = ref(false);
-const newMemberId = ref("");
 const allMemberList = ref([]);
 const searchQuery = ref("");
 const filteredMemberList = ref([]);
-let selectDate = "";
 const mapRef = ref(null);
 const locations = ref([]);
 const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
@@ -35,6 +64,36 @@ const showModal = ref(false); // 모달 표시 여부를 제어할 ref
 const clickMarker = ref("");
 const newMarkertitle = ref("");
 import clickMarkerImage from "@/assets/img/click-marker-blue.png";
+
+// 날짜 범위 생성 함수
+const generateDateRange = (start, end) => {
+  const dateArray = [];
+  let currentDate = dayjs(start);
+  let idCounter = 1;
+  while (currentDate.isBefore(dayjs(end).add(1, "day"))) {
+    dateArray.push({
+      planScheduleId: idCounter,
+      date: currentDate.format("YYYY-MM-DD"),
+      planId: null, // 필요에 따라 planId 할당
+    });
+    currentDate = currentDate.add(1, "day");
+    idCounter += 1;
+  }
+  return dateArray;
+};
+
+// watch 함수 설정
+watch(
+  [() => planDto.value.startDate, () => planDto.value.endDate],
+  ([newStartDate, newEndDate]) => {
+    if (newStartDate && newEndDate) {
+      scheduleDates.value = generateDateRange(newStartDate, newEndDate);
+      // planLocations 배열을 각 날짜별로 초기화
+      planLocations.value = scheduleDates.value.map(() => []);
+    }
+  }
+);
+
 const addMarker = (event) => {
   clickMarker.value = {
     position: { lat: event.latLng.lat(), lng: event.latLng.lng() },
@@ -47,11 +106,6 @@ const addMarker = (event) => {
 
 const polylineColors = ["#0a296d", "#742405", "#97654c", "#054b2a", "#812f00"];
 
-import redMarkerImage from "@/assets/img/marker-red.png";
-import blueMarkerImage from "@/assets/img/marker-sky.png";
-import greenMarkerImage from "@/assets/img/marker-green.png";
-import orangeMarkerImage from "@/assets/img/marker-orange.png";
-import yellowMarkerImage from "@/assets/img/marker-yellow.png";
 const markerImages = [
   blueMarkerImage,
   redMarkerImage,
@@ -82,11 +136,11 @@ const addMember = (member) => {
   if (member) {
     memberIds.value.push({
       memberId: member.memberId,
-      planId: planId,
+      planId: "",
     });
     searchQuery.value = "";
     filterMembers();
-    getMemberNicknames();
+    getMemberInfo();
     showMemberModal.value = false;
   }
 };
@@ -96,7 +150,8 @@ const filterMembers = () => {
   const existingMemberIds = memberIds.value.map((m) => m.memberId);
   filteredMemberList.value = allMemberList.value.filter(
     (member) =>
-      !existingMemberIds.includes(member.memberId) && member.nickname.toLowerCase().includes(query)
+      !existingMemberIds.includes(member.memberId) &&
+      member.nickname.toLowerCase().includes(query)
   );
 };
 
@@ -198,13 +253,16 @@ const search = () => {
 
 const memberList = ref([{}]);
 
-const getMemberNicknames = async () => {
+const getMemberInfo = async () => {
   memberList.value = new Array(memberIds.value.length).fill(""); // nicknames 배열을 memberIds 길이만큼 초기화
   const memberPromises = memberIds.value.map(async (member, index) => {
     try {
       const { data } = await local.get(`/plans/getMember/${member.memberId}`);
       memberList.value[index] = data;
-      if (memberList.value[index].image && !memberList.value[index].image.startsWith("http")) {
+      if (
+        memberList.value[index].image &&
+        !memberList.value[index].image.startsWith("http")
+      ) {
         memberList.value[index].image =
           "http://localhost/products/" + memberList.value[index].image;
       }
@@ -213,32 +271,6 @@ const getMemberNicknames = async () => {
     }
   });
   await Promise.all(memberPromises);
-};
-const getPlanDetail = async () => {
-  try {
-    const response = await local.get(`/plans/detail/${planId}`);
-    planInfo.value = response.data;
-
-    planDto.value = {
-      planId: planInfo.value.planDto.planId,
-      memberId: planInfo.value.planDto.memberId,
-      title: planInfo.value.planDto.title,
-      startDate: planInfo.value.planDto.startDate,
-      endDate: planInfo.value.planDto.endDate,
-    };
-    memberIds.value = planInfo.value.memberIds;
-    bookContents.value = planInfo.value.bookContents;
-    scheduleDates.value = planInfo.value.scheduleDates.map((date) => ({
-      ...date,
-      expanded: false,
-    }));
-    paymentDetails.value = planInfo.value.paymentDetails;
-    planLocations.value = planInfo.value.planLocations;
-    getMarkerLocations();
-    await getMemberNicknames(); // 닉네임 로드 함수 호출
-  } catch (error) {
-    console.error("Error fetching plan detail:", error);
-  }
 };
 
 const markerLocations = ref([]);
@@ -265,12 +297,20 @@ const printMarkerLocations = (index) => {
 };
 
 const submitUpdatedDetail = async () => {
+  planDto.value.memberId = memberId.value;
   try {
-    // planDto 내용을 planInfo에 병합
-    planInfo.value.planDto = { ...planDto.value };
+    planInfo.value = {
+      planDto: planDto.value,
+      memberIds: memberIds.value,
+      bookContents: bookContents.value,
+      scheduleDates: scheduleDates.value,
+      paymentDetails: paymentDetails.value,
+      planLocations: planLocations.value,
+    };
+    console.log(planInfo);
 
     // 업데이트된 planInfo를 서버로 전송
-    await local.put(`/plans/update/${planId}`, planInfo.value);
+    await local.post(`/plans/create`, planInfo.value);
     alert("성공!");
     router.push({ name: "plan-list" });
   } catch (error) {
@@ -284,13 +324,13 @@ const addPaymentDetail = () => {
     content: "",
     price: "",
     memberId: "",
-    planId: planId,
+    planId: "",
   });
 };
 
 const addBookContent = () => {
   bookContents.value.push({
-    planId: planId,
+    planId: "",
     content: "",
   });
 };
@@ -310,22 +350,24 @@ const addPlanLocation = (date_index, title, latitude, longitude, contentId) => {
   setTimeout(function () {
     toggleAll(true);
   }, 50);
-  selectDate = "";
+  selectedDate.value = "";
   showNewMarkerModal.value = false;
 };
 
 const showDetail = (location) => {
-  local.get(`/shareplan/map/attractiondescription/${location.contentId}`).then(({ data }) => {
-    selectedLocation.value = data;
-    selectedLocation.value.title = location.title;
-    selectedLocation.value.image = location.firstImage
-      ? location.firstImage
-      : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
-    selectedLocation.value.addr = location.addr1 + " " + location.addr2;
-    selectedLocation.value.latitude = location.latitude;
-    selectedLocation.value.longitude = location.longitude;
-    showModal.value = true;
-  });
+  local
+    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
+    .then(({ data }) => {
+      selectedLocation.value = data;
+      selectedLocation.value.title = location.title;
+      selectedLocation.value.image = location.firstImage
+        ? location.firstImage
+        : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
+      selectedLocation.value.addr = location.addr1 + " " + location.addr2;
+      selectedLocation.value.latitude = location.latitude;
+      selectedLocation.value.longitude = location.longitude;
+      showModal.value = true;
+    });
 };
 const showNewMarkerModal = ref(false);
 const showAddModal = () => {
@@ -366,14 +408,19 @@ watch(
   { immediate: true, deep: true }
 );
 
-onMounted(() => {
+onMounted(async () => {
+  await setMemberIdValue();
+  // 작성자 memberId 참여 멤버에 업데이트
+  memberIds.value.push({
+    memberId: memberId.value,
+    planId: "",
+  });
+  // 작성자 정보 호출
+  getMemberInfo();
   local.get("/shareplan/map/sido").then(({ data }) => {
     makeOption(data);
   });
-  getPlanDetail();
   fetchMemberList();
-
-  console.log(markerLocations.value);
   watch(
     () => mapRef.value.ready,
     (isReady) => {
@@ -384,7 +431,10 @@ onMounted(() => {
         const bounds = new google.maps.LatLngBounds();
         newLocations.forEach((location) => {
           bounds.extend(
-            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
+            new google.maps.LatLng(
+              parseFloat(location.latitude),
+              parseFloat(location.longitude)
+            )
           );
         });
         gmap.fitBounds(bounds);
@@ -439,8 +489,16 @@ onMounted(() => {
           aria-label="검색어"
           v-model="searchOption.keyword"
         />
-        <button id="btn-search" class="btn-search" type="button" @click="search">검색</button>
+        <button
+          id="btn-search"
+          class="btn-search"
+          type="button"
+          @click="search"
+        >
+          검색
+        </button>
       </form>
+
       <!-- Map -->
       <div class="map-container">
         <GoogleMap
@@ -451,7 +509,7 @@ onMounted(() => {
           :zoom="zoom"
           @click="addMarker"
         >
-          <div v-for="(scheduleDate, index1) in planLocations">
+          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
             <Polyline
               :options="{
                 path: printMarkerLocations(index1),
@@ -469,7 +527,7 @@ onMounted(() => {
                   lat: parseFloat(planLocations[index1][index2].latitude),
                   lng: parseFloat(planLocations[index1][index2].longitude),
                 },
-                icon: getMarkerIcon(index1, index2),
+                icon: getMarkerIcon(index1),
                 label: {
                   text: `${index2 + 1}`,
                   color: 'black',
@@ -480,36 +538,50 @@ onMounted(() => {
               }"
               @click="toggleAccordion(index1)"
             />
-            <Marker
-              v-for="location in locations"
-              :options="{
-                position: {
-                  lat: parseFloat(location.latitude),
-                  lng: parseFloat(location.longitude),
-                },
-              }"
-              :key="location.contentId"
-              @click="showDetail(location)"
-            />
-            <Marker :options="clickMarker" @click="showAddModal()" />
           </div>
-          <button @click="resetSearch" class="btn-search-result">검색 결과 초기화</button>
+          <Marker
+            v-for="location in locations"
+            :options="{
+              position: {
+                lat: parseFloat(location.latitude),
+                lng: parseFloat(location.longitude),
+              },
+            }"
+            :key="location.contentId"
+            @click="showDetail(location)"
+          />
+          <Marker :options="clickMarker" @click="showAddModal()" />
+
+          <button @click="resetSearch" class="btn-search-result">
+            검색 결과 초기화
+          </button>
         </GoogleMap>
       </div>
     </div>
 
     <!-- 여행 정보 상세 -->
     <div class="details">
-      <label class="mb-0">📝 제목 </label>
-      <div class="title-section">
-        <input type="text" v-model="planDto.title" />
-        <button class="btn-submit" @click="submitUpdatedDetail">수정</button>
-      </div>
+      <form @submit.prevent="submitUpdatedDetail">
+        <label class="mb-0">📝 제목 </label>
+        <div :v-model="memberId"></div>
+        <div class="title-section">
+          <input type="text" v-model="planDto.title" required />
+          <button class="btn-submit" type="submit">저장</button>
+        </div>
+      </form>
       <div class="members-section">
         <label>👨‍👩‍👦 참여 멤버</label>
         <div class="members-list">
-          <div v-for="(member, index) in memberIds" :key="index" class="member-profile">
-            <img :src="memberList[index].image" alt="프로필 이미지" class="profile-image mb-0" />
+          <div
+            v-for="(member, index) in memberIds"
+            :key="index"
+            class="member-profile"
+          >
+            <img
+              :src="memberList[index].image"
+              alt="프로필 이미지"
+              class="profile-image mb-0"
+            />
             <p class="mb-0 mt-1">{{ memberList[index].nickname }}</p>
             <button
               class="btn btn-remove mt-0"
@@ -526,7 +598,11 @@ onMounted(() => {
             <p class="center">추가</p>
           </div>
         </div>
-        <div v-if="showMemberModal" class="modal" @click.self="showMemberModal = false">
+        <div
+          v-if="showMemberModal"
+          class="modal"
+          @click.self="showMemberModal = false"
+        >
           <div class="modal-content add-member">
             <span class="close" @click="showMemberModal = false">&times;</span>
             <h2>멤버 검색</h2>
@@ -554,23 +630,43 @@ onMounted(() => {
         <div class="date-inputs">
           <input type="date" v-model="planDto.startDate" />
           <span class="mt-2">~</span>
-          <input type="date" v-model="planDto.endDate" :min="planDto.startDate" />
+          <input
+            type="date"
+            v-model="planDto.endDate"
+            :min="planDto.startDate"
+          />
         </div>
       </div>
 
       <div class="schedule-section">
         <label>🕘 여행 일정</label>
-        <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
-        <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
-        <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
+        <button @click="toggleAll(true)" class="btn btn-light">
+          모두 열기
+        </button>
+        <button @click="toggleAll(false)" class="btn btn-light">
+          모두 닫기
+        </button>
+        <div
+          v-for="(date, index1) in scheduleDates"
+          :key="index1"
+          class="day-schedule"
+        >
           <div
             @click="toggleAccordion(index1)"
             :class="['schedule-date', `color-${(index1 % 5) + 1}`]"
           >
             <span class="schedule-date">{{ scheduleDates[index1].date }}</span>
           </div>
-          <transition name="accordion" @before-enter="beforeEnter" @enter="enter" @leave="leave">
-            <div v-show="scheduleDates[index1].expanded" class="accordion-content">
+          <transition
+            name="accordion"
+            @before-enter="beforeEnter"
+            @enter="enter"
+            @leave="leave"
+          >
+            <div
+              v-show="scheduleDates[index1].expanded"
+              class="accordion-content"
+            >
               <table class="styled-table">
                 <thead>
                   <tr>
@@ -580,15 +676,27 @@ onMounted(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(location, index2) in planLocations[index1]" :key="index2">
+                  <tr
+                    v-for="(location, index2) in planLocations[index1]"
+                    :key="index2"
+                  >
                     <td>
-                      <input type="time" v-model="planLocations[index1][index2].time" />
+                      <input
+                        type="time"
+                        v-model="planLocations[index1][index2].time"
+                      />
                     </td>
                     <td>
-                      <input type="text" v-model="planLocations[index1][index2].title" />
+                      <input
+                        type="text"
+                        v-model="planLocations[index1][index2].title"
+                      />
                     </td>
                     <td>
-                      <button class="btn btn-remove" @click="removePlanLocation(index1, index2)">
+                      <button
+                        class="btn btn-remove"
+                        @click="removePlanLocation(index1, index2)"
+                      >
                         X
                       </button>
                     </td>
@@ -602,13 +710,23 @@ onMounted(() => {
 
       <div class="booking-section">
         <label>🚊 예약 내역</label>
-        <div v-for="(content, index) in bookContents" :key="index" style="display: flex">
+        <div
+          v-for="(content, index) in bookContents"
+          :key="index"
+          style="display: flex"
+        >
           <input type="text" v-model="bookContents[index].content" />
-          <button class="btn btn-remove mb-2" style="color: gray" @click="removeBookContent(index)">
+          <button
+            class="btn btn-remove mb-2"
+            style="color: gray"
+            @click="removeBookContent(index)"
+          >
             X
           </button>
         </div>
-        <button class="btn btn-outline-secondary" @click="addBookContent">+</button>
+        <button class="btn btn-outline-secondary" @click="addBookContent">
+          +
+        </button>
       </div>
       <div class="payment-section">
         <label>💰 결제 내역</label>
@@ -661,10 +779,13 @@ onMounted(() => {
             </tr>
           </tbody>
         </table>
-        <button class="btn btn-outline-secondary" @click="addPaymentDetail">+</button>
+        <button class="btn btn-outline-secondary" @click="addPaymentDetail">
+          +
+        </button>
       </div>
     </div>
   </div>
+
   <!-- Attraction Description Modal -->
   <div
     v-if="showModal"
@@ -686,7 +807,11 @@ onMounted(() => {
         <div class="modal-footer">
           <select name="selectDate" id="selectDate" v-model="selectedDate">
             <option disabled value="">날짜 선택</option>
-            <option v-for="(schedule, index) in scheduleDates" :key="index" :value="index">
+            <option
+              v-for="(schedule, index) in scheduleDates"
+              :key="index"
+              :value="index"
+            >
               {{ schedule.date }}
             </option>
           </select>
@@ -705,7 +830,13 @@ onMounted(() => {
           >
             여행 계획에 추가
           </button>
-          <button type="button" class="btn btn-secondary" @click="showModal = false">닫기</button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="showModal = false"
+          >
+            닫기
+          </button>
         </div>
       </div>
     </div>
@@ -720,7 +851,11 @@ onMounted(() => {
     <div class="modal-content">
       <select name="selectDate" id="selectDate" v-model="selectedDate">
         <option disabled value="">날짜 선택</option>
-        <option v-for="(schedule, index) in scheduleDates" :key="index" :value="index">
+        <option
+          v-for="(schedule, index) in scheduleDates"
+          :key="index"
+          :value="index"
+        >
           {{ schedule.date }}
         </option>
       </select>
@@ -747,7 +882,11 @@ onMounted(() => {
       >
         여행 계획에 추가
       </button>
-      <button type="button" class="btn btn-secondary" @click="showNewMarkerModal = false">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        @click="showNewMarkerModal = false"
+      >
         닫기
       </button>
     </div>
@@ -855,7 +994,7 @@ button:hover {
 .modal {
   display: block; /* Hidden by default */
   position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
+  z-index: 5; /* Sit on top */
   left: 0;
   top: 0;
   width: 100%; /* Full width */
@@ -1133,7 +1272,7 @@ button:hover {
   color: rgb(44, 44, 44);
   padding: 4px 7px;
   margin: 5px 0;
-  z-index: 9999;
+  z-index: 5;
   position: absolute;
   top: 5px;
   right: 60px;

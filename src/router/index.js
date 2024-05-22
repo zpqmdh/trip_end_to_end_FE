@@ -52,7 +52,8 @@ const router = createRouter({
         {
           path: "changepassword",
           name: "member-changepassword",
-          component: () => import("@/components/member/MemberChangePassword.vue"),
+          component: () =>
+            import("@/components/member/MemberChangePassword.vue"),
         },
       ],
     },
@@ -70,11 +71,6 @@ const router = createRouter({
           path: "list",
           name: "plan-list",
           component: () => import("@/components/plan/PlanList.vue"),
-        },
-        {
-          path: "modify/:id",
-          name: "plan-modify",
-          component: () => import("@/components/plan/PlanModify.vue"),
         },
         {
           path: "detail/ongoing/:id",
@@ -96,22 +92,26 @@ const router = createRouter({
         {
           path: "write",
           name: "notice-write",
-          component: () => import("@/components/notice_board/NoticeBoardWrite.vue"),
+          component: () =>
+            import("@/components/notice_board/NoticeBoardWrite.vue"),
         },
         {
           path: "list",
           name: "notice-list",
-          component: () => import("@/components/notice_board/NoticeBoardList.vue"),
+          component: () =>
+            import("@/components/notice_board/NoticeBoardList.vue"),
         },
         {
           path: "detail/:id",
           name: "notice-detail",
-          component: () => import("@/components/notice_board/NoticeBoardDetail.vue"),
+          component: () =>
+            import("@/components/notice_board/NoticeBoardDetail.vue"),
         },
         {
           path: "modify/:id",
           name: "notice-modify",
-          component: () => import("@/components/notice_board/NoticeBoardModify.vue"),
+          component: () =>
+            import("@/components/notice_board/NoticeBoardModify.vue"),
         },
       ],
     },
@@ -160,19 +160,27 @@ const router = createRouter({
         {
           path: "detail/:id",
           name: "share-plan-detail",
-          component: () => import("@/components/plan_board/PlanBoardDetail.vue"),
+          component: () =>
+            import("@/components/plan_board/PlanBoardDetail.vue"),
         },
         {
           path: "modify/:id",
           name: "share-plan-modify",
-          component: () => import("@/components/plan_board/PlanBoardModify.vue"),
+          component: () =>
+            import("@/components/plan_board/PlanBoardModify.vue"),
         },
       ],
     },
   ],
 });
 
-const passedPaths = ["/", "/main", "/member/login", "/member/signup", "/member/findpassword"]; // 보호된 경로 배열
+const passedPaths = [
+  "/",
+  "/main",
+  "/member/login",
+  "/member/signup",
+  "/member/findpassword",
+]; // 보호된 경로 배열
 
 router.beforeEach((to, from, next) => {
   if (passedPaths.includes(to.path)) {
