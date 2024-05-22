@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { GoogleMap, Marker } from "vue3-google-map";
+import { GoogleMap, Marker, Polyline } from "vue3-google-map";
 import Datepicker from "vue3-datepicker";
 import { ko } from "date-fns/locale";
 import { QuillEditor } from "@vueup/vue-quill";
@@ -15,16 +15,20 @@ import "sweetalert2/src/sweetalert2.scss";
 const local = localAxios();
 const router = useRouter();
 
+const mapRef = ref(null);
 const center = { lat: 36.355387, lng: 127.29964 };
 const zoom = ref(13);
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 
+// 여행 계획에서 데이터 불러왔는지 : 필수 !
+const getDataBoolean = ref(false);
+
+// 여행 공유 게시글 정조
 let startDate = ref(new Date());
 let endDate = ref(new Date());
 let content = ref(null);
 const locale = ref(ko);
 const inputFormat = ref("yyyy-MM-dd");
-
 const planBoardObject = ref({
   planBoard: {
     memberId: "",
@@ -38,25 +42,53 @@ const planBoardObject = ref({
   tagList: [],
 });
 
-const searchOption = ref({
-  sido: 0,
-  gugun: 0,
-  contentTypeId: 0,
-  keyword: "",
-});
+// 상세 여행 계획 정보
+const planInfo = ref({});
+const planDto = ref({});
+const scheduleDates = ref([]);
+const planLocations = ref([]);
+
+// 지도에 표시할 여행 계획 정보
+const markerLocations = ref([]);
+const polylineColors = ["#0a296d", "#742405", "#97654c", "#054b2a", "#812f00"];
+import redMarkerImage from "@/assets/img/marker-red.png";
+import blueMarkerImage from "@/assets/img/marker-sky.png";
+import greenMarkerImage from "@/assets/img/marker-green.png";
+import orangeMarkerImage from "@/assets/img/marker-orange.png";
+import yellowMarkerImage from "@/assets/img/marker-yellow.png";
+const markerImages = [
+  blueMarkerImage,
+  redMarkerImage,
+  yellowMarkerImage,
+  greenMarkerImage,
+  orangeMarkerImage,
+];
+const getMarkerIcon = (index1) => {
+  return {
+    url: markerImages[index1 % markerImages.length], // 이미지 경로
+    scaledSize: new google.maps.Size(30, 45), // 아이콘 크기 조절
+    labelOrigin: new google.maps.Point(15, 14), // 라벨 위치 조정 (x, y)
+  };
+};
+
+// 유저가 작성할 수 있는 여행 리스트와 선택된 것
+const plans = ref([]);
+const selectedPlan = ref("");
+const showPlan = ref(false);
 
 const loginedId = ref("");
 const thumbnail = ref("");
 
-const mapRef = ref(null);
-const locations = ref([]);
-const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
-const showModal = ref(false); // 모달 표시 여부를 제어할 ref
-
 const insertArticle = async () => {
   planBoardObject.value.planBoard.content = content.value.getHTML();
-  planBoardObject.value.planBoard.startDate = format(startDate.value, inputFormat.value);
-  planBoardObject.value.planBoard.endDate = format(endDate.value, inputFormat.value);
+  planBoardObject.value.planBoard.startDate = format(
+    startDate.value,
+    inputFormat.value
+  );
+  planBoardObject.value.planBoard.endDate = format(
+    endDate.value,
+    inputFormat.value
+  );
   const formData = new FormData();
   formData.append(
     "planBoardForm",
@@ -86,95 +118,16 @@ const getMemberId = () => {
     planBoardObject.value.planBoard.memberId = data.memberId;
   });
 };
+
 onMounted(() => {
   getMemberId();
-  local.get("/shareplan/map/sido").then(({ data }) => {
-    makeOption(data);
-  });
   watch(
     () => mapRef.value.ready,
     (isReady) => {
       if (!isReady) return;
-      const gmap = mapRef.value.map;
-      watch(locations, (newLocations) => {
-        if (newLocations.length === 0) return;
-        const bounds = new google.maps.LatLngBounds();
-        newLocations.forEach((location) => {
-          bounds.extend(
-            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
-          );
-        });
-        gmap.fitBounds(bounds);
-      });
     }
   );
 });
-
-const makeOption = (data) => {
-  let areas = data.sidoList;
-  let sel = document.getElementById("search-area");
-  areas.forEach((area) => {
-    let opt = document.createElement("option");
-    opt.setAttribute("value", area.sidoCode);
-    opt.appendChild(document.createTextNode(area.sidoName));
-    sel.appendChild(opt);
-  });
-};
-
-const getGugun = (sidoCode) => {
-  const url = `/shareplan/map/gugun/${sidoCode}`;
-  local.get(url).then(({ data }) => {
-    makeGugunOption(data);
-  });
-};
-
-const makeGugunOption = (data) => {
-  let guguns = data.gugunList;
-  let sel = document.getElementById("search-gugun");
-  sel.innerHTML = `<option value="0" selected>구군 선택</option>`;
-  guguns.forEach((gugun) => {
-    let opt = document.createElement("option");
-    opt.setAttribute("value", gugun.gugunCode);
-    opt.appendChild(document.createTextNode(gugun.gugunName));
-    sel.appendChild(opt);
-  });
-};
-
-const search = () => {
-  const areaCode = searchOption.value.sido;
-  const gugunCode = searchOption.value.gugun;
-  const contentTypeId = searchOption.value.contentTypeId;
-  const keyword = searchOption.value.keyword;
-
-  let queryString = "";
-  if (areaCode != 0) queryString += `&areaCode=${areaCode}`;
-  if (gugunCode != 0) queryString += `&gugunCode=${gugunCode}`;
-  if (contentTypeId != 0) queryString += `&contentTypeId=${contentTypeId}`;
-  if (keyword.trim() != "") queryString += `&keyword=${keyword}`;
-
-  local.get("/shareplan/map/attractioninfo?" + queryString).then(({ data }) => {
-    locations.value = data.attractionInfoList;
-  });
-};
-
-const showDetail = (location) => {
-  local.get(`/shareplan/map/attractiondescription/${location.contentId}`).then(({ data }) => {
-    selectedLocation.value = data;
-    selectedLocation.value.title = location.title;
-    selectedLocation.value.image = location.firstImage
-      ? location.firstImage
-      : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
-    selectedLocation.value.addr = location.addr1 + " " + location.addr2;
-    console.log(selectedLocation.value);
-    showModal.value = true;
-  });
-};
-
-const plans = ref([]);
-const selectedPlan = ref("");
-
-const planObject = ref({});
-const showPlan = ref(false);
 
 const getDataListPlan = () => {
   local.get(`/plans/list/all/${loginedId.value}`).then(({ data }) => {
@@ -199,16 +152,62 @@ const addPlanByCheckingDate = (data) => {
 };
 const getPlanDetail = (planId) => {
   local.get(`/plans/detail/${planId}`).then(({ data }) => {
-    planObject.value = data;
-    startDate.value = new Date(planObject.value.planDto.startDate);
-    endDate.value = new Date(planObject.value.planDto.endDate);
-    planBoardObject.value.planBoard.theNumberOfMembers = planObject.value.memberIds.length;
+    console.log(data);
+    getDataBoolean.value = true;
+    planInfo.value = data;
+    planDto.value = {
+      planId: planInfo.value.planDto.planId,
+      memberId: planInfo.value.planDto.memberId,
+      title: planInfo.value.planDto.title,
+      startDate: planInfo.value.planDto.startDate,
+      endDate: planInfo.value.planDto.endDate,
+    };
+    startDate.value = new Date(planInfo.value.planDto.startDate);
+    endDate.value = new Date(planInfo.value.planDto.endDate);
+    planBoardObject.value.planBoard.theNumberOfMembers =
+      planInfo.value.memberIds.length;
+    scheduleDates.value = planInfo.value.scheduleDates.map((date) => ({
+      ...date,
+      expanded: false,
+    }));
+    planLocations.value = planInfo.value.planLocations;
+    getMarkerLocations();
   });
 };
-
+const getMarkerLocations = () => {
+  markerLocations.value = planLocations.value.map(() => []); // planLocations와 같은 구조로 초기화
+  planLocations.value.forEach((scheduleDate, index) => {
+    const path = scheduleDate
+      .map((location) => {
+        if (location.latitude && location.longitude) {
+          return {
+            lat: parseFloat(location.latitude),
+            lng: parseFloat(location.longitude),
+          };
+        }
+      })
+      .filter(Boolean); // 필터링하여 유효한 좌표만 포함
+    markerLocations.value[index] = path;
+  });
+  console.log(markerLocations.value);
+  console.log(planLocations.value);
+};
+const printMarkerLocations = (index) => {
+  return markerLocations.value[index];
+};
+const toggleAccordion = (index) => {
+  scheduleDates.value[index].expanded = !scheduleDates.value[index].expanded;
+};
+const toggleAll = (expand) => {
+  scheduleDates.value.forEach((schedule) => {
+    schedule.expanded = expand;
+  });
+};
 watch(selectedPlan, (newPlanId) => {
   getPlanDetail(newPlanId);
 });
+
+// Tag
 const tagName = ref("");
 const tagResults = ref([]);
 const searchTag = () => {
@@ -221,15 +220,18 @@ const searchTag = () => {
     tagResults.value = data;
   });
 };
-
 const addTag = (tag) => {
-  const exists = planBoardObject.value.tagList.some((t) => t.tagTypeId === tag.tagTypeId);
+  const exists = planBoardObject.value.tagList.some(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (!exists) {
     planBoardObject.value.tagList.push(tag);
   }
 };
 const removeTag = (tag) => {
-  const index = planBoardObject.value.tagList.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const index = planBoardObject.value.tagList.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (index !== -1) {
     planBoardObject.value.tagList.splice(index, 1);
   }
@@ -259,50 +261,6 @@ const onThumbnailChange = (event) => {
     </div>
     <hr />
     <div class="container">
-      <!-- Search bar start -->
-      <form class="d-flex my-4 mx-5" role="search">
-        <select
-          id="search-area"
-          class="form-select me-2"
-          name="sidoCode"
-          v-model="searchOption.sido"
-          @change="getGugun(searchOption.sido)"
-        >
-          <option value="0" selected>검색 할 지역 선택</option>
-        </select>
-        <select
-          id="search-gugun"
-          class="form-select me-2"
-          name="gugunCode"
-          v-model="searchOption.gugun"
-        >
-          <option value="0" selected>구군 선택</option>
-        </select>
-        <select
-          id="search-content-id"
-          class="form-select me-2"
-          v-model="searchOption.contentTypeId"
-        >
-          <option value="0" selected>관광지 유형</option>
-          <option value="12">관광지</option>
-          <option value="14">문화시설</option>
-          <option value="15">축제공연행사</option>
-          <option value="25">여행코스</option>
-          <option value="28">레포츠</option>
-          <option value="32">숙박</option>
-          <option value="38">쇼핑</option>
-          <option value="39">음식점</option>
-        </select>
-        <input
-          id="search-keyword"
-          class="form-control me-2"
-          type="search"
-          placeholder="검색어"
-          aria-label="검색어"
-          v-model="searchOption.keyword"
-        />
-        <button id="btn-search" class="btn" type="button" @click="search">검색</button>
-      </form>
       <!-- Map and Details -->
       <div class="row my-5">
         <!-- Map Section -->
@@ -310,28 +268,49 @@ const onThumbnailChange = (event) => {
           <GoogleMap
             ref="mapRef"
             :api-key="VITE_GOOGLE_MAP_KEY"
-            style="height: 800px"
+            style="height: 1000px; width: 600px"
             :center="center"
             :zoom="zoom"
           >
-            <Marker
-              v-for="location in locations"
-              :options="{
-                position: {
-                  lat: parseFloat(location.latitude),
-                  lng: parseFloat(location.longitude),
-                },
-              }"
-              :key="location.contentId"
-              @click="showDetail(location)"
-            />
+            <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
+              <Polyline
+                :options="{
+                  path: printMarkerLocations(index1),
+                  geodesic: true,
+                  strokeColor: polylineColors[index1],
+                  strokeOpacity: 1.0,
+                  strokeWeight: 5,
+                }"
+              />
+              <Marker
+                v-for="(attraction, index2) in scheduleDate"
+                :key="`${attraction.planScheduleId}-${index1}`"
+                :options="{
+                  position: {
+                    lat: parseFloat(planLocations[index1][index2].latitude),
+                    lng: parseFloat(planLocations[index1][index2].longitude),
+                  },
+                  icon: getMarkerIcon(index1),
+                  label: {
+                    text: `${index2 + 1}`,
+                    color: 'black',
+                    fontWeight: 'bold',
+                    fontSize: '20px',
+                  },
+                  zIndex: 9999,
+                }"
+                @click="toggleAccordion(index1)"
+              />
+            </div>
           </GoogleMap>
         </div>
         <!-- Details Section -->
         <div class="col-md-6">
           <!-- Thumbnail -->
           <div class="mb-3">
-            <label for="thumbnailInput" class="form-label">🖼️ 대표 사진 지정하기</label>
+            <label for="thumbnailInput" class="form-label"
+              >🖼️ 대표 사진 지정하기</label
+            >
             <input
               class="form-control"
               type="file"
@@ -350,6 +329,7 @@ const onThumbnailChange = (event) => {
                 :inputFormat="inputFormat"
                 :clearable="true"
                 class="form-control"
+                :disabled="getDataBoolean"
               />
             </div>
             <div>
@@ -361,6 +341,7 @@ const onThumbnailChange = (event) => {
                 :inputFormat="inputFormat"
                 :clearable="true"
                 class="form-control"
+                :disabled="getDataBoolean"
               />
             </div>
           </div>
@@ -373,6 +354,7 @@ const onThumbnailChange = (event) => {
               type="number"
               min="1"
               placeholder="1"
+              :disabled="getDataBoolean"
             />
           </div>
           <!-- Write Content -->
@@ -381,7 +363,12 @@ const onThumbnailChange = (event) => {
           </div>
           <!-- 여행 (plan) 에서 가져오기 -->
           <div class="mb-3">
-            <button id="btn-get" @click="getDataListPlan" type="submit" class="btn w-100">
+            <button
+              id="btn-get"
+              @click="getDataListPlan"
+              type="submit"
+              class="btn w-100"
+            >
               여행에서 불러오기
             </button>
             <select
@@ -390,7 +377,11 @@ const onThumbnailChange = (event) => {
               v-model="selectedPlan"
             >
               <option value="" disabled selected>여행을 선택하세요</option>
-              <option v-for="plan in plans" :key="plan.planId" :value="plan.planId">
+              <option
+                v-for="plan in plans"
+                :key="plan.planId"
+                :value="plan.planId"
+              >
                 {{ plan.title }} | 기간: {{ plan.startDate }} -
                 {{ plan.endDate }}
               </option>
@@ -408,8 +399,15 @@ const onThumbnailChange = (event) => {
             />
           </div>
           <div class="text-center mb-4">
-            <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
-              <button class="btn btn-outline-secondary m-1" @click="addTag(tag)">
+            <div
+              v-for="tag in tagResults"
+              :key="tag.tagTypeId"
+              class="d-inline-block"
+            >
+              <button
+                class="btn btn-outline-secondary m-1"
+                @click="addTag(tag)"
+              >
                 {{ tag.name }} <i class="bi bi-x" @click="removeTag(tag)"></i>
               </button>
             </div>
@@ -421,34 +419,24 @@ const onThumbnailChange = (event) => {
               :key="selectedTag.tagTypeId"
               class="d-inline-block"
             >
-              <button class="btn btn-outline-secondary m-1" @click="removeTag(selectedTag)">
+              <button
+                class="btn btn-outline-secondary m-1"
+                @click="removeTag(selectedTag)"
+              >
                 {{ selectedTag.name }}
               </button>
             </div>
           </div>
           <!-- Insert Article Button -->
           <div class="text-center">
-            <button id="btn-insert" @click="insertArticle" type="submit" class="btn w-100">
+            <button
+              id="btn-insert"
+              @click="insertArticle"
+              type="submit"
+              class="btn w-100"
+            >
               등록
             </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Attraction Description Modal -->
-    <div v-if="showModal" class="modal fade show d-block" tabindex="-1" role="dialog">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ selectedLocation.title }}</h5>
-          </div>
-          <div class="modal-body">
-            <img :src="selectedLocation.image" class="img-fluid" />
-            <p>주소 : {{ selectedLocation.addr }}</p>
-            <p>{{ selectedLocation.overview }}</p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showModal = false">닫기</button>
           </div>
         </div>
       </div>

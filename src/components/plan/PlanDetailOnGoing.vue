@@ -4,6 +4,8 @@ import { GoogleMap, Marker, Polyline } from "vue3-google-map";
 import { localAxios } from "@/util/http-commons";
 import { useRoute, useRouter } from "vue-router";
 import PlanLiveChat from "@/components/plan/item/PlanLiveChat.vue";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 const route = useRoute();
@@ -269,17 +271,56 @@ const printMarkerLocations = (index) => {
 };
 
 const submitUpdatedDetail = async () => {
-  try {
-    // planDto 내용을 planInfo에 병합
-    planInfo.value.planDto = { ...planDto.value };
-
-    // 업데이트된 planInfo를 서버로 전송
-    await local.put(`/plans/update/${planId}`, planInfo.value);
-    alert("성공!");
+  planInfo.value.planDto = { ...planDto.value };
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+    },
+    buttonsStyling: true,
+  });
+  swalWithBootstrapButtons;
+  local.put(`/plans/update/${planId}`, planInfo.value).then(() => {
+    swalWithBootstrapButtons.fire({
+      title: "수정 완료",
+      icon: "success",
+    });
     router.push({ name: "plan-list" });
-  } catch (error) {
-    console.error("여행 계획 수정에 실패하였습니다:", error);
-  }
+  });
+};
+
+const deletePlan = () => {
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
+  });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local.delete(`/plans/delete/${planId}`).then(() => {
+          swalWithBootstrapButtons.fire({
+            title: "삭제 완료",
+            icon: "success",
+          });
+          router.push({ name: "plan-list" });
+        });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
 
 const addPaymentDetail = () => {
@@ -333,6 +374,7 @@ const showDetail = (location) => {
       showModal.value = true;
     });
 };
+
 const showNewMarkerModal = ref(false);
 const showAddModal = () => {
   showNewMarkerModal.value = !showNewMarkerModal.value;
@@ -467,7 +509,7 @@ onMounted(() => {
           :zoom="zoom"
           @click="addMarker"
         >
-          <div v-for="(scheduleDate, index1) in planLocations">
+          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
             <Polyline
               :options="{
                 path: printMarkerLocations(index1),
@@ -520,8 +562,11 @@ onMounted(() => {
     <div class="details">
       <label class="mb-0">📝 제목 </label>
       <div class="title-section">
-        <input type="text" v-model="planDto.title" />
+        <input type="text" v-model="planDto.title" required />
         <button class="btn-submit" @click="submitUpdatedDetail">수정</button>
+        <button class="btn-delete" @click="deletePlan" tpye="button">
+          삭제
+        </button>
       </div>
       <div class="members-section">
         <label>👨‍👩‍👦 참여 멤버</label>
@@ -947,7 +992,7 @@ button:hover {
 .modal {
   display: block; /* Hidden by default */
   position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
+  z-index: 5; /* Sit on top */
   left: 0;
   top: 0;
   width: 100%; /* Full width */
@@ -1214,6 +1259,18 @@ button:hover {
   background-color: #547586;
 }
 
+.btn-delete {
+  background-color: #acb8be;
+  border: none;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+  width: 80px;
+  height: 80%;
+  margin-left: 10px;
+  border-radius: 8px;
+}
+
 .btn-remove {
   color: black;
   text-decoration: none;
@@ -1225,7 +1282,7 @@ button:hover {
   color: rgb(44, 44, 44);
   padding: 4px 7px;
   margin: 5px 0;
-  z-index: 9999;
+  z-index: 5;
   position: absolute;
   top: 5px;
   right: 60px;
