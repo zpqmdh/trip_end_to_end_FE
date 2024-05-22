@@ -29,7 +29,7 @@ const newMemberId = ref("");
 const allMemberList = ref([]);
 const searchQuery = ref("");
 const filteredMemberList = ref([]);
-
+let selectDate = "";
 const mapRef = ref(null);
 const locations = ref([]);
 const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
@@ -253,7 +253,11 @@ const addPlanLocation = (date_index, title, latitude, longitude, contentId) => {
     title: title,
   });
   showModal.value = false;
-  console.log(planLocations.value);
+  toggleAll(false);
+  setTimeout(function () {
+    toggleAll(true);
+  }, 50);
+  selectDate = "";
 };
 
 const showDetail = (location) => {
@@ -370,6 +374,12 @@ onMounted(() => {
           v-model="searchOption.keyword"
         />
         <button id="btn-search" class="btn btn-outline-success" type="button" @click="search">
+        <button
+          id="btn-search"
+          class="btn-search"
+          type="button"
+          @click="search"
+        >
           검색
         </button>
       </form>
@@ -378,7 +388,7 @@ onMounted(() => {
         <GoogleMap
           ref="mapRef"
           :api-key="VITE_GOOGLE_MAP_KEY"
-          style="height: 800px"
+          style="height: 1200px; width: 700px"
           :center="center"
           :zoom="zoom"
         >
@@ -398,28 +408,45 @@ onMounted(() => {
     </div>
     <!-- 여행 정보 상세 -->
     <div class="details">
+      <label class="mb-0">📝 제목 </label>
       <div class="title-section">
-        <label>
-          제목
-          <input type="text" v-model="planDto.title" />
-        </label>
+        <input type="text" v-model="planDto.title" />
+        <button class="btn-submit" @click="submitUpdatedDetail">수정</button>
       </div>
       <div class="members-section">
-        <label>참여 멤버</label>
+        <label>👨‍👩‍👦 참여 멤버</label>
         <div v-if="loading">로딩중</div>
         <div v-if="!loading" class="members-list">
-          <div v-for="(member, index) in memberIds" :key="index" class="member-profile">
-            <img :src="memberList[index].image" alt="프로필 이미지" class="profile-image" />
-            <p>{{ memberList[index].nickname }}</p>
-            <button class="btn btn-remove" @click="removeMember(index)">X</button>
+
+          <div
+            v-for="(member, index) in memberIds"
+            :key="index"
+            class="member-profile"
+          >
+            <img
+              :src="memberList[index].image"
+              alt="프로필 이미지"
+              class="profile-image mb-0"
+            />
+            <p class="mb-0 mt-1">{{ memberList[index].nickname }}</p>
+            <button
+              class="btn btn-remove mt-0"
+              style="padding: 0px; color: gray"
+              @click="removeMember(index)"
+            >
+              X
+            </button>
+
           </div>
           <div class="addMember">
-            <button class="btn btn-link" @click="openMemberModal"></button>
-            <p>추가</p>
+            <button @click="openMemberModal">
+              <i class="bi bi-person-plus"></i>
+            </button>
+            <p class="center">추가</p>
           </div>
         </div>
         <div v-if="showMemberModal" class="modal">
-          <div class="modal-content">
+          <div class="modal-content add-member">
             <span class="close" @click="showMemberModal = false">&times;</span>
             <h2>멤버 검색</h2>
             <input
@@ -428,18 +455,21 @@ onMounted(() => {
               @input="filterMembers"
               placeholder="닉네임 검색"
             />
-            <ul>
-              <li v-for="member in filteredMemberList" :key="member.memberId">
-                {{ member.nickname }}
-                <button @click="addMember(member)">추가</button>
-              </li>
-            </ul>
+            <div v-show="searchQuery.length > 0">
+              <ul class="member-list">
+                <li v-for="member in filteredMemberList" :key="member.memberId">
+                  <button class="member-button" @click="addMember(member)">
+                    {{ member.nickname }}
+                  </button>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="date-section">
-        <label>여행 기간</label>
+        <label>📆 여행 기간</label>
         <div class="date-inputs">
           <input type="date" v-model="planDto.startDate" />
           <span class="mt-2">~</span>
@@ -448,10 +478,25 @@ onMounted(() => {
       </div>
 
       <div class="schedule-section">
+
         <label>여행 일정</label>
         <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
         <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
         <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
+
+        <label>🕘 여행 일정</label>
+        <button @click="toggleAll(true)" class="btn btn-light">
+          모두 열기
+        </button>
+        <button @click="toggleAll(false)" class="btn btn-light">
+          모두 닫기
+        </button>
+        <div
+          v-for="(date, index1) in scheduleDates"
+          :key="index1"
+          class="day-schedule"
+        >
+
           <div
             @click="toggleAccordion(index1)"
             :class="['schedule-date', `color-${(index1 % 4) + 1}`]"
@@ -490,15 +535,26 @@ onMounted(() => {
       </div>
 
       <div class="booking-section">
-        <label>예약 내역</label>
-        <div v-for="(content, index) in bookContents" :key="index">
+        <label>🚊 예약 내역</label>
+        <div
+          v-for="(content, index) in bookContents"
+          :key="index"
+          style="display: flex"
+        >
           <input type="text" v-model="bookContents[index].content" />
-          <button class="btn btn-remove" @click="removeBookContent(index)">X</button>
+
+          <button
+            class="btn btn-remove mb-2"
+            style="color: gray"
+            @click="removeBookContent(index)"
+          >
+            X
+          </button>
         </div>
         <button class="btn btn-outline-secondary" @click="addBookContent">+</button>
       </div>
       <div class="payment-section">
-        <label>결제 내역</label>
+        <label>💰 결제 내역</label>
         <table>
           <colgroup>
             <col style="width: 20%" />
@@ -538,13 +594,19 @@ onMounted(() => {
               </td>
               <td>
                 <button class="btn btn-remove" @click="removePaymentDetail(index)">X</button>
+                <button
+                  class="btn btn-remove mb-2"
+                  @click="removePaymentDetail(index)"
+                  style="color: gray"
+                >
+                  X
+                </button>
               </td>
             </tr>
           </tbody>
         </table>
         <button class="btn btn-outline-secondary" @click="addPaymentDetail">+</button>
       </div>
-      <button class="btn btn-link" @click="submitUpdatedDetail">수정</button>
     </div>
   </div>
   <!-- Attraction Description Modal -->
@@ -561,7 +623,14 @@ onMounted(() => {
         </div>
         <div class="modal-footer">
           <select name="selectDate" id="selectDate" v-model="selectedDate">
-            <option v-for="(schedule, index) in scheduleDates" :key="index" :value="index">
+
+            <option disabled value="">날짜 선택</option>
+            <option
+              v-for="(schedule, index) in scheduleDates"
+              :key="index"
+              :value="index"
+            >
+
               {{ schedule.date }}
             </option>
           </select>
@@ -617,6 +686,11 @@ body {
   gap: 20px;
 }
 
+.title-section {
+  display: flex;
+  height: 60px;
+}
+
 .title-section,
 .members-section,
 .booking-section,
@@ -631,7 +705,7 @@ body {
 .schedule-section label,
 .payment-section label {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .date-section {
@@ -651,12 +725,15 @@ body {
 
 input[type="text"],
 input[type="date"],
+input[type="time"],
 select,
 .form-control {
   width: 100%;
   padding: 10px;
   margin-bottom: 10px;
   box-sizing: border-box;
+  border: 1px solid rgb(176, 176, 176);
+  border-radius: 10px;
 }
 
 table {
@@ -672,7 +749,7 @@ table td {
 }
 
 button:hover {
-  background: #0056b3;
+  background: #9a9a9a;
 }
 
 .modal {
@@ -690,10 +767,13 @@ button:hover {
 
 .modal-content {
   background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
+  margin: 10% auto;
   padding: 20px;
   border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
+  width: 500px;
+  height: auto;
+  align-content: center;
+  flex-direction: column;
 }
 
 .close {
@@ -747,6 +827,7 @@ button:hover {
 
 .schedule-date {
   width: 100px;
+  margin: 10px 0;
 }
 
 .schedule-date.color-1 {
@@ -795,7 +876,7 @@ button:hover {
 
 .styled-table th {
   background-color: #f2f2f2; /* Add background color to table headers */
-  text-align: left; /* Align text to the left in table headers */
+  text-align: left;
 }
 
 .styled-table tr:nth-child(even) {
@@ -818,24 +899,26 @@ button:hover {
   border-bottom-right-radius: 10px; /* Bottom-right corner */
 }
 
-.addMember {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 10px;
+.addMember p {
+  margin-top: 4px;
+  text-align: center;
 }
 
 .addMember button {
   display: flex;
-  width: 50px; /* 원하는 크기로 조정 */
-  height: 50px; /* 원하는 크기로 조정 */
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
   border: none;
-  background-image: url("https://cdn.icon-icons.com/icons2/3428/PNG/512/users_person_user_account_avatar_profile_add_icon_218731.png");
-  background-size: cover;
-  background-position: center;
-  border-radius: 50%; /* 원형 버튼 */
+  border-radius: 50%;
   cursor: pointer;
-  background-color: #e9e3e3;
+  background-color: rgb(230, 230, 230); /* 투명 배경 */
+}
+
+.addMember button i {
+  font-size: 24px; /* 아이콘 크기 조절 */
+  color: black; /* 아이콘 색상 */
 }
 
 .btn {
@@ -847,6 +930,29 @@ button:hover {
   text-decoration: none;
   cursor: pointer;
   border-radius: 4px;
+}
+
+.btn-search {
+  width: 200px;
+  height: 45px;
+
+  background-color: transparent;
+  color: #6c757d;
+  border: 2px solid #6c757d;
+  border-radius: 8px;
+}
+
+.btn-search:hover {
+  background-color: #6c757d;
+  color: white;
+  border: 2px solid #6c757d;
+  border-radius: 8px;
+}
+
+.btn-light {
+  background-color: #e4e4e4;
+  margin-bottom: 5px;
+  margin-right: 10px;
 }
 
 .btn-primary {
@@ -862,9 +968,11 @@ button:hover {
 }
 
 .btn-outline-secondary {
+  width: 92%;
   background-color: transparent;
   color: #6c757d;
-  border: 2px solid #6c757d;
+  border: 1px solid #6c757d;
+  border-radius: 8px;
 }
 
 .btn-outline-primary:hover,
@@ -872,12 +980,20 @@ button:hover {
   background-color: #f0f2f5;
 }
 
-.btn-link {
+.btn-submit {
   background-color: #577b8d;
   border: none;
   color: white;
   text-decoration: none;
   cursor: pointer;
+  width: 80px;
+  height: 80%;
+  margin-left: 10px;
+  border-radius: 8px;
+}
+
+.btn-submit:hover {
+  background-color: #547586;
 }
 
 .btn-remove {
@@ -894,5 +1010,34 @@ button:hover {
   margin: 0 auto;
   max-width: 80%;
   height: auto;
+}
+
+/* ul과 li 스타일 설정 */
+.member-list {
+  list-style-type: none; /* 불릿 기호 제거 */
+  padding: 0;
+  margin: 0;
+}
+
+.member-list li {
+  margin-bottom: 10px;
+}
+
+/* 버튼 스타일 설정 */
+.member-button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none; /* 버튼 스타일 제거 */
+  background: none; /* 배경 제거 */
+  text-align: left; /* 텍스트 왼쪽 정렬 */
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease; /* 부드러운 전환 효과 */
+}
+
+/* Hover 효과 */
+.member-button:hover {
+  background-color: #f0f0f0; /* 밝은 회색 */
 }
 </style>
