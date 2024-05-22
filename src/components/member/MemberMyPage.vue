@@ -89,7 +89,8 @@ const loadMemberDetails = async () => {
       phoneNumber: data.phoneNumber,
     };
     if (!member.value.image.startsWith("http")) {
-      member.value.image = `http://${VITE_LOCALHOST_URL}/products/` + member.value.image;
+      member.value.image =
+        `http://${VITE_LOCALHOST_URL}/products/` + member.value.image;
     }
   } catch (error) {
     Swal.fire({
@@ -100,7 +101,27 @@ const loadMemberDetails = async () => {
   }
 };
 
-onMounted(loadMemberDetails);
+const searchOption = ref({
+  sido: 0,
+});
+
+const makeOption = (data) => {
+  let areas = data.sidoList;
+  let sel = document.getElementById("search-area");
+  areas.forEach((area) => {
+    let opt = document.createElement("option");
+    opt.setAttribute("value", area.sidoCode);
+    opt.appendChild(document.createTextNode(area.sidoName));
+    sel.appendChild(opt);
+  });
+};
+
+onMounted(() => {
+  loadMemberDetails();
+  local.get("/shareplan/map/sido").then(({ data }) => {
+    makeOption(data);
+  });
+});
 
 const handleUpdate = async () => {
   // 회원 정보 수정
@@ -197,11 +218,19 @@ const handleDelete = async () => {
           @drop.prevent="handleDrop"
           :class="{ 'drag-over': isDragActive }"
         >
-          <input type="file" @change="handleFileChange" class="d-none" ref="fileInput" />
+          <input
+            type="file"
+            @change="handleFileChange"
+            class="d-none"
+            ref="fileInput"
+          />
           <div v-if="fileNames.length == 0">
             <p class="mb-0">프로필 사진을 등록하세요</p>
           </div>
-          <div v-if="fileNames.length > 0" class="d-flex justify-content-center">
+          <div
+            v-if="fileNames.length > 0"
+            class="d-flex justify-content-center"
+          >
             <p class="mb-0"><strong>파일명:</strong></p>
             <ul class="list-inline mb-0">
               <p v-for="(name, index) in fileNames" :key="index" class="mb-0">
@@ -222,32 +251,68 @@ const handleDelete = async () => {
       <form class="member-details-form">
         <div class="form-group">
           <label for="name">이름</label>
-          <input v-model="member.name" type="text" id="name" placeholder="이름" />
+          <input
+            v-model="member.name"
+            type="text"
+            id="name"
+            placeholder="이름"
+          />
         </div>
         <div class="form-group">
           <label for="birthdate">생년월일</label>
-          <input v-model="member.birthdate" type="date" id="birthdate" placeholder="생년월일" />
+          <input
+            v-model="member.birthdate"
+            type="date"
+            id="birthdate"
+            placeholder="생년월일"
+          />
         </div>
         <div class="form-group">
           <label for="email">이메일</label>
-          <input v-model="member.emailId" type="text" id="email" placeholder="이메일" />
+          <input
+            v-model="member.emailId"
+            type="text"
+            id="email"
+            placeholder="이메일"
+          />
         </div>
         <div class="form-group">
           <label for="area">지역</label>
-          <input v-model="member.area" type="text" id="area" placeholder="지역" />
+          <select
+            id="search-area"
+            class="form-select"
+            style="height: 45px"
+            name="sidoCode"
+            v-model="member.area"
+          >
+            <option value="member.area" selected>검색 할 지역 선택</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="sex">성별</label>
-          <input v-model="member.sex" type="text" id="sex" placeholder="성별" />
+          <select v-model="member.sex" class="form-select" style="height: 45px">
+            <option value="member.sex" selected></option>
+            <option value="0">남</option>
+            <option value="1">여</option>
+          </select>
         </div>
         <div class="form-group">
           <label for="phoneNumber">휴대폰</label>
-          <input v-model="member.phoneNumber" type="text" id="phoneNumber" placeholder="휴대폰" />
+          <input
+            v-model="member.phoneNumber"
+            type="text"
+            id="phoneNumber"
+            placeholder="휴대폰"
+          />
         </div>
         <div class="button-group">
           <button type="button" @click="handleUpdate">회원 정보 수정</button>
-          <button type="button" @click="handlePasswordChange">비밀번호 변경</button>
-          <button type="button" class="btn btn-secondary" @click="handleDelete">회원탈퇴</button>
+          <button type="button" @click="handlePasswordChange">
+            비밀번호 변경
+          </button>
+          <button type="button" class="btn btn-secondary" @click="handleDelete">
+            회원탈퇴
+          </button>
         </div>
       </form>
     </div>
