@@ -19,7 +19,7 @@ var dateString = year + "-" + month + "-" + day;
 const todayDate = new Date(dateString);
 const getOnGoingPlanList = async () => {
   const id = loginedId;
-  local.get(`/plans/list/${id}`).then(({ data }) => {
+  local.get(`/plans/list/all/${id}`).then(({ data }) => {
     onGoingPlanList.value = data.filter(
       (plan) => new Date(plan.endDate) > todayDate
     );

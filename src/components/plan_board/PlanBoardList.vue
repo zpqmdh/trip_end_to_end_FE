@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, onUpdated } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import PlanBoardCard from "./item/PlanBoardCard.vue";
@@ -22,7 +22,9 @@ const getArticleList = async () => {
 onMounted(() => {
   getArticleList();
 });
-
+onUpdated(() => {
+  getArticleList();
+});
 const searchTag = () => {
   if (!tagName.value.trim()) {
     tagResults.value = [];
@@ -34,7 +36,9 @@ const searchTag = () => {
 };
 
 const filterTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (tagIndex === -1) {
     filteredTag.value.push(tag);
   } else {
@@ -43,18 +47,24 @@ const filterTag = (tag) => {
 
   filteredArticleList.value = planArticleList.value.filter((article) => {
     return filteredTag.value.every((filter) => {
-      return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
+      return article.tagList.some(
+        (item) => item.tagTypeId === filter.tagTypeId
+      );
     });
   });
 };
 
 const removeTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (tagIndex !== -1) {
     filteredTag.value.splice(tagIndex, 1);
     filteredArticleList.value = planArticleList.value.filter((article) => {
       return filteredTag.value.every((filter) => {
-        return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
+        return article.tagList.some(
+          (item) => item.tagTypeId === filter.tagTypeId
+        );
       });
     });
   }
@@ -69,7 +79,9 @@ const moveWrite = () => {
   <div class="container">
     <h1 class="text-center">🚗 다녀온 여행 공유</h1>
     <div class="text-center mb-4">
-      <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">게시글 작성하기</button>
+      <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">
+        게시글 작성하기
+      </button>
     </div>
     <form class="text-center mb-4">
       <div class="form-row justify-content-center">
@@ -87,7 +99,11 @@ const moveWrite = () => {
       </div>
     </form>
     <div class="text-center mb-4">
-      <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
+      <div
+        v-for="tag in tagResults"
+        :key="tag.tagTypeId"
+        class="d-inline-block"
+      >
         <button
           class="btn btn-outline-secondary m-1"
           @click.prevent="filterTag(tag)"
@@ -101,7 +117,11 @@ const moveWrite = () => {
     <div class="text-center mb-4">
       <div v-if="filteredTag.length > 0">
         <h5>검색 결과</h5>
-        <div v-for="tag in filteredTag" :key="tag.tagTypeId" class="d-inline-block">
+        <div
+          v-for="tag in filteredTag"
+          :key="tag.tagTypeId"
+          class="d-inline-block"
+        >
           <button
             class="btn btn-outline-secondary m-1"
             @click.prevent="removeTag(tag)"

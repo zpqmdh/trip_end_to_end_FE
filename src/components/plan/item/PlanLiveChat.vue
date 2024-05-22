@@ -12,10 +12,17 @@ const props = defineProps({
   },
 });
 const local = localAxios();
+
+const colors = ["blue-message", "purple-message", "orange-message"];
 const chatObject = ref({
   showToggle: true,
   stompClient: null,
-  nickname: "",
+  member: {
+    memberId: "",
+    nickname: "",
+    image: "",
+    colorIdx: "",
+  },
   content: "",
   currentChannel: null,
   connected: false,
@@ -42,23 +49,35 @@ const checkDate = () => {
 };
 
 const toggleChat = () => {
-  // 채널 이름 입력받고 연결
   if (!chatObject.value.showChat && chatObject.value.currentChannel === null) {
-    chatObject.value.currentChannel = prompt("Enter channel name:");
-    if (chatObject.value.currentChannel === null) return;
-    connect();
+    getCurrentChannel();
   }
   chatObject.value.showChat = !chatObject.value.showChat;
 };
+const getCurrentChannel = () => {
+  local.get(`/plans/detail/${props.planDto.planId}`).then(({ data }) => {
+    chatObject.value.currentChannel = data.planDto.planId;
+    if (chatObject.value.currentChannel === null) return;
+    checkAuthorization(data.memberIds);
+  });
+};
+const checkAuthorization = (memberList) => {
+  console.log(memberList);
+  let flag = false;
+  memberList.forEach((member) => {
+    if (member.memberId == chatObject.value.member.memberId) flag = true;
+  });
+  if (flag) connect(); // 해당 여행 계획에 포함되어 있어야만 채팅채널에 접근 가능
+};
 
-const getMessageClass = (messageType) => {
+const getMessageClass = (messageType, colorIdx) => {
   switch (messageType) {
     case "JOIN":
       return "join-message";
     case "LEAVE":
       return "leave-message";
     case "SEND":
-      return "send-message";
+      return `${colors[colorIdx]} send-message`;
     default:
       return "";
   }
@@ -83,10 +102,20 @@ const connect = () => {
           showMessage(JSON.parse(message.body));
         }
       );
+      // connect 할 때 임의로 배경색 지정 -> 유저마다 별도의 고유값 할당
+      const colorIdx = Math.floor(Math.random() * colors.length);
+      chatObject.value.member.colorIdx = colorIdx;
+
       chatObject.value.stompClient.send(
         `/app/chat.addUser/${chatObject.value.currentChannel}`,
         {},
-        JSON.stringify({ nickname: chatObject.value.nickname, content: "JOIN", type: "JOIN" })
+        JSON.stringify({
+          nickname: chatObject.value.member.nickname,
+          image: chatObject.value.member.image,
+          content: "JOIN",
+          type: "JOIN",
+          colorIdx: chatObject.value.member.colorIdx,
+        })
       );
     },
     (error) => {
@@ -100,7 +129,13 @@ const disconnect = () => {
     chatObject.value.stompClient.send(
       `/app/chat.leaveUser/${chatObject.value.currentChannel}`,
       {},
-      JSON.stringify({ nickname: chatObject.value.nickname, content: "LEAVE", type: "LEAVE" })
+      JSON.stringify({
+        nickname: chatObject.value.member.nickname,
+        image: chatObject.value.member.image,
+        content: "LEAVE",
+        type: "LEAVE",
+        colorIdx: chatObject.value.member.colorIdx,
+      })
     );
     chatObject.value.stompClient.disconnect(() => {
       setConnected(false);
@@ -110,16 +145,17 @@ const disconnect = () => {
     chatObject.value.currentChannel = null;
   }
 };
-
 const sendMessage = () => {
   if (chatObject.value.content && chatObject.value.stompClient) {
     chatObject.value.stompClient.send(
       `/app/chat.sendMessage/${chatObject.value.currentChannel}`,
       {},
       JSON.stringify({
-        nickname: chatObject.value.nickname,
+        nickname: chatObject.value.member.nickname,
+        image: chatObject.value.member.image,
         content: chatObject.value.content,
         type: "SEND",
+        colorIdx: chatObject.value.member.colorIdx,
       })
     );
     chatObject.value.content = "";
@@ -127,31 +163,17 @@ const sendMessage = () => {
 };
 
 const showMessage = (message) => {
-  let displayMessage;
-  switch (message.type) {
-    case "JOIN":
-      displayMessage = `${message.nickname}님이 입장하셨습니다.`;
-      break;
-    case "LEAVE":
-      displayMessage = `${message.nickname}님이 퇴장하셨습니다.`;
-      break;
-    case "SEND":
-      displayMessage = `${message.nickname}: ${message.content}`;
-      break;
-    default:
-      displayMessage = `알 수 없는 메시지 타입: ${message.type}`;
-  }
-  chatObject.value.messages.push({
-    nickname: message.nickname,
-    content: displayMessage,
-    type: message.type,
-  });
+  chatObject.value.messages.push(message);
 };
 
 const getMember = async () => {
   const loginedId = decodedTokenFunc();
   const response = await local.get(`/members/detail/${loginedId}`);
-  chatObject.value.nickname = response.data.nickname;
+  chatObject.value.member.memberId = response.data.memberId;
+  chatObject.value.member.image = response.data.image;
+  chatObject.value.member.nickname = response.data.nickname;
+  chatObject.value.member.backgroundColor = colors[response.data.colorIdx];
+  console.log(chatObject.value);
 };
 
 onMounted(() => {
@@ -195,8 +217,30 @@ onBeforeRouteLeave((to, from, next) => {
           </button>
         </div>
         <div class="chat-box" ref="chatBox">
-          <div v-for="(message, index) in chatObject.messages" :key="index" :class="message.type">
-            <div :class="getMessageClass(message.type)">{{ message.content }}</div>
+          <div
+            v-for="(message, index) in chatObject.messages"
+            :key="index"
+            :class="message.type"
+          >
+            <div
+              :class="getMessageClass(message.type, message.colorIdx)"
+              class="message-bubble"
+            >
+              <template v-if="message.type === 'SEND'">
+                <img
+                  :src="message.image"
+                  class="profile-img"
+                  alt="Profile Image"
+                />
+                <div class="message-content">
+                  <div class="nickname">{{ message.nickname }}</div>
+                  <div class="content">{{ message.content }}</div>
+                </div>
+              </template>
+              <template v-else>
+                <div class="content">{{ message.content }}</div>
+              </template>
+            </div>
           </div>
         </div>
         <div class="input-container">
@@ -206,9 +250,14 @@ onBeforeRouteLeave((to, from, next) => {
             id="userInput"
             placeholder="메시지를 입력하세요..."
             v-model="chatObject.content"
-            @keydown.enter="sendMessage"
+            @keyup.enter="sendMessage"
           />
-          <button @click.prevent="sendMessage" class="btn btn-outline-secondary">Send</button>
+          <button
+            @click.prevent="sendMessage"
+            class="btn btn-outline-secondary"
+          >
+            전송
+          </button>
         </div>
       </div>
     </div>
@@ -234,8 +283,8 @@ onBeforeRouteLeave((to, from, next) => {
   position: fixed;
   top: 150px;
   right: 0;
-  width: 300px;
-  height: 400px;
+  width: 400px;
+  height: 600px;
   background: white;
   border: 1px solid #ccc;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
@@ -266,7 +315,6 @@ onBeforeRouteLeave((to, from, next) => {
 }
 
 .message-bubble {
-  background: #e1ffc7;
   border-radius: 10px;
   padding: 5px 10px;
   margin-bottom: 5px;
@@ -286,13 +334,46 @@ onBeforeRouteLeave((to, from, next) => {
 
 .join-message {
   background-color: #d4edda;
+  text-align: center;
 }
 
 .leave-message {
   background-color: #f8d7da;
+  text-align: center;
 }
 
 .send-message {
-  background-color: #cce5ff;
+  display: flex;
+  align-items: center;
+}
+
+.blue-message {
+  background-color: #d2e1ea;
+}
+
+.purple-message {
+  background-color: #e0d3ea;
+}
+.orange-message {
+  background-color: #eedfd8;
+}
+.profile-img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.nickname {
+  font-weight: bold;
+}
+
+.content {
+  margin-top: 5px;
 }
 </style>

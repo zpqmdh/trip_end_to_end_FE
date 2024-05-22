@@ -167,8 +167,12 @@ const getMemberNicknames = async () => {
   const memberPromises = memberIds.value.map(async (member, index) => {
     try {
       const { data } = await local.get(`/plans/getMember/${member.memberId}`);
+      console.log(data);
       memberList.value[index] = data;
-      if (!memberList.value[index].image.startsWith("http")) {
+      if (
+        memberList.value[index].image &&
+        !memberList.value[index].image.startsWith("http")
+      ) {
         memberList.value[index].image =
           "http://localhost/products/" + memberList.value[index].image;
       }
