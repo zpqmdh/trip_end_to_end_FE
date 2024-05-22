@@ -267,14 +267,23 @@ const handleDelete = async () => {
             placeholder="생년월일"
           />
         </div>
-        <div class="form-group">
+        <div class="form-email">
           <label for="email">이메일</label>
-          <input
-            v-model="member.emailId"
-            type="text"
-            id="email"
-            placeholder="이메일"
-          />
+          <div style="display: flex">
+            <input
+              v-model="member.emailId"
+              type="text"
+              id="email"
+              placeholder="이메일"
+            />
+            <p style="margin: 2px 5px; margin-top: 9px">@</p>
+            <input
+              v-model="member.emailDomain"
+              type="text"
+              id="email"
+              placeholder="이메일"
+            />
+          </div>
         </div>
         <div class="form-group">
           <label for="area">지역</label>
@@ -370,6 +379,21 @@ const handleDelete = async () => {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  width: 400px;
+}
+
+.form-email input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 187px;
+}
+
+.form-group select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 400px;
 }
 
 .button-group {
