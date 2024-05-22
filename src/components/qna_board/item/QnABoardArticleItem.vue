@@ -1,10 +1,42 @@
 <script setup>
 import { useRouter } from "vue-router";
-defineProps({ article: Object });
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
+
+const prop = defineProps({ article: Object });
 
 const router = useRouter();
 const mvDetail = (id) => {
-  router.push({ name: "qna-detail", params: { id: id } });
+  if (prop.article.secret != 0) {
+    Swal.fire({
+      title: "🔒 비밀번호가 설정된 게시글입니다.",
+      text: "비밀번호를 입력해주세요",
+      input: "password",
+      inputAttributes: {
+        autocapitalize: "off",
+      },
+      showCancelButton: true,
+      confirmButtonText: "확인",
+      showLoaderOnConfirm: true,
+      preConfirm: (password) => {
+        console.log(password);
+        if (password == prop.article.password) {
+          Swal.fire({
+            icon: "success",
+            title: "확인되었습니다.",
+          });
+          router.push({ name: "qna-detail", params: { id: id } });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "비밀번호가 일치하지 않습니다",
+          });
+        }
+      },
+    });
+  } else {
+    router.push({ name: "qna-detail", params: { id: id } });
+  }
 };
 </script>
 <template>

@@ -3,7 +3,8 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
-
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 const route = useRoute();
 const router = useRouter();
 const local = localAxios();
@@ -35,10 +36,38 @@ const getAuthor = () => {
   });
 };
 const deleteArticle = () => {
-  // TODO: delete 할건지 물어보기
-  local.delete(`/qna/${article.value.qnaBoardDto.qnaBoardId}`).then(({ data }) => {
-    router.push({ name: "qna-list" });
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
   });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local.delete(`/qna/${article.value.qnaBoardDto.qnaBoardId}`).then(({ data }) => {
+          swalWithBootstrapButtons.fire({
+            title: "삭제 완료",
+            icon: "success",
+          });
+          router.push({ name: "qna-list" });
+        });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
 
 const newComment = ref({
@@ -83,24 +112,45 @@ onMounted(() => {
   getQnADetail(route.params.id);
   getMember();
 });
+
+const mvList = () => {
+  router.push({ name: "qna-list" });
+};
+const mvModify = () => {
+  router.push({ name: "qna-modify", params: { id: article.value.qnaBoardDto.qnaBoardId } });
+};
 </script>
+
 <template>
-  <div class="container">
+  <div class="d-flex justify-content-center mt-3">
+    <h1>❓ 문의 게시판</h1>
+  </div>
+  <div class="container" id="main">
     <!-- Main Section -->
-    <div class="main">
+    <div class="d-flex justify-content-center">
       <h2>{{ article.qnaBoardDto.subject }}</h2>
-      <div class="meta">
-        <span class="author">👤 작성자: {{ author.nickname }}</span>
-        <span class="divider">|</span>
-        <span class="views">👁 조회수: {{ article.qnaBoardDto.hit }}</span>
-        <span class="divider">|</span>
-        <span class="time">🕒 {{ article.qnaBoardDto.registerTime }}</span>
-      </div>
-      <div class="content">{{ article.qnaBoardDto.content }}</div>
+    </div>
+    <hr />
+
+    <div class="meta">
+      <span class="author">👤 작성자: {{ author.nickname }}</span>
+      <span class="divider">|</span>
+      <span class="views">👁 조회수: {{ article.qnaBoardDto.hit }}</span>
+      <span class="divider">|</span>
+      <span class="time">🕒 {{ article.qnaBoardDto.registerTime }}</span>
+    </div>
+    <div class="content">{{ article.qnaBoardDto.content }}</div>
+    <div class="col-auto text-end">
+      <button id="btn-list" type="button" class="btn mb-3" @click="mvList">목록으로</button>
       <template v-if="author.memberId === member.memberId">
-        <button @click.prevent="deleteArticle">삭제</button>
+        <button id="btn-modify" type="button" class="btn mb-3" @click="mvModify">수정하기</button>
+        <button id="btn-delete" type="button" class="btn mb-3" @click.prevent="deleteArticle">
+          삭제하기
+        </button>
       </template>
     </div>
+  </div>
+  <div class="container">
     <!-- Comment Section -->
     <div class="comment-section">
       <h4>댓글</h4>
@@ -113,26 +163,44 @@ onMounted(() => {
         ></textarea>
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
-      <div class="comment-list mt-4">
-        <div v-for="comment in article.commentList" :key="comment.id" class="comment-item">
+      <div class="comment-list mt-4 d-flex justify-content-center">
+        <div
+          v-for="comment in article.commentList"
+          :key="comment.id"
+          class="comment-item"
+          style="width: 100%"
+        >
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
-            <div v-if="editingComment !== comment.commentId">
-              <p>작성자: {{ comment.nickname }}</p>
-              <p>{{ comment.registerTime }}</p>
+            <div>
+              <p>👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}</p>
+            </div>
+            <div
+              v-if="editingComment !== comment.commentId"
+              class="d-flex justify-content-between align-items-center"
+            >
               <p>{{ comment.content }}</p>
               <div class="comment-actions">
-                <button @click="startEditingComment(comment)" class="btn btn-warning btn-sm">
+                <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
                   수정
                 </button>
-                <button @click="deleteComment(comment.commentId)" class="btn btn-danger btn-sm">
+                <button
+                  @click="deleteComment(comment.commentId)"
+                  class="btn btn-sm"
+                  id="btn-delete"
+                >
                   삭제
                 </button>
               </div>
             </div>
-            <div v-else>
-              <textarea v-model="updateComment.content" class="form-control" rows="2"></textarea>
-              <button @click="saveEditComment(comment.commentId)" class="btn btn-primary mt-2">
+            <div v-else class="d-flex justify-content-center">
+              <textarea
+                v-model="updateComment.content"
+                class="form-control"
+                style="width: 80%; margin-right: 10px"
+                rows="2"
+              ></textarea>
+              <button @click="saveEditComment(comment.commentId)" class="btn mt-2" id="btn-list">
                 저장
               </button>
             </div>
@@ -151,37 +219,134 @@ onMounted(() => {
       </div>
     </div>
   </div>
-  <hr />
 </template>
+
 <style scoped>
 .container {
   margin-top: 20px;
   padding: 20px;
-  border: 1px solid #ccc;
   border-radius: 5px;
 }
 
-h2 {
+/* Styling for the main container */
+#main {
+  border: 1px solid #ccc;
+}
+
+#main h2 {
   font-size: 24px;
   margin-bottom: 10px;
 }
 
-hr {
-  border: none;
-  border-top: 1px solid #ccc;
+#main .meta {
   margin-bottom: 20px;
+  text-align: end;
+  font-size: 16px;
 }
 
-.meta {
-  margin-bottom: 20px;
+#main .author,
+.views,
+.time {
+  margin-right: 10px;
+  color: #666;
 }
-.divider {
+
+#main .divider {
   color: #999;
 }
 
-.content {
-  font-size: 16px;
+#main .content {
+  font-size: 20px;
   line-height: 1.6;
   margin-bottom: 20px;
+  padding-left: 100px;
+  padding-right: 100px;
+  padding-top: 30px;
+}
+
+/* Styling for the rest of the containers */
+.container h2 {
+  font-size: 20px;
+}
+
+.container .meta {
+  margin-bottom: 15px;
+}
+
+.container .content {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 15px;
+}
+
+#btn-list {
+  border-color: #97654c;
+  color: #97654c;
+  background-color: white;
+  margin-right: 5px;
+}
+#btn-list:hover {
+  background-color: #97654c;
+  color: white;
+}
+#btn-modify {
+  border-color: #577b8d;
+  color: #577b8d;
+  background-color: white;
+  margin-right: 5px;
+}
+#btn-modify:hover {
+  background-color: #577b8d;
+  color: white;
+}
+#btn-delete {
+  border-color: #666;
+  color: #666;
+  background-color: white;
+}
+#btn-delete:hover {
+  background-color: #666;
+  color: white;
+}
+
+/* Comment Section */
+.comment-section {
+  margin-top: 20px;
+}
+
+.comment-form textarea {
+  width: 80%;
+  resize: vertical;
+}
+.comment-form button {
+  margin-left: 10px;
+  background-color: #5698ad;
+  color: white;
+  border-color: white;
+}
+
+.comment-item {
+  border-bottom: 1px solid #ddd;
+  padding: 15px 0;
+}
+
+.comment-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.comment-actions .btn {
+  background-color: #577b8d;
+  color: white;
+}
+
+.comment-actions .btn:hover {
+  background-color: #475f6e;
+}
+
+.d-flex.align-items-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 </style>
