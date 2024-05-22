@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 const router = useRouter();
@@ -53,14 +55,8 @@ const showModal = ref(false); // 모달 표시 여부를 제어할 ref
 
 const insertArticle = async () => {
   planBoardObject.value.planBoard.content = content.value.getHTML();
-  planBoardObject.value.planBoard.startDate = format(
-    startDate.value,
-    inputFormat.value
-  );
-  planBoardObject.value.planBoard.endDate = format(
-    endDate.value,
-    inputFormat.value
-  );
+  planBoardObject.value.planBoard.startDate = format(startDate.value, inputFormat.value);
+  planBoardObject.value.planBoard.endDate = format(endDate.value, inputFormat.value);
   const formData = new FormData();
   formData.append(
     "planBoardForm",
@@ -75,6 +71,10 @@ const insertArticle = async () => {
     })
     .then(({ data }) => {
       console.log(data);
+      Swal.fire({
+        icon: "success",
+        text: "여행 공유 게시글이 등록되었습니다.",
+      });
     });
   router.replace({ name: "share-plan-list" });
 };
@@ -101,10 +101,7 @@ onMounted(() => {
         const bounds = new google.maps.LatLngBounds();
         newLocations.forEach((location) => {
           bounds.extend(
-            new google.maps.LatLng(
-              parseFloat(location.latitude),
-              parseFloat(location.longitude)
-            )
+            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
           );
         });
         gmap.fitBounds(bounds);
@@ -161,18 +158,16 @@ const search = () => {
 };
 
 const showDetail = (location) => {
-  local
-    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
-    .then(({ data }) => {
-      selectedLocation.value = data;
-      selectedLocation.value.title = location.title;
-      selectedLocation.value.image = location.firstImage
-        ? location.firstImage
-        : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
-      selectedLocation.value.addr = location.addr1 + " " + location.addr2;
-      console.log(selectedLocation.value);
-      showModal.value = true;
-    });
+  local.get(`/shareplan/map/attractiondescription/${location.contentId}`).then(({ data }) => {
+    selectedLocation.value = data;
+    selectedLocation.value.title = location.title;
+    selectedLocation.value.image = location.firstImage
+      ? location.firstImage
+      : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
+    selectedLocation.value.addr = location.addr1 + " " + location.addr2;
+    console.log(selectedLocation.value);
+    showModal.value = true;
+  });
 };
 
 const plans = ref([]);
@@ -207,8 +202,7 @@ const getPlanDetail = (planId) => {
     planObject.value = data;
     startDate.value = new Date(planObject.value.planDto.startDate);
     endDate.value = new Date(planObject.value.planDto.endDate);
-    planBoardObject.value.planBoard.theNumberOfMembers =
-      planObject.value.memberIds.length;
+    planBoardObject.value.planBoard.theNumberOfMembers = planObject.value.memberIds.length;
   });
 };
 
@@ -229,17 +223,13 @@ const searchTag = () => {
 };
 
 const addTag = (tag) => {
-  const exists = planBoardObject.value.tagList.some(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const exists = planBoardObject.value.tagList.some((t) => t.tagTypeId === tag.tagTypeId);
   if (!exists) {
     planBoardObject.value.tagList.push(tag);
   }
 };
 const removeTag = (tag) => {
-  const index = planBoardObject.value.tagList.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const index = planBoardObject.value.tagList.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (index !== -1) {
     planBoardObject.value.tagList.splice(index, 1);
   }
@@ -311,9 +301,7 @@ const onThumbnailChange = (event) => {
           aria-label="검색어"
           v-model="searchOption.keyword"
         />
-        <button id="btn-search" class="btn" type="button" @click="search">
-          검색
-        </button>
+        <button id="btn-search" class="btn" type="button" @click="search">검색</button>
       </form>
       <!-- Map and Details -->
       <div class="row my-5">
@@ -343,9 +331,7 @@ const onThumbnailChange = (event) => {
         <div class="col-md-6">
           <!-- Thumbnail -->
           <div class="mb-3">
-            <label for="thumbnailInput" class="form-label"
-              >🖼️ 대표 사진 지정하기</label
-            >
+            <label for="thumbnailInput" class="form-label">🖼️ 대표 사진 지정하기</label>
             <input
               class="form-control"
               type="file"
@@ -395,12 +381,7 @@ const onThumbnailChange = (event) => {
           </div>
           <!-- 여행 (plan) 에서 가져오기 -->
           <div class="mb-3">
-            <button
-              id="btn-get"
-              @click="getDataListPlan"
-              type="submit"
-              class="btn w-100"
-            >
+            <button id="btn-get" @click="getDataListPlan" type="submit" class="btn w-100">
               여행에서 불러오기
             </button>
             <select
@@ -409,11 +390,7 @@ const onThumbnailChange = (event) => {
               v-model="selectedPlan"
             >
               <option value="" disabled selected>여행을 선택하세요</option>
-              <option
-                v-for="plan in plans"
-                :key="plan.planId"
-                :value="plan.planId"
-              >
+              <option v-for="plan in plans" :key="plan.planId" :value="plan.planId">
                 {{ plan.title }} | 기간: {{ plan.startDate }} -
                 {{ plan.endDate }}
               </option>
@@ -431,15 +408,8 @@ const onThumbnailChange = (event) => {
             />
           </div>
           <div class="text-center mb-4">
-            <div
-              v-for="tag in tagResults"
-              :key="tag.tagTypeId"
-              class="d-inline-block"
-            >
-              <button
-                class="btn btn-outline-secondary m-1"
-                @click="addTag(tag)"
-              >
+            <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
+              <button class="btn btn-outline-secondary m-1" @click="addTag(tag)">
                 {{ tag.name }} <i class="bi bi-x" @click="removeTag(tag)"></i>
               </button>
             </div>
@@ -451,22 +421,14 @@ const onThumbnailChange = (event) => {
               :key="selectedTag.tagTypeId"
               class="d-inline-block"
             >
-              <button
-                class="btn btn-outline-secondary m-1"
-                @click="removeTag(selectedTag)"
-              >
+              <button class="btn btn-outline-secondary m-1" @click="removeTag(selectedTag)">
                 {{ selectedTag.name }}
               </button>
             </div>
           </div>
           <!-- Insert Article Button -->
           <div class="text-center">
-            <button
-              id="btn-insert"
-              @click="insertArticle"
-              type="submit"
-              class="btn w-100"
-            >
+            <button id="btn-insert" @click="insertArticle" type="submit" class="btn w-100">
               등록
             </button>
           </div>
@@ -474,12 +436,7 @@ const onThumbnailChange = (event) => {
       </div>
     </div>
     <!-- Attraction Description Modal -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      role="dialog"
-    >
+    <div v-if="showModal" class="modal fade show d-block" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -491,13 +448,7 @@ const onThumbnailChange = (event) => {
             <p>{{ selectedLocation.overview }}</p>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-secondary"
-              @click="showModal = false"
-            >
-              닫기
-            </button>
+            <button type="button" class="btn btn-secondary" @click="showModal = false">닫기</button>
           </div>
         </div>
       </div>

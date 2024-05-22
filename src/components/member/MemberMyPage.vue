@@ -7,6 +7,7 @@ import MemberMyPageSidebarVue from "./MemberMyPageSidebar.vue";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import "sweetalert2/src/sweetalert2.scss";
 
+const { VITE_LOCALHOST_URL } = import.meta.env;
 const loginedId = decodedTokenFunc();
 const router = useRouter();
 const local = localAxios();
@@ -88,7 +89,7 @@ const loadMemberDetails = async () => {
       phoneNumber: data.phoneNumber,
     };
     if (!member.value.image.startsWith("http")) {
-      member.value.image = "http://localhost/products/" + member.value.image;
+      member.value.image = `http://${VITE_LOCALHOST_URL}/products/` + member.value.image;
     }
   } catch (error) {
     Swal.fire({
