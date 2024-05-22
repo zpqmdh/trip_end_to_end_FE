@@ -1,10 +1,7 @@
 <template>
   <div class="landmark-detection container mt-5">
     <h1 class="text-center mb-4">사진으로 관광지를 조회해보세요</h1>
-    <form
-      @submit.prevent="handleSubmit"
-      class="mb-4 p-4 bg-light rounded shadow-sm"
-    >
+    <form @submit.prevent="handleSubmit" class="mb-4 p-4 bg-light rounded shadow-sm">
       <div
         class="dnd-dropzone border border-primary border-dashed rounded p-4 text-center mb-4"
         @dragenter.prevent="handleDragEnter"
@@ -13,21 +10,13 @@
         @drop.prevent="handleDrop"
         :class="{ 'drag-over': isDragActive }"
       >
-        <input
-          type="file"
-          @change="handleFileChange"
-          class="d-none"
-          ref="fileInput"
-        />
+        <input type="file" @change="handleFileChange" class="d-none" ref="fileInput" />
         <p>
           Drag & Drop or
           <a href="#" @click.prevent="triggerFileInput">upload</a>
         </p>
         <p>지원 확장자: JPEG, JPG, PNG</p>
-        <div
-          v-if="fileNames.length > 0"
-          class="mt-3 d-flex justify-content-center"
-        >
+        <div v-if="fileNames.length > 0" class="mt-3 d-flex justify-content-center">
           <p><strong>파일명:</strong></p>
           <ul class="list-inline mb-0">
             <p v-for="(name, index) in fileNames" :key="index">
@@ -76,17 +65,8 @@
           />
         </div>
         <ul class="list-group">
-          <li
-            v-for="(landmark, index) in landmarks"
-            :key="index"
-            class="list-group-item"
-          >
-            <a
-              href="#"
-              @click.prevent="
-                moveToLocation(landmark.latitude, landmark.longitude)
-              "
-            >
+          <li v-for="(landmark, index) in landmarks" :key="index" class="list-group-item">
+            <a href="#" @click.prevent="moveToLocation(landmark.latitude, landmark.longitude)">
               {{ landmark.description }}
             </a>
           </li>
@@ -174,8 +154,7 @@ async function handleSubmit() {
         lng: landmarks.value[0].longitude,
       };
     }
-    checkNoInput.value =
-      "장소를 찾을 수 없습니다. 다른 이미지로 다시 검색해주세요.";
+    checkNoInput.value = "장소를 찾을 수 없습니다. 다른 이미지로 다시 검색해주세요.";
   } catch (err) {
     error.value = "사진을 인식할 수 없습니다. 다시 시도해주세요.";
   }
@@ -186,9 +165,7 @@ function onMapLoad(map) {
     if (newLandmarks.length > 0) {
       const bounds = new google.maps.LatLngBounds();
       newLandmarks.forEach((landmark) => {
-        bounds.extend(
-          new google.maps.LatLng(landmark.latitude, landmark.longitude)
-        );
+        bounds.extend(new google.maps.LatLng(landmark.latitude, landmark.longitude));
       });
       map.fitBounds(bounds);
     }
