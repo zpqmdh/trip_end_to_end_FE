@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
@@ -13,11 +13,12 @@ onMounted(() => {
   getMemberId();
 });
 
-let member = ref({
+const member = ref({
   memberId: "",
   id: "",
   nickname: "",
 });
+
 const getMemberId = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
@@ -34,17 +35,21 @@ const qnaBoardDto = ref({
   password: "",
 });
 
+const isSecretBoolean = ref(qnaBoardDto.value.secret === "1");
+
 const insertArticle = () => {
-  qnaBoardDto.value.secret = isSecretBoolean ? 1 : 0;
+  qnaBoardDto.value.secret = isSecretBoolean.value ? "1" : "0";
   qnaBoardDto.value.memberId = member.value.memberId;
-  if (isSecretBoolean && !/^\d{4}$/.test(qnaBoardDto.value.password)) {
+
+  if (isSecretBoolean.value && !/^\d{4}$/.test(qnaBoardDto.value.password)) {
     Swal.fire({
       icon: "error",
-      text: "게시글 비밀번호는 4자리로 설정해주세요.",
+      text: "게시글 비밀번호는 4자리 숫자로 설정해주세요.",
     });
     return;
   }
-  local.post("/qna/insert", qnaBoardDto.value).then(({ data }) => {
+
+  local.post("/qna/insert", qnaBoardDto.value).then(() => {
     Swal.fire({
       icon: "success",
       text: "게시글이 등록되었습니다.",
@@ -56,24 +61,18 @@ const insertArticle = () => {
 const resetInput = () => {
   qnaBoardDto.value.subject = "";
   qnaBoardDto.value.content = "";
-  qnaBoardDto.value.secret = false;
+  qnaBoardDto.value.secret = "0";
   qnaBoardDto.value.password = "";
+  isSecretBoolean.value = false;
 };
 
-const isSecretBoolean = computed({
-  get() {
-    return qnaBoardDto.value.secret === "1";
-  },
-  set(value) {
-    qnaBoardDto.value.secret = value ? "1" : "0";
-  },
-});
 watch(isSecretBoolean, (newVal) => {
   if (!newVal) {
     qnaBoardDto.value.password = "";
   }
 });
 </script>
+
 <template>
   <div class="container">
     <div class="row justify-content-center">
@@ -121,7 +120,6 @@ watch(isSecretBoolean, (newVal) => {
             placeholder="4자리 비밀번호"
             :required="isSecretBoolean"
             :disabled="!isSecretBoolean"
-            :value="qnaBoardDto.password"
             v-model="qnaBoardDto.password"
           />
         </div>
@@ -142,6 +140,7 @@ watch(isSecretBoolean, (newVal) => {
     </div>
   </div>
 </template>
+
 <style scoped>
 #title {
   margin: 35px 0px;

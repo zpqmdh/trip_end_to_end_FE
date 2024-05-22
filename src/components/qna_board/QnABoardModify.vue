@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
@@ -14,16 +14,21 @@ const article = ref({
   qnaBoardDto: {},
   commentList: [],
 });
+
+const isSecretBoolean = ref(false);
+
 onMounted(() => {
   getDetail(route.params.id);
 });
+
 const getDetail = (id) => {
   local.get("/qna/" + id).then(({ data }) => {
     article.value = data.article;
-    console.log(article.value);
+    isSecretBoolean.value = article.value.qnaBoardDto.secret === "1";
     getMember(); // 수정 권한 확인
   });
 };
+
 const getMember = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
@@ -36,51 +41,54 @@ const getMember = () => {
     }
   });
 };
+
 const updateArticle = () => {
   const id = route.params.id;
-  console.log(article.value.qnaBoardDto);
-  if (isSecretBoolean && !/^\d{4}$/.test(article.value.qnaBoardDto.password)) {
+  article.value.qnaBoardDto.secret = isSecretBoolean.value ? "1" : "0";
+
+  if (isSecretBoolean.value && !/^\d{4}$/.test(article.value.qnaBoardDto.password)) {
     Swal.fire({
       icon: "error",
-      text: "게시글 비밀번호는 4자리로 설정해주세요.",
+      text: "게시글 비밀번호는 4자리 숫자로 설정해주세요.",
     });
     return;
   }
+
   local
     .put("/qna/" + id, article.value.qnaBoardDto)
-    .then(({ data }) => {
-      console.log(data);
+    .then(() => {
       Swal.fire({
         icon: "success",
         text: "해당 게시글이 수정되었습니다.",
       });
       router.replace({ name: "qna-list" });
     })
-    .catch((error) => {
+    .catch(() => {
       Swal.fire({
         icon: "error",
         text: "게시글 수정에 실패하였습니다.",
       });
     });
 };
+
 const resetInput = () => {
   article.value.qnaBoardDto = {};
 };
 
-const isSecretBoolean = computed({
-  get() {
-    return article.value.qnaBoardDto.secret === "1";
-  },
-  set(value) {
-    article.value.qnaBoardDto.secret = value ? "1" : "0";
-  },
-});
+watch(
+  () => article.value.qnaBoardDto.secret,
+  (newVal) => {
+    isSecretBoolean.value = newVal === "1";
+  }
+);
+
 watch(isSecretBoolean, (newVal) => {
   if (!newVal) {
     article.value.qnaBoardDto.password = "";
   }
 });
 </script>
+
 <template>
   <div class="container">
     <div class="row justify-content-center">
@@ -128,7 +136,6 @@ watch(isSecretBoolean, (newVal) => {
             placeholder="4자리 비밀번호"
             :required="isSecretBoolean"
             :disabled="!isSecretBoolean"
-            :value="article.qnaBoardDto.password"
             v-model="article.qnaBoardDto.password"
           />
         </div>
@@ -142,6 +149,7 @@ watch(isSecretBoolean, (newVal) => {
     </div>
   </div>
 </template>
+
 <style scoped>
 #btn-update {
   border-color: #577b8d;
