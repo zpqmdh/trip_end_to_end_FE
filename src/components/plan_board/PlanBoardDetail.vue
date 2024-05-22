@@ -67,9 +67,12 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
-        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.thumbnail;
+        `http://${VITE_LOCALHOST_URL}/products/` +
+        planBoardObject.value.planBoard.thumbnail;
     }
-    const like = planBoardObject.value.likeList.find((like) => like.memberId === memberId.value);
+    const like = planBoardObject.value.likeList.find(
+      (like) => like.memberId === memberId.value
+    );
     if (like) {
       // 로그인 상태의 유저가 해당 게시글에 좋아요를 누른 상태
       isClickedLike.value = like;
@@ -82,7 +85,10 @@ const getDetail = () => {
 /* Comment */
 const addComment = () => {
   local
-    .post(`/shareplan/insert/${newComment.value.planBoardId}/comment`, newComment.value)
+    .post(
+      `/shareplan/insert/${newComment.value.planBoardId}/comment`,
+      newComment.value
+    )
     .then(() => {
       getDetail();
       newComment.value.content = "";
@@ -144,16 +150,21 @@ const clickLike = () => {
     console.log("qwe");
     console.log(newLike.value);
     local
-      .post(`/shareplan/insert/${newLike.value.planBoardId}/like`, newLike.value)
+      .post(
+        `/shareplan/insert/${newLike.value.planBoardId}/like`,
+        newLike.value
+      )
       .then(({ data }) => {
         console.log(data);
         getDetail();
       });
   } else {
-    local.delete(`/shareplan/like/${isClickedLike.value.planLikeId}`).then(({ data }) => {
-      console.log(data);
-      getDetail();
-    });
+    local
+      .delete(`/shareplan/like/${isClickedLike.value.planLikeId}`)
+      .then(({ data }) => {
+        console.log(data);
+        getDetail();
+      });
   }
 };
 
@@ -212,13 +223,27 @@ const deleteArticle = () => {
       <h3 class="header">{{ planBoardObject.planBoard.subject }}</h3>
       <hr />
       <!-- Sub-Title -->
-      <div class="sub-header">
-        <!-- Register Time -->
-        <div>📆 {{ planBoardObject.planBoard.registerTime }}</div>
-        <!-- hit -->
-        <div>👀 {{ planBoardObject.planBoard.hit }}</div>
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <span>
+            <img
+              :src="planBoardObject.planBoard.image"
+              alt="Profile Image"
+              class="article-profile-image"
+            />
+            <span>{{ planBoardObject.planBoard.nickname }}</span>
+          </span>
+        </div>
+        <div class="meta">
+          <span class="views"
+            >👁 조회수: {{ planBoardObject.planBoard.hit }}</span
+          >
+          <span class="divider">|</span>
+          <span class="time"
+            >🕒 {{ planBoardObject.planBoard.registerTime }}</span
+          >
+        </div>
       </div>
-
       <!-- Section 1 -->
       <div class="col-md-6">
         <!-- Map Section -->
@@ -247,13 +272,6 @@ const deleteArticle = () => {
       <!-- Section 2 -->
       <div class="col-md-6">
         <div class="mb-3">
-          <!-- Thumbnail -->
-          <img
-            id="thumbnail"
-            :src="planBoardObject.planBoard.thumbnail"
-            class="thumbnail"
-            alt="Thumbnail"
-          />
           <!-- Dates -->
           <div class="d-flex justify-content-around mb-3">
             <div>
@@ -275,24 +293,50 @@ const deleteArticle = () => {
               />
             </div>
           </div>
+          <!-- Thumbnail -->
+          <img
+            id="thumbnail"
+            :src="planBoardObject.planBoard.thumbnail"
+            class="thumbnail"
+            alt="Thumbnail"
+          />
           <!-- 동행인 수 -->
-          <div>👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
+          <div>
+            👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
+          </div>
           <!-- Content -->
-          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
+          <div
+            class="content-box"
+            v-html="planBoardObject.planBoard.content"
+          ></div>
         </div>
       </div>
     </div>
     <!-- Like Section -->
     <div class="like-section">
       <button @click="clickLike" class="like-button">
-        <img v-show="isClickedLike" src="@/assets/img/like-on.png" class="like-icon" alt="Liked" />
-        <img v-show="!isClickedLike" src="@/assets/img/like-off.png" class="like-icon" alt="Like" />
+        <img
+          v-show="isClickedLike"
+          src="@/assets/img/like-on.png"
+          class="like-icon"
+          alt="Liked"
+        />
+        <img
+          v-show="!isClickedLike"
+          src="@/assets/img/like-off.png"
+          class="like-icon"
+          alt="Like"
+        />
         <h5>{{ planBoardObject.likeList.length }}</h5>
       </button>
     </div>
     <!-- Tag Section -->
     <div class="tag-section">
-      <button v-for="tag in planBoardObject.tagList" :key="tag.planBoardTagId" class="tag-btn">
+      <button
+        v-for="tag in planBoardObject.tagList"
+        :key="tag.planBoardTagId"
+        class="tag-btn"
+      >
         #{{ tag.name }}
       </button>
     </div>
@@ -300,11 +344,14 @@ const deleteArticle = () => {
     <div class="d-flex justify-content-end">
       <button id="btn-list" class="btn" @click="moveList">목록으로</button>
       <template v-if="planBoardObject.planBoard.memberId === memberId">
-        <button id="btn-modify" class="btn" @click="moveModify">수정하기</button>
-        <button id="btn-delete" class="btn" @click="deleteArticle">삭제하기</button>
+        <button id="btn-modify" class="btn" @click="moveModify">
+          수정하기
+        </button>
+        <button id="btn-delete" class="btn" @click="deleteArticle">
+          삭제하기
+        </button>
       </template>
     </div>
-
     <hr />
     <!-- Comment Section -->
     <div class="comment-section">
@@ -319,11 +366,27 @@ const deleteArticle = () => {
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
-        <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
+        <div
+          v-for="comment in planBoardObject.commentList"
+          :key="comment.id"
+          class="comment-item"
+        >
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
-            <div>
-              <p>👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}</p>
+            <div
+              class="comment-header d-flex align-items-center justify-content-between"
+            >
+              <span>
+                <img
+                  :src="comment.image"
+                  alt="Profile Image"
+                  class="profile-image"
+                />
+                <span>{{ comment.nickname }}</span>
+              </span>
+              <p class="text-end ml-auto" style="font-size: 14px">
+                🕒 {{ comment.registerTime }}
+              </p>
             </div>
             <div
               v-if="editingComment !== comment.commentId"
@@ -331,7 +394,11 @@ const deleteArticle = () => {
             >
               <p>{{ comment.content }}</p>
               <div v-if="comment.memberId === memberId" class="comment-actions">
-                <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
+                <button
+                  @click="startEditingComment(comment)"
+                  class="btn btn-sm"
+                  id="btn-modify"
+                >
                   수정
                 </button>
                 <button
@@ -350,7 +417,11 @@ const deleteArticle = () => {
                 style="width: 80%; margin-right: 10px"
                 rows="2"
               ></textarea>
-              <button @click="saveEditComment(comment.commentId)" class="btn mt-2" id="btn-list">
+              <button
+                @click="saveEditComment(comment.commentId)"
+                class="btn mt-2"
+                id="btn-list"
+              >
                 저장
               </button>
             </div>
@@ -426,6 +497,20 @@ const deleteArticle = () => {
   background-color: #666;
   color: white;
 }
+.meta {
+  margin-bottom: 20px;
+  text-align: end;
+  font-size: 16px;
+}
+.author,
+.views,
+.time {
+  margin-right: 10px;
+  color: #666;
+}
+.divider {
+  color: #999;
+}
 /* Like Section */
 .like-section {
   text-align: center;
@@ -493,7 +578,18 @@ const deleteArticle = () => {
   padding: 15px 0;
   width: 100%; /* Ensure the comment item takes up full width */
 }
-
+.article-profile-image {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+.profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
 .comment-actions {
   display: flex;
   gap: 10px;
