@@ -19,6 +19,7 @@ const getDetail = (id) => {
   local.get("/notice/" + id).then(({ data }) => {
     console.log(data);
     notice.value = data;
+    notice.value.content = data.content.replaceAll(/(\n|\r\n)/g, "<br>");
   });
 };
 const getMember = () => {
@@ -62,7 +63,7 @@ const deleteArticle = () => {
       <span class="divider">|</span>
       <span class="time">🕒 {{ notice.registerTime }}</span>
     </div>
-    <div class="content">{{ notice.content }}</div>
+    <div class="content" v-html="notice.content"></div>
     <div class="col-auto text-end">
       <button id="btn-list" type="button" class="btn mb-3" @click="mvList">목록으로</button>
       <template v-if="member.type == 3">
@@ -115,7 +116,9 @@ hr {
   font-size: 20px;
   line-height: 1.6;
   margin-bottom: 20px;
-  padding: 100px;
+  padding-left: 100px;
+  padding-right: 100px;
+  padding-top: 50px;
 }
 
 #btn-list {
