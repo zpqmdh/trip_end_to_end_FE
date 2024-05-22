@@ -307,11 +307,6 @@ const submitUpdatedDetail = async () => {
       paymentDetails: paymentDetails.value,
       planLocations: planLocations.value,
     };
-    console.log(memberIds.value);
-    // console.log(bookContents.value);
-    // console.log(scheduleDates.value);
-    // console.log(paymentDetails.value);
-    // console.log(planLocations.value);
     console.log(planInfo);
 
     // 업데이트된 planInfo를 서버로 전송
@@ -413,8 +408,15 @@ watch(
   { immediate: true, deep: true }
 );
 
-onMounted(() => {
-  setMemberIdValue();
+onMounted(async () => {
+  await setMemberIdValue();
+  // 작성자 memberId 참여 멤버에 업데이트
+  memberIds.value.push({
+    memberId: memberId.value,
+    planId: "",
+  });
+  // 작성자 정보 호출
+  getMemberInfo();
   local.get("/shareplan/map/sido").then(({ data }) => {
     makeOption(data);
   });
@@ -559,12 +561,14 @@ onMounted(() => {
 
     <!-- 여행 정보 상세 -->
     <div class="details">
-      <label class="mb-0">📝 제목 </label>
-      <div :v-model="memberId"></div>
-      <div class="title-section">
-        <input type="text" v-model="planDto.title" />
-        <button class="btn-submit" @click="submitUpdatedDetail">수정</button>
-      </div>
+      <form @submit.prevent="submitUpdatedDetail">
+        <label class="mb-0">📝 제목 </label>
+        <div :v-model="memberId"></div>
+        <div class="title-section">
+          <input type="text" v-model="planDto.title" required />
+          <button class="btn-submit" type="submit">저장</button>
+        </div>
+      </form>
       <div class="members-section">
         <label>👨‍👩‍👦 참여 멤버</label>
         <div class="members-list">
@@ -781,6 +785,7 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
   <!-- Attraction Description Modal -->
   <div
     v-if="showModal"

@@ -518,11 +518,13 @@ onMounted(() => {
 
     <!-- 여행 정보 상세 -->
     <div class="details">
-      <label class="mb-0">📝 제목 </label>
-      <div class="title-section">
-        <input type="text" v-model="planDto.title" />
-        <button class="btn-submit" @click="submitUpdatedDetail">수정</button>
-      </div>
+      <form @submit.prevent="submitUpdatedDetail">
+        <label class="mb-0">📝 제목 </label>
+        <div class="title-section">
+          <input type="text" v-model="planDto.title" required />
+          <button class="btn-submit" type="submit">수정</button>
+        </div>
+      </form>
       <div class="members-section">
         <label>👨‍👩‍👦 참여 멤버</label>
         <div class="members-list">
@@ -947,7 +949,7 @@ button:hover {
 .modal {
   display: block; /* Hidden by default */
   position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
+  z-index: 5; /* Sit on top */
   left: 0;
   top: 0;
   width: 100%; /* Full width */
@@ -1225,7 +1227,7 @@ button:hover {
   color: rgb(44, 44, 44);
   padding: 4px 7px;
   margin: 5px 0;
-  z-index: 9999;
+  z-index: 5;
   position: absolute;
   top: 5px;
   right: 60px;

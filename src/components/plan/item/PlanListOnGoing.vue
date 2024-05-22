@@ -20,7 +20,6 @@ const todayDate = new Date(dateString);
 const getOnGoingPlanList = async () => {
   const id = loginedId;
   local.get(`/plans/list/all/${id}`).then(({ data }) => {
-    console.log(data);
     onGoingPlanList.value = data.filter(
       (plan) => new Date(plan.endDate) >= todayDate
     );
@@ -28,7 +27,6 @@ const getOnGoingPlanList = async () => {
 };
 
 const handleGoToDetail = (planId) => {
-  console.log(planId);
   router.push({ name: "plan-detail-ongoing", params: { id: planId } });
 };
 
