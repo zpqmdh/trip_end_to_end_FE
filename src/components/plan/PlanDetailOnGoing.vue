@@ -467,7 +467,7 @@ onMounted(() => {
           :zoom="zoom"
           @click="addMarker"
         >
-          <div v-for="(scheduleDate, index1) in planLocations">
+          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
             <Polyline
               :options="{
                 path: printMarkerLocations(index1),
