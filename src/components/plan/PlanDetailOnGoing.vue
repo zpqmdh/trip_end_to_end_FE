@@ -5,8 +5,6 @@ import { localAxios } from "@/util/http-commons";
 import { useRoute, useRouter } from "vue-router";
 import PlanLiveChat from "@/components/plan/item/PlanLiveChat.vue";
 
-const { VITE_LOCALHOST_URL } = import.meta.env;
-
 const local = localAxios();
 const route = useRoute();
 const router = useRouter();
@@ -212,8 +210,7 @@ const getMemberNicknames = async () => {
         !memberList.value[index].image.startsWith("http")
       ) {
         memberList.value[index].image =
-          `http://${VITE_LOCALHOST_URL}/products/` +
-          memberList.value[index].image;
+          "http://localhost/products/" + memberList.value[index].image;
       }
     } catch (error) {
       console.error("Error fetching nickname:", error);
@@ -470,7 +467,7 @@ onMounted(() => {
           :zoom="zoom"
           @click="addMarker"
         >
-          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
+          <div v-for="(scheduleDate, index1) in planLocations">
             <Polyline
               :options="{
                 path: printMarkerLocations(index1),
@@ -480,7 +477,6 @@ onMounted(() => {
                 strokeWeight: 5,
               }"
             />
-
             <Marker
               v-for="(attraction, index2) in scheduleDate"
               :key="`${attraction.planScheduleId}-${index1}`"
@@ -582,25 +578,21 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
-    <div class="date-section">
-      <label>📆 여행 기간</label>
-      <div class="date-inputs">
-        <input type="date" v-model="planDto.startDate" />
-        <span class="mt-2">~</span>
-        <input type="date" v-model="planDto.endDate" :min="planDto.startDate" />
-      </div>
-    </div>
 
-    <div class="schedule-section">
-      <label>여행 일정</label>
-      <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
-      <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
-      <div
-        v-for="(date, index1) in scheduleDates"
-        :key="index1"
-        class="day-schedule"
-      >
+      <div class="date-section">
+        <label>📆 여행 기간</label>
+        <div class="date-inputs">
+          <input type="date" v-model="planDto.startDate" />
+          <span class="mt-2">~</span>
+          <input
+            type="date"
+            v-model="planDto.endDate"
+            :min="planDto.startDate"
+          />
+        </div>
+      </div>
+
+      <div class="schedule-section">
         <label>🕘 여행 일정</label>
         <button @click="toggleAll(true)" class="btn btn-light">
           모두 열기
@@ -730,12 +722,6 @@ onMounted(() => {
                 </select>
               </td>
               <td>
-                <button
-                  class="btn btn-remove"
-                  @click="removePaymentDetail(index)"
-                >
-                  X
-                </button>
                 <button
                   class="btn btn-remove mb-2"
                   @click="removePaymentDetail(index)"
