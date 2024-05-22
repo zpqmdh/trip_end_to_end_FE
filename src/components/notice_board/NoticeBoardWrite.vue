@@ -45,8 +45,8 @@ const insertArticle = () => {
 <template>
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-lg-8 col-md-10 col-sm-12">
-        <h2 class="my-3 py-3 text-center">공지사항</h2>
+      <div class="d-flex justify-content-center mt-3">
+        <h1>📢 공지사항</h1>
       </div>
       <div class="col-lg-8 col-md-10 col-sm-12">
         <div class="mb-3">
@@ -81,20 +81,33 @@ const insertArticle = () => {
           <label class="form-check-label" for="isFixed"> 고정하기 </label>
         </div>
         <div class="col-auto text-center">
-          <button
-            type="button"
-            id="btn-register"
-            class="btn btn-outline-primary mb-3"
-            @click="insertArticle"
-          >
+          <button type="button" id="btn-register" class="btn mb-3" @click="insertArticle">
             등록하기
           </button>
-          <button type="reset" class="btn btn-outline-danger mb-3" @click="resetInput">
-            초기화
-          </button>
+          <button id="btn-reset" type="reset" class="btn mb-3" @click="resetInput">초기화</button>
         </div>
       </div>
     </div>
   </div>
 </template>
-<style scoped></style>
+<style scoped>
+#btn-register {
+  border-color: #577b8d;
+  color: #577b8d;
+  background-color: white;
+  margin-right: 5px;
+}
+#btn-register:hover {
+  background-color: #577b8d;
+  color: white;
+}
+#btn-reset {
+  border-color: #97654c;
+  color: #97654c;
+  background-color: white;
+}
+#btn-reset:hover {
+  background-color: #97654c;
+  color: white;
+}
+</style>

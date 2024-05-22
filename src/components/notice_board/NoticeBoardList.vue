@@ -2,11 +2,12 @@
 import NoticeBoardArticleItem from "./item/NoticeBoardArticleItem.vue";
 import NoticePageNavigation from "./item/NoticePageNavigation.vue";
 import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
 
 const route = useRoute();
+const router = useRouter();
 const local = localAxios();
 
 const articles = ref([]);
@@ -45,11 +46,20 @@ const onPageChange = (val) => {
   currentPage.value = val;
   getArticleList();
 };
+
+const moveWrite = () => {
+  router.push({ name: "notice-write" });
+};
 </script>
 <template>
   <div class="container">
-    <h1>📢 공지사항</h1>
-    <table class="table table-hover">
+    <div class="d-flex justify-content-center mt-3">
+      <h1>📢 공지사항</h1>
+    </div>
+    <div v-show="member.type == 3" class="d-flex justify-content-end">
+      <button id="btn-mv-write" class="btn" @click="moveWrite">글쓰기</button>
+    </div>
+    <table class="table table-hover mt-3">
       <thead>
         <tr class="text-center">
           <th scope="col">글번호</th>
@@ -67,9 +77,6 @@ const onPageChange = (val) => {
         ></NoticeBoardArticleItem>
       </tbody>
     </table>
-    <div v-show="member.type == 3">
-      <RouterLink :to="{ name: 'notice-write' }" class="back-link">작성</RouterLink>
-    </div>
     <NoticePageNavigation
       :current-page="currentPage"
       :total-page="totalPage"
@@ -77,4 +84,16 @@ const onPageChange = (val) => {
     ></NoticePageNavigation>
   </div>
 </template>
-<style scoped></style>
+<style scoped>
+#btn-mv-write {
+  border-color: #97654c;
+  background-color: #fff;
+  color: #97654c;
+  margin-right: 20px;
+}
+#btn-mv-write:hover {
+  background-color: #97654c;
+  color: white;
+  margin-right: 20px;
+}
+</style>
