@@ -3,6 +3,8 @@ import { onMounted, ref } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 const router = useRouter();
@@ -16,7 +18,10 @@ const getMemberId = () => {
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
     // 관리자 아님 -> 작성 권한 없음
     if (data.type != 3) {
-      alert("공지사항 작성 권한이 없습니다.");
+      Swal.fire({
+        icon: "error",
+        text: "공지사항 작성은 관리자만 할 수 있습니다.",
+      });
       router.push({ name: "notice-list" });
     }
     member.value.memberId = data.memberId;

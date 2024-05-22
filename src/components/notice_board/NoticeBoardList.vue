@@ -56,7 +56,7 @@ const moveWrite = () => {
     <div class="d-flex justify-content-center mt-3">
       <h1>📢 공지사항</h1>
     </div>
-    <div v-show="member.type == 3" class="d-flex justify-content-end">
+    <div v-if="member.type == 3" class="d-flex justify-content-end">
       <button id="btn-mv-write" class="btn" @click="moveWrite">글쓰기</button>
     </div>
     <table class="table table-hover mt-3">

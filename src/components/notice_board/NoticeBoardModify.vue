@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 const route = useRoute();
@@ -24,7 +26,10 @@ const getMember = () => {
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
     // 관리자 아님 -> 수정 권한 없음
     if (data.type != 3) {
-      alert("공지사항 수정 권한이 없습니다.");
+      Swal.fire({
+        icon: "error",
+        text: "공지사항 수정은 관리자만 할 수 있습니다.",
+      });
       router.push({ name: "notice-list" });
     }
   });
@@ -40,6 +45,10 @@ const getDetail = (id) => {
 const updateArticle = () => {
   const id = notice.value.noticeBoardId;
   local.put("/notice/" + id, notice.value).then(({ data }) => {
+    Swal.fire({
+      icon: "success",
+      text: "공지사항이 수정되었습니다.",
+    });
     router.push({
       name: "notice-detail",
       params: { id: notice.value.noticeBoardId },
@@ -47,7 +56,6 @@ const updateArticle = () => {
   });
 };
 
-// computed property to handle isFixed as a boolean
 const isFixedBoolean = computed({
   get() {
     return notice.value.isFixed === "1";
@@ -57,7 +65,6 @@ const isFixedBoolean = computed({
   },
 });
 
-// reset input fields
 const resetInput = () => {
   notice.value.subject = "";
   notice.value.content = "";
