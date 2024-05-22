@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
+import { GoogleMap, Marker, Polyline } from "vue3-google-map";
 import { localAxios } from "@/util/http-commons.js";
 import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
@@ -12,6 +13,11 @@ const { VITE_LOCALHOST_URL } = import.meta.env;
 const local = localAxios();
 const route = useRoute();
 const router = useRouter();
+
+const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
+const center = { lat: 36.355387, lng: 127.29964 };
+const zoom = ref(8);
+const mapRef = ref(null);
 
 const planBoardObject = ref({
   planBoard: {},
@@ -43,12 +49,98 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
-        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.thumbnail;
+        `http://${VITE_LOCALHOST_URL}/products/` +
+        planBoardObject.value.planBoard.thumbnail;
     }
     getMember(); // 수정 권한 확인
+    getPlanDetail();
   });
 };
 
+const scheduleDates = ref([]);
+const planLocations = ref([]);
+// 지도에 표시할 여행 계획 정보
+const markerLocations = ref([]);
+const polylineColors = ["#0a296d", "#742405", "#97654c", "#054b2a", "#812f00"];
+import redMarkerImage from "@/assets/img/marker-red.png";
+import blueMarkerImage from "@/assets/img/marker-sky.png";
+import greenMarkerImage from "@/assets/img/marker-green.png";
+import orangeMarkerImage from "@/assets/img/marker-orange.png";
+import yellowMarkerImage from "@/assets/img/marker-yellow.png";
+const markerImages = [
+  blueMarkerImage,
+  redMarkerImage,
+  yellowMarkerImage,
+  greenMarkerImage,
+  orangeMarkerImage,
+];
+const getMarkerIcon = (index1) => {
+  return {
+    url: markerImages[index1 % markerImages.length], // 이미지 경로
+    scaledSize: new google.maps.Size(30, 45), // 아이콘 크기 조절
+    labelOrigin: new google.maps.Point(15, 14), // 라벨 위치 조정 (x, y)
+  };
+};
+const getPlanDetail = () => {
+  local
+    .get(`/plans/detail/${planBoardObject.value.planBoard.planId}`)
+    .then(({ data }) => {
+      console.log(data);
+      scheduleDates.value = data.scheduleDates.map((date) => ({
+        ...date,
+        expanded: false,
+      }));
+      planLocations.value = data.planLocations;
+      getMarkerLocations();
+    });
+};
+const getMarkerLocations = () => {
+  markerLocations.value = planLocations.value.map(() => []); // planLocations와 같은 구조로 초기화
+  planLocations.value.forEach((scheduleDate, index) => {
+    const path = scheduleDate
+      .map((location) => {
+        if (location.latitude && location.longitude) {
+          return {
+            lat: parseFloat(location.latitude),
+            lng: parseFloat(location.longitude),
+          };
+        }
+      })
+      .filter(Boolean); // 필터링하여 유효한 좌표만 포함
+    markerLocations.value[index] = path;
+  });
+};
+const printMarkerLocations = (index) => {
+  return markerLocations.value[index];
+};
+const toggleAccordion = (index) => {
+  scheduleDates.value[index].expanded = !scheduleDates.value[index].expanded;
+};
+const toggleAll = (expand) => {
+  scheduleDates.value.forEach((schedule) => {
+    schedule.expanded = expand;
+  });
+};
+const beforeEnter = (el) => {
+  el.style.height = "0";
+  el.style.opacity = "0";
+};
+const enter = (el, done) => {
+  el.style.height = el.scrollHeight + "px";
+  el.style.opacity = "1";
+  el.style.transition = "height 0.5s ease, opacity 0.5s ease";
+  el.addEventListener("transitionend", done);
+};
+const leave = (el, done) => {
+  el.style.height = el.scrollHeight + "px";
+  el.style.opacity = "1";
+  requestAnimationFrame(() => {
+    el.style.height = "0";
+    el.style.opacity = "0";
+    el.style.transition = "height 0.5s ease, opacity 0.5s ease";
+  });
+  el.addEventListener("transitionend", done);
+};
 const tagName = ref("");
 const tagResults = ref([]);
 const searchTag = () => {
@@ -62,13 +154,24 @@ const searchTag = () => {
   });
 };
 const addTag = (tag) => {
-  const exists = planBoardObject.value.tagList.some((t) => t.tagTypeId === tag.tagTypeId);
+  const exists = planBoardObject.value.tagList.some(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (!exists) {
+    if (planBoardObject.value.tagList.length >= 3) {
+      Swal.fire({
+        icon: "warning",
+        text: "게시글 당 태그는 최대 3개까지 등록할 수 있습니다.",
+      });
+      return;
+    }
     planBoardObject.value.tagList.push(tag);
   }
 };
 const removeTag = (tag) => {
-  const index = planBoardObject.value.tagList.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const index = planBoardObject.value.tagList.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (index !== -1) {
     planBoardObject.value.tagList.splice(index, 1);
   }
@@ -76,6 +179,13 @@ const removeTag = (tag) => {
 
 const updateArticle = () => {
   console.log(planBoardObject.value);
+  if (planBoardObject.value.tagList.length >= 3) {
+    Swal.fire({
+      icon: "error",
+      text: "게시글 당 태그는 최대 3개까지 등록할 수 있습니다.",
+    });
+    return;
+  }
   const formData = new FormData();
   formData.append(
     "planBoardForm",
@@ -85,9 +195,13 @@ const updateArticle = () => {
   );
   formData.append("thumbnail", thumbnail.value);
   local
-    .put(`/shareplan/${planBoardObject.value.planBoard.planBoardId}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    .put(
+      `/shareplan/${planBoardObject.value.planBoard.planBoardId}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    )
     .then(({ data }) => {
       console.log(data);
       Swal.fire({
@@ -109,68 +223,195 @@ const onThumbnailChange = (event) => {
 </script>
 
 <template>
-  <div class="container my-4 p-4 border rounded shadow-sm">
-    <!-- Main Section -->
-    <div class="row">
-      <!-- Title -->
-      <div class="col-12 mb-3">
+  <div class="container">
+    <!-- Title -->
+    <div class="row justify-content-center my-4">
+      <div class="col-12 col-md-8">
         <input
           id="subject"
           v-model="planBoardObject.planBoard.subject"
-          class="form-control form-control-lg"
+          class="form-control"
           type="text"
           placeholder="제목 ..."
           required
         />
       </div>
-      <hr />
-      <!-- Register Time -->
-      <div class="col-12 text-muted text-end mb-4">
-        {{ planBoardObject.planBoard.registerTime }}
+    </div>
+    <!-- Sub-Title -->
+    <div class="d-flex align-items-center justify-content-between">
+      <div>
+        <span>
+          <img
+            :src="planBoardObject.planBoard.image"
+            alt="Profile Image"
+            class="article-profile-image"
+          />
+          <span>{{ planBoardObject.planBoard.nickname }}</span>
+        </span>
       </div>
-      <!-- Section 1 -->
-      <div class="col-md-6 mb-3">
-        <!-- Thumbnail -->
-        <img
-          id="thumbnail"
-          :src="planBoardObject.planBoard.thumbnail"
-          class="thumbnail img-fluid rounded"
-          alt="Thumbnail"
-        />
+      <div class="meta">
+        <span class="views">👁 조회수: {{ planBoardObject.planBoard.hit }}</span>
+        <span class="divider">|</span>
+        <span class="time"
+          >🕒 {{ planBoardObject.planBoard.registerTime }}</span
+        >
       </div>
-      <!-- Section 2 -->
-      <div class="col-md-6 mb-3">
-        <!-- Thumbnail -->
-        <div class="mb-3">
-          <label for="thumbnailInput" class="form-label">대표 사진 변경하기</label>
-          <input class="form-control" type="file" id="thumbnailInput" @change="onThumbnailChange" />
-        </div>
-        <!-- Dates -->
-        <div class="d-flex justify-content-around mb-3">
-          <div>
-            <label>시작 날짜</label>
-            <input
-              class="form-control"
-              type="text"
-              v-model="planBoardObject.planBoard.startDate"
-              readonly
+    </div>
+    <hr />
+  </div>
+  <div>
+    <!-- Main Section -->
+    <div class="row my-5 d-flex justify-content-between">
+      <!-- Map Section -->
+      <div class="col-md-4" style="margin-left: 20px">
+        <GoogleMap
+          ref="mapRef"
+          :api-key="VITE_GOOGLE_MAP_KEY"
+          style="height: 1000px; width: 100%"
+          :center="center"
+          :zoom="zoom"
+        >
+          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
+            <Polyline
+              :options="{
+                path: printMarkerLocations(index1),
+                geodesic: true,
+                strokeColor: polylineColors[index1],
+                strokeOpacity: 1.0,
+                strokeWeight: 5,
+              }"
+            />
+            <Marker
+              v-for="(attraction, index2) in scheduleDate"
+              :key="`${attraction.planScheduleId}-${index1}`"
+              :options="{
+                position: {
+                  lat: parseFloat(planLocations[index1][index2].latitude),
+                  lng: parseFloat(planLocations[index1][index2].longitude),
+                },
+                icon: getMarkerIcon(index1),
+                label: {
+                  text: `${index2 + 1}`,
+                  color: 'black',
+                  fontWeight: 'bold',
+                  fontSize: '20px',
+                },
+                zIndex: 9999,
+              }"
+              @click="toggleAccordion(index1)"
             />
           </div>
-          <div>
-            <label>종료 날짜</label>
+        </GoogleMap>
+      </div>
+      <!-- Information Section-->
+      <div class="col-md-3">
+        <div>
+          <!-- Date -->
+          <div class="date-section">
+            <label>📆 여행 기간</label>
+            <div class="date-inputs">
+              <input
+                type="date"
+                v-model="planBoardObject.planBoard.startDate"
+                disabled
+              />
+              <span class="mt-2">~</span>
+              <input
+                type="date"
+                v-model="planBoardObject.planBoard.endDate"
+                disabled
+              />
+            </div>
+          </div>
+          <!-- Thumbnail -->
+          <div class="mb-3">
+            <label for="thumbnailInput" class="form-label"
+              >대표 사진 변경하기</label
+            >
             <input
               class="form-control"
-              type="text"
-              v-model="planBoardObject.planBoard.endDate"
-              readonly
+              type="file"
+              id="thumbnailInput"
+              @change="onThumbnailChange"
             />
           </div>
+          <!-- 동행인 수 -->
+          <div style="margin-bottom: 10px">
+            👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
+          </div>
+          <!-- 여행 일정 -->
+          <div class="schedule-section">
+            <label>🕘 여행 일정</label>
+            <button @click="toggleAll(true)" class="btn btn-light">
+              모두 열기
+            </button>
+            <button @click="toggleAll(false)" class="btn btn-light">
+              모두 닫기
+            </button>
+            <div
+              v-for="(date, index1) in scheduleDates"
+              :key="index1"
+              class="day-schedule"
+            >
+              <div
+                @click="toggleAccordion(index1)"
+                :class="['schedule-date', `color-${(index1 % 5) + 1}`]"
+              >
+                <span class="schedule-date">{{
+                  scheduleDates[index1].date
+                }}</span>
+              </div>
+              <transition
+                name="accordion"
+                @before-enter="beforeEnter"
+                @enter="enter"
+                @leave="leave"
+              >
+                <div
+                  v-show="scheduleDates[index1].expanded"
+                  class="accordion-content"
+                >
+                  <table class="styled-table">
+                    <thead>
+                      <tr>
+                        <th>시간</th>
+                        <th>방문지</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        v-for="(location, index2) in planLocations[index1]"
+                        :key="index2"
+                      >
+                        <td>
+                          <input
+                            type="time"
+                            v-model="planLocations[index1][index2].time"
+                            disabled="true"
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            v-model="planLocations[index1][index2].title"
+                            disabled="true"
+                          />
+                        </td>
+                        <td></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </transition>
+            </div>
+          </div>
         </div>
-        <!-- 동반인 수 -->
-        <div class="mb-3">동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
+      </div>
+      <!-- Content Section -->
+      <div class="col-md-4 mb-3" style="margin-right: 20px">
         <!-- Content -->
-        <div class="mb-3">
-          <label>내용</label>
+        <div class="mb-3" style="height: 200px">
           <QuillEditor
             toolbar="essential"
             theme="snow"
@@ -180,7 +421,7 @@ const onThumbnailChange = (event) => {
           />
         </div>
         <!-- Selected Tags -->
-        <div class="mb-3">
+        <div class="mb-3" style="margin-top: 100px">
           <label>선택된 태그</label>
           <div>
             <button
@@ -194,7 +435,7 @@ const onThumbnailChange = (event) => {
           </div>
         </div>
         <!-- Tag 검색 -->
-        <div class="mb-3">
+        <div class="mb-3 text-center">
           <input
             id="search-tag"
             type="text"
@@ -207,7 +448,7 @@ const onThumbnailChange = (event) => {
             <button
               v-for="tag in tagResults"
               :key="tag.tagTypeId"
-              class="btn btn-outline-primary m-1"
+              class="btn btn-outline-secondary m-1"
               @click="addTag(tag)"
             >
               {{ tag.name }}
@@ -216,7 +457,9 @@ const onThumbnailChange = (event) => {
         </div>
         <!-- 수정 버튼 -->
         <div class="text-center">
-          <button class="btn btn-primary" @click="updateArticle">수정</button>
+          <button id="btn-update" class="btn w-100" @click="updateArticle">
+            수정
+          </button>
         </div>
       </div>
     </div>
@@ -248,5 +491,149 @@ const onThumbnailChange = (event) => {
 
 button.btn-outline-secondary .bi-x {
   margin-left: 5px;
+}
+
+.article-profile-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+.date-section {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.date-section .date-inputs {
+  display: flex;
+  gap: 10px;
+}
+
+.date-section label {
+  margin-bottom: 10px;
+}
+input[type="text"],
+input[type="date"],
+input[type="time"],
+select,
+.form-control {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+  border: 1px solid rgb(176, 176, 176);
+  border-radius: 10px;
+}
+.schedule-section {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+.schedule-section label {
+  margin-bottom: 20px;
+  display: block;
+}
+.accordion-enter-active,
+.accordion-leave-active {
+  transition: height 0.5s ease, opacity 0.5s ease;
+}
+
+.accordion-enter,
+.accordion-leave-to {
+  height: 0;
+  opacity: 0;
+}
+
+.accordion-content {
+  overflow: hidden;
+}
+.schedule-date {
+  width: 100px;
+  margin: 10px 0;
+}
+
+.schedule-date.color-1 {
+  background-color: #f2f7ff;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-2 {
+  background-color: #fef4f4;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-3 {
+  background-color: #fcfce2;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-4 {
+  background-color: #f5fff4;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+
+.schedule-date.color-5 {
+  background-color: #ffeec0;
+  border-radius: 10px;
+  padding: 4px 5px;
+  cursor: pointer;
+  color: #4e4e4e;
+}
+.btn-light {
+  background-color: #e4e4e4;
+  margin-bottom: 5px;
+  margin-right: 10px;
+}
+.styled-table th,
+.styled-table td {
+  padding: 8px; /* Add padding to table cells */
+}
+
+.styled-table th {
+  background-color: #f2f2f2; /* Add background color to table headers */
+  text-align: left;
+}
+
+.styled-table tr:nth-child(even) {
+  background-color: #f9f9f9; /* Add background color to even rows */
+}
+
+.styled-table th:first-child {
+  border-top-left-radius: 10px; /* Top-left corner */
+}
+
+.styled-table th:last-child {
+  border-top-right-radius: 10px; /* Top-right corner */
+}
+
+.styled-table td:first-child {
+  border-bottom-left-radius: 10px; /* Bottom-left corner */
+}
+
+.styled-table td:last-child {
+  border-bottom-right-radius: 10px; /* Bottom-right corner */
+}
+
+#btn-update {
+  background-color: #5698ad;
+  border-color: white;
+  color: white;
+}
+#btn-update:hover {
+  background-color: white;
+  border-color: #5698ad;
+  color: #5698ad;
 }
 </style>
