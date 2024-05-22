@@ -2,7 +2,8 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons";
-import { login } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 
@@ -12,30 +13,6 @@ const loginMember = ref({
   password: "",
 });
 const findComplete = ref("");
-
-const handleLogin = async () => {
-  try {
-    const response = await local.post("/members/login", loginMember.value);
-    const { accessToken, refreshToken } = response.data;
-
-    // 토큰 저장 (localStorage)
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
-
-    // 로그인 상태 변경
-    login();
-
-    // 메인 화면으로 라우팅
-    router.push({ name: "main" });
-  } catch (error) {
-    if (error.response && error.response.status === 403) {
-      alert("탈퇴된 아이디입니다.");
-    } else {
-      alert("로그인에 실패하였습니다.");
-    }
-    console.error("로그인에 실패하였습니다.", error);
-  }
-};
 
 const handleFindPassword = async () => {
   findComplete.value = "회원님의 이메일로 비밀번호 설정 링크가 발송되었습니다!";
@@ -52,19 +29,13 @@ const handleMoveToSignup = async () => {
 </script>
 
 <template>
-  <div class="login-page">
-    <form @submit.prevent="handleLogin" class="login-form">
+  <div class="find-password-page">
+    <form @submit.prevent="handleFindPassword" class="find-password-form">
       <div v-if="!findComplete">
-        <h2 class="login-title">비밀번호 찾기</h2>
+        <h2 class="find-password-title">비밀번호 찾기</h2>
         <div class="form-group">
           <label for="id" class="mb-2">아이디</label>
-          <input
-            v-model="loginMember.id"
-            type="text"
-            id="id"
-            class="form-control"
-            required
-          />
+          <input v-model="loginMember.id" type="text" id="id" class="form-control" required />
         </div>
         <div class="form-group">
           <label for="email" class="mb-2">이메일</label>
@@ -76,11 +47,7 @@ const handleMoveToSignup = async () => {
             required
           />
         </div>
-        <button
-          type="submit"
-          class="btn btn-primary"
-          @click="handleFindPassword"
-        >
+        <button type="submit" class="btn btn-primary" @click="handleFindPassword">
           비밀번호 찾기
         </button>
       </div>
@@ -88,18 +55,10 @@ const handleMoveToSignup = async () => {
         {{ findComplete }}
       </div>
       <div class="links">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="handleMoveToLogin"
-        >
+        <button type="button" class="btn btn-secondary" @click="handleMoveToLogin">
           로그인 페이지로
         </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="handleMoveToSignup"
-        >
+        <button type="button" class="btn btn-secondary" @click="handleMoveToSignup">
           회원가입 페이지로
         </button>
       </div>
@@ -108,7 +67,7 @@ const handleMoveToSignup = async () => {
 </template>
 
 <style scoped>
-.login-page {
+.find-password-page {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -116,7 +75,7 @@ const handleMoveToSignup = async () => {
   background-color: #b5ccce;
 }
 
-.login-form {
+.find-password-form {
   background: #fff;
   padding: 20px;
   border-radius: 8px;
@@ -127,7 +86,7 @@ const handleMoveToSignup = async () => {
   align-content: center;
 }
 
-.login-title {
+.find-password-title {
   margin-bottom: 20px;
   font-size: 24px;
   font-weight: bold;

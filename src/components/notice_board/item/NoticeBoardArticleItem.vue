@@ -1,5 +1,11 @@
 <script setup>
+import { useRouter } from "vue-router";
 defineProps({ article: Object });
+
+const router = useRouter();
+const mvDetail = (id) => {
+  router.push({ name: "notice-detail", params: { id: id } });
+};
 </script>
 <template>
   <tr class="text-center">
@@ -8,16 +14,19 @@ defineProps({ article: Object });
     </td>
     <td v-else>🚩</td>
     <td>
-      <router-link
-        :to="{
-          name: 'notice-detail',
-          params: { id: article.noticeBoardId },
-        }"
-        >{{ article.subject }}</router-link
-      >
+      <a href="#" @click="mvDetail(article.noticeBoardId)" id="subject">{{ article.subject }}</a>
     </td>
     <td>{{ article.hit }}</td>
     <td>{{ article.nickname }}</td>
     <td>{{ article.registerTime }}</td>
   </tr>
 </template>
+<style scoped>
+#subject {
+  text-decoration: none;
+  color: black;
+}
+#subject:hover {
+  color: #577b8d;
+}
+</style>

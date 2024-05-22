@@ -4,6 +4,8 @@ import { useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons";
 import { decodedTokenFunc } from "@/util/auth";
 import MemberMyPageSidebar from "./MemberMyPageSidebar.vue";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 const router = useRouter();
@@ -15,20 +17,25 @@ const changePassword = ref({
 });
 
 const handleChangePassword = async () => {
-  if (
-    changePassword.value.newPassword !== changePassword.value.newPasswordCheck
-  ) {
-    alert("새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.");
+  if (changePassword.value.newPassword !== changePassword.value.newPasswordCheck) {
+    Swal.fire({
+      icon: "error",
+      text: "새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.",
+    });
     return;
   }
   try {
-    const response = await local.put(
-      "/members/changepassword",
-      changePassword.value
-    );
-    alert("비밀번호 변경이 완료되었습니다.");
+    const response = await local.put("/members/changepassword", changePassword.value);
+    Swal.fire({
+      icon: "success",
+      text: "비밀번호 변경이 완료되었습니다.",
+    });
     router.push({ name: "member-mypage" });
   } catch (error) {
+    Swal.fire({
+      icon: "error",
+      text: "비밀번호 변경에 실패하였습니다.",
+    });
     console.error("비밀번호 변경에 실패하였습니다.", error);
   }
 };

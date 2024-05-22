@@ -1,10 +1,11 @@
 <script setup>
+const { VITE_LOCALHOST_URL } = import.meta.env;
+
 const prop = defineProps({ planArticle: Object });
 if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
   prop.planArticle.planBoard.thumbnail =
-    "http://localhost/products/" + prop.planArticle.planBoard.thumbnail;
+    `http://${VITE_LOCALHOST_URL}/products/` + prop.planArticle.planBoard.thumbnail;
 }
-console.log(prop.planArticle);
 </script>
 <template>
   <div class="card">

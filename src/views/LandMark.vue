@@ -103,7 +103,7 @@ function handleFileChange(event) {
   fileNames.value = [file.value.name];
   error.value = "";
   checkNoInput.value = "";
-  landmarks.value = null;
+  // landmarks.value = null;
 }
 
 function triggerFileInput() {

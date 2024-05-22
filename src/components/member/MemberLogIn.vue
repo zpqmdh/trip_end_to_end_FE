@@ -3,6 +3,8 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons";
 import { login } from "@/util/auth";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
 
 const local = localAxios();
 
@@ -25,12 +27,24 @@ const handleLogin = async () => {
     login();
 
     // 메인 화면으로 라우팅
+    Swal.fire({
+      icon: "success",
+      title: "로그인 성공 !",
+    });
     router.push({ name: "main" });
   } catch (error) {
+    loginMember.value.id = "";
+    loginMember.value.password = "";
     if (error.response && error.response.status === 403) {
-      alert("탈퇴된 아이디입니다.");
+      Swal.fire({
+        icon: "error",
+        text: "탈퇴한 아이디입니다.",
+      });
     } else {
-      alert("로그인에 실패하였습니다.");
+      Swal.fire({
+        icon: "error",
+        text: "아이디와 비밀번호가 일치하는 회원이 없습니다.",
+      });
     }
     console.error("로그인에 실패하였습니다.", error);
   }
@@ -52,13 +66,7 @@ const handleMoveToSignup = async () => {
       <h2 class="login-title">로그인</h2>
       <div class="form-group">
         <label for="id" class="mb-2">아이디</label>
-        <input
-          v-model="loginMember.id"
-          type="text"
-          id="id"
-          class="form-control"
-          required
-        />
+        <input v-model="loginMember.id" type="text" id="id" class="form-control" required />
       </div>
       <div class="form-group">
         <label for="password" class="mb-2">비밀번호</label>
@@ -73,17 +81,12 @@ const handleMoveToSignup = async () => {
       <button type="submit" class="btn btn-primary">로그인</button>
       <div class="links">
         <p class="forgot-password">비밀번호를 잊으셨나요?</p>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="handleFindPassword"
-        >
+        <button type="button" class="btn btn-secondary" @click="handleFindPassword">
           비밀번호 찾기
         </button>
       </div>
       <div class="signup-link">
-        계정이 없다면 <a href="#" @click="handleMoveToSignup">회원가입</a> 후
-        로그인해주세요.
+        계정이 없다면 <a href="#" @click="handleMoveToSignup">회원가입</a> 후 로그인해주세요.
       </div>
     </form>
   </div>

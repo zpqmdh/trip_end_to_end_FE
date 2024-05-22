@@ -3,7 +3,7 @@ import { ref, onMounted, watch } from "vue";
 import { decodedTokenFunc } from "@/util/auth";
 import { localAxios } from "@/util/http-commons.js";
 import { onBeforeRouteLeave } from "vue-router";
-
+const { VITE_LOCALHOST_URL } = import.meta.env;
 const props = defineProps({
   planDto: {
     type: Object,
@@ -12,6 +12,7 @@ const props = defineProps({
   },
 });
 const local = localAxios();
+const chatBox = ref(null);
 
 const colors = ["blue-message", "purple-message", "orange-message"];
 const chatObject = ref({
@@ -89,7 +90,7 @@ const setConnected = (connected) => {
 };
 
 const connect = () => {
-  const socket = new SockJS("http://localhost/tete-chat");
+  const socket = new SockJS(`http://${VITE_LOCALHOST_URL}/tete-chat`);
   chatObject.value.stompClient = Stomp.over(socket);
   chatObject.value.stompClient.connect(
     {},
@@ -163,6 +164,12 @@ const sendMessage = () => {
 };
 
 const showMessage = (message) => {
+  if (!message.image.startsWith("http")) {
+    message.image = `http://${VITE_LOCALHOST_URL}/products/` + message.image;
+  }
+  setTimeout(() => {
+    chatBox.value.scrollTop = chatBox.value.scrollHeight;
+  }, 100);
   chatObject.value.messages.push(message);
 };
 
@@ -200,38 +207,18 @@ onBeforeRouteLeave((to, from, next) => {
 <template>
   <div>
     <div class="livechat-icon" @click="toggleChat" v-if="chatObject.showToggle">
-      <img src="@/assets/img/livechat-icon.png" alt="LiveChat Icon" />
+      <img src="@/assets/img/live-icon.png" alt="LiveChat Icon" />
     </div>
     <div v-if="chatObject.showChat" class="chat-overlay">
       <div class="chat-container">
         <div class="offcanvas-title" style="height: 40px">
           <span>친구들과 함께 여행 계획을 세워봐요.</span>
-          <button
-            id="disconnect"
-            class="btn btn-default"
-            type="submit"
-            :disabled="!chatObject.connected"
-            @click.prevent="disconnect"
-          >
-            나가기
-          </button>
         </div>
         <div class="chat-box" ref="chatBox">
-          <div
-            v-for="(message, index) in chatObject.messages"
-            :key="index"
-            :class="message.type"
-          >
-            <div
-              :class="getMessageClass(message.type, message.colorIdx)"
-              class="message-bubble"
-            >
+          <div v-for="(message, index) in chatObject.messages" :key="index" :class="message.type">
+            <div :class="getMessageClass(message.type, message.colorIdx)" class="message-bubble">
               <template v-if="message.type === 'SEND'">
-                <img
-                  :src="message.image"
-                  class="profile-img"
-                  alt="Profile Image"
-                />
+                <img :src="message.image" class="profile-img" alt="Profile Image" />
                 <div class="message-content">
                   <div class="nickname">{{ message.nickname }}</div>
                   <div class="content">{{ message.content }}</div>
@@ -252,12 +239,7 @@ onBeforeRouteLeave((to, from, next) => {
             v-model="chatObject.content"
             @keyup.enter="sendMessage"
           />
-          <button
-            @click.prevent="sendMessage"
-            class="btn btn-outline-secondary"
-          >
-            전송
-          </button>
+          <button @click.prevent="sendMessage" class="btn btn-outline-secondary">전송</button>
         </div>
       </div>
     </div>
@@ -276,28 +258,33 @@ onBeforeRouteLeave((to, from, next) => {
 .livechat-icon img {
   width: 100%;
   height: 90%;
-  /* border-radius: 50%; */
 }
-
 .chat-overlay {
   position: fixed;
   top: 150px;
   right: 0;
   width: 400px;
   height: 600px;
-  background: white;
+  background: rgba(255, 255, 255, 0.5);
   border: 1px solid #ccc;
+  border-radius: 10px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
 }
-
 .chat-container {
   display: flex;
   flex-direction: column;
   height: 100%;
+  border-radius: 10px;
+  background: transparent;
 }
-
+.chat-box {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  background: transparent;
+}
 .offcanvas-title {
   display: flex;
   justify-content: space-between;
@@ -306,14 +293,6 @@ onBeforeRouteLeave((to, from, next) => {
   background: #f1f1f1;
   border-bottom: 1px solid #ccc;
 }
-
-.chat-box {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  background: #f9f9f9;
-}
-
 .message-bubble {
   border-radius: 10px;
   padding: 5px 10px;
@@ -354,9 +333,11 @@ onBeforeRouteLeave((to, from, next) => {
 .purple-message {
   background-color: #e0d3ea;
 }
+
 .orange-message {
   background-color: #eedfd8;
 }
+
 .profile-img {
   width: 30px;
   height: 30px;

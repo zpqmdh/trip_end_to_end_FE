@@ -2,24 +2,40 @@
 import { onMounted, ref } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRoute, useRouter } from "vue-router";
+import { decodedTokenFunc } from "@/util/auth";
 
 const local = localAxios();
 const route = useRoute();
 const router = useRouter();
 
 const notice = ref({});
-
+const member = ref({});
 onMounted(() => {
   getDetail(route.params.id);
+  getMember();
 });
 
 const getDetail = (id) => {
   local.get("/notice/" + id).then(({ data }) => {
     console.log(data);
     notice.value = data;
+    notice.value.content = data.content.replaceAll(/(\n|\r\n)/g, "<br>");
+  });
+};
+const getMember = () => {
+  const loginedId = decodedTokenFunc();
+  local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    member.value = data;
+    console.log(member.value);
   });
 };
 
+const mvList = () => {
+  router.push({ name: "notice-list" });
+};
+const mvModify = () => {
+  router.push({ name: "notice-modify", params: { id: notice.value.noticeBoardId } });
+};
 const deleteArticle = () => {
   const flag = confirm("정말 삭제하시겠습니까?");
   if (!flag) return;
@@ -32,8 +48,13 @@ const deleteArticle = () => {
 </script>
 
 <template>
+  <div class="d-flex justify-content-center mt-3">
+    <h1>📢 공지사항</h1>
+  </div>
   <div class="container">
-    <h2>{{ notice.subject }}</h2>
+    <div class="d-flex justify-content-center">
+      <h2>{{ notice.subject }}</h2>
+    </div>
     <hr />
     <div class="meta">
       <span class="author">👤 작성자: {{ notice.nickname }}</span>
@@ -42,14 +63,16 @@ const deleteArticle = () => {
       <span class="divider">|</span>
       <span class="time">🕒 {{ notice.registerTime }}</span>
     </div>
-    <div class="content">{{ notice.content }}</div>
-    <RouterLink :to="{ name: 'notice-list' }" class="back-link">목록으로</RouterLink>
-    <RouterLink
-      :to="{ name: 'notice-modify', params: { id: notice.noticeBoardId } }"
-      class="back-link"
-      >수정하기</RouterLink
-    >
-    <button @click.prevent="deleteArticle">삭제</button>
+    <div class="content" v-html="notice.content"></div>
+    <div class="col-auto text-end">
+      <button id="btn-list" type="button" class="btn mb-3" @click="mvList">목록으로</button>
+      <template v-if="member.type == 3">
+        <button id="btn-modify" type="button" class="btn mb-3" @click="mvModify">수정하기</button>
+        <button id="btn-delete" type="button" class="btn mb-3" @click.prevent="deleteArticle">
+          삭제하기
+        </button>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -62,7 +85,7 @@ const deleteArticle = () => {
 }
 
 h2 {
-  font-size: 24px;
+  font-size: 30px;
   margin-bottom: 10px;
 }
 
@@ -74,13 +97,14 @@ hr {
 
 .meta {
   margin-bottom: 20px;
+  text-align: end;
+  font-size: 16px;
 }
 
 .author,
 .views,
 .time {
   margin-right: 10px;
-  font-size: 14px;
   color: #666;
 }
 
@@ -89,19 +113,41 @@ hr {
 }
 
 .content {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.6;
   margin-bottom: 20px;
+  padding-left: 100px;
+  padding-right: 100px;
+  padding-top: 50px;
 }
 
-.back-link {
-  display: inline-block;
-  margin-top: 20px;
-  color: blue;
-  text-decoration: none;
+#btn-list {
+  border-color: #97654c;
+  color: #97654c;
+  background-color: white;
+  margin-right: 5px;
 }
-
-.back-link:hover {
-  text-decoration: underline;
+#btn-list:hover {
+  background-color: #97654c;
+  color: white;
+}
+#btn-modify {
+  border-color: #577b8d;
+  color: #577b8d;
+  background-color: white;
+  margin-right: 5px;
+}
+#btn-modify:hover {
+  background-color: #577b8d;
+  color: white;
+}
+#btn-delete {
+  border-color: #666;
+  color: #666;
+  background-color: white;
+}
+#btn-delete:hover {
+  background-color: #666;
+  color: white;
 }
 </style>

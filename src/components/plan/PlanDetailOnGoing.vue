@@ -5,6 +5,8 @@ import { localAxios } from "@/util/http-commons";
 import { useRoute, useRouter } from "vue-router";
 import PlanLiveChat from "@/components/plan/item/PlanLiveChat.vue";
 
+const { VITE_LOCALHOST_URL } = import.meta.env;
+
 const local = localAxios();
 const route = useRoute();
 const router = useRouter();
@@ -96,7 +98,8 @@ const filterMembers = () => {
   const existingMemberIds = memberIds.value.map((m) => m.memberId);
   filteredMemberList.value = allMemberList.value.filter(
     (member) =>
-      !existingMemberIds.includes(member.memberId) && member.nickname.toLowerCase().includes(query)
+      !existingMemberIds.includes(member.memberId) &&
+      member.nickname.toLowerCase().includes(query)
   );
 };
 
@@ -204,9 +207,13 @@ const getMemberNicknames = async () => {
     try {
       const { data } = await local.get(`/plans/getMember/${member.memberId}`);
       memberList.value[index] = data;
-      if (memberList.value[index].image && !memberList.value[index].image.startsWith("http")) {
+      if (
+        memberList.value[index].image &&
+        !memberList.value[index].image.startsWith("http")
+      ) {
         memberList.value[index].image =
-          "http://localhost/products/" + memberList.value[index].image;
+          `http://${VITE_LOCALHOST_URL}/products/` +
+          memberList.value[index].image;
       }
     } catch (error) {
       console.error("Error fetching nickname:", error);
@@ -315,17 +322,19 @@ const addPlanLocation = (date_index, title, latitude, longitude, contentId) => {
 };
 
 const showDetail = (location) => {
-  local.get(`/shareplan/map/attractiondescription/${location.contentId}`).then(({ data }) => {
-    selectedLocation.value = data;
-    selectedLocation.value.title = location.title;
-    selectedLocation.value.image = location.firstImage
-      ? location.firstImage
-      : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
-    selectedLocation.value.addr = location.addr1 + " " + location.addr2;
-    selectedLocation.value.latitude = location.latitude;
-    selectedLocation.value.longitude = location.longitude;
-    showModal.value = true;
-  });
+  local
+    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
+    .then(({ data }) => {
+      selectedLocation.value = data;
+      selectedLocation.value.title = location.title;
+      selectedLocation.value.image = location.firstImage
+        ? location.firstImage
+        : `https://www.shoshinsha-design.com/wp-content/uploads/2020/05/noimage-760x460.png`;
+      selectedLocation.value.addr = location.addr1 + " " + location.addr2;
+      selectedLocation.value.latitude = location.latitude;
+      selectedLocation.value.longitude = location.longitude;
+      showModal.value = true;
+    });
 };
 const showNewMarkerModal = ref(false);
 const showAddModal = () => {
@@ -384,7 +393,10 @@ onMounted(() => {
         const bounds = new google.maps.LatLngBounds();
         newLocations.forEach((location) => {
           bounds.extend(
-            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
+            new google.maps.LatLng(
+              parseFloat(location.latitude),
+              parseFloat(location.longitude)
+            )
           );
         });
         gmap.fitBounds(bounds);
@@ -439,7 +451,14 @@ onMounted(() => {
           aria-label="검색어"
           v-model="searchOption.keyword"
         />
-        <button id="btn-search" class="btn-search" type="button" @click="search">검색</button>
+        <button
+          id="btn-search"
+          class="btn-search"
+          type="button"
+          @click="search"
+        >
+          검색
+        </button>
       </form>
       <!-- Map -->
       <div class="map-container">
@@ -451,7 +470,7 @@ onMounted(() => {
           :zoom="zoom"
           @click="addMarker"
         >
-          <div v-for="(scheduleDate, index1) in planLocations">
+          <div v-for="(scheduleDate, index1) in planLocations" :key="index1">
             <Polyline
               :options="{
                 path: printMarkerLocations(index1),
@@ -461,6 +480,7 @@ onMounted(() => {
                 strokeWeight: 5,
               }"
             />
+
             <Marker
               v-for="(attraction, index2) in scheduleDate"
               :key="`${attraction.planScheduleId}-${index1}`"
@@ -493,7 +513,9 @@ onMounted(() => {
             />
             <Marker :options="clickMarker" @click="showAddModal()" />
           </div>
-          <button @click="resetSearch" class="btn-search-result">검색 결과 초기화</button>
+          <button @click="resetSearch" class="btn-search-result">
+            검색 결과 초기화
+          </button>
         </GoogleMap>
       </div>
     </div>
@@ -508,8 +530,16 @@ onMounted(() => {
       <div class="members-section">
         <label>👨‍👩‍👦 참여 멤버</label>
         <div class="members-list">
-          <div v-for="(member, index) in memberIds" :key="index" class="member-profile">
-            <img :src="memberList[index].image" alt="프로필 이미지" class="profile-image mb-0" />
+          <div
+            v-for="(member, index) in memberIds"
+            :key="index"
+            class="member-profile"
+          >
+            <img
+              :src="memberList[index].image"
+              alt="프로필 이미지"
+              class="profile-image mb-0"
+            />
             <p class="mb-0 mt-1">{{ memberList[index].nickname }}</p>
             <button
               class="btn btn-remove mt-0"
@@ -526,7 +556,11 @@ onMounted(() => {
             <p class="center">추가</p>
           </div>
         </div>
-        <div v-if="showMemberModal" class="modal" @click.self="showMemberModal = false">
+        <div
+          v-if="showMemberModal"
+          class="modal"
+          @click.self="showMemberModal = false"
+        >
           <div class="modal-content add-member">
             <span class="close" @click="showMemberModal = false">&times;</span>
             <h2>멤버 검색</h2>
@@ -548,29 +582,53 @@ onMounted(() => {
           </div>
         </div>
       </div>
-
-      <div class="date-section">
-        <label>📆 여행 기간</label>
-        <div class="date-inputs">
-          <input type="date" v-model="planDto.startDate" />
-          <span class="mt-2">~</span>
-          <input type="date" v-model="planDto.endDate" :min="planDto.startDate" />
-        </div>
+    </div>
+    <div class="date-section">
+      <label>📆 여행 기간</label>
+      <div class="date-inputs">
+        <input type="date" v-model="planDto.startDate" />
+        <span class="mt-2">~</span>
+        <input type="date" v-model="planDto.endDate" :min="planDto.startDate" />
       </div>
+    </div>
 
-      <div class="schedule-section">
+    <div class="schedule-section">
+      <label>여행 일정</label>
+      <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
+      <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
+      <div
+        v-for="(date, index1) in scheduleDates"
+        :key="index1"
+        class="day-schedule"
+      >
         <label>🕘 여행 일정</label>
-        <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
-        <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
-        <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
+        <button @click="toggleAll(true)" class="btn btn-light">
+          모두 열기
+        </button>
+        <button @click="toggleAll(false)" class="btn btn-light">
+          모두 닫기
+        </button>
+        <div
+          v-for="(date, index1) in scheduleDates"
+          :key="index1"
+          class="day-schedule"
+        >
           <div
             @click="toggleAccordion(index1)"
             :class="['schedule-date', `color-${(index1 % 5) + 1}`]"
           >
             <span class="schedule-date">{{ scheduleDates[index1].date }}</span>
           </div>
-          <transition name="accordion" @before-enter="beforeEnter" @enter="enter" @leave="leave">
-            <div v-show="scheduleDates[index1].expanded" class="accordion-content">
+          <transition
+            name="accordion"
+            @before-enter="beforeEnter"
+            @enter="enter"
+            @leave="leave"
+          >
+            <div
+              v-show="scheduleDates[index1].expanded"
+              class="accordion-content"
+            >
               <table class="styled-table">
                 <thead>
                   <tr>
@@ -580,15 +638,27 @@ onMounted(() => {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(location, index2) in planLocations[index1]" :key="index2">
+                  <tr
+                    v-for="(location, index2) in planLocations[index1]"
+                    :key="index2"
+                  >
                     <td>
-                      <input type="time" v-model="planLocations[index1][index2].time" />
+                      <input
+                        type="time"
+                        v-model="planLocations[index1][index2].time"
+                      />
                     </td>
                     <td>
-                      <input type="text" v-model="planLocations[index1][index2].title" />
+                      <input
+                        type="text"
+                        v-model="planLocations[index1][index2].title"
+                      />
                     </td>
                     <td>
-                      <button class="btn btn-remove" @click="removePlanLocation(index1, index2)">
+                      <button
+                        class="btn btn-remove"
+                        @click="removePlanLocation(index1, index2)"
+                      >
                         X
                       </button>
                     </td>
@@ -602,13 +672,23 @@ onMounted(() => {
 
       <div class="booking-section">
         <label>🚊 예약 내역</label>
-        <div v-for="(content, index) in bookContents" :key="index" style="display: flex">
+        <div
+          v-for="(content, index) in bookContents"
+          :key="index"
+          style="display: flex"
+        >
           <input type="text" v-model="bookContents[index].content" />
-          <button class="btn btn-remove mb-2" style="color: gray" @click="removeBookContent(index)">
+          <button
+            class="btn btn-remove mb-2"
+            style="color: gray"
+            @click="removeBookContent(index)"
+          >
             X
           </button>
         </div>
-        <button class="btn btn-outline-secondary" @click="addBookContent">+</button>
+        <button class="btn btn-outline-secondary" @click="addBookContent">
+          +
+        </button>
       </div>
       <div class="payment-section">
         <label>💰 결제 내역</label>
@@ -651,6 +731,12 @@ onMounted(() => {
               </td>
               <td>
                 <button
+                  class="btn btn-remove"
+                  @click="removePaymentDetail(index)"
+                >
+                  X
+                </button>
+                <button
                   class="btn btn-remove mb-2"
                   @click="removePaymentDetail(index)"
                   style="color: gray"
@@ -661,7 +747,9 @@ onMounted(() => {
             </tr>
           </tbody>
         </table>
-        <button class="btn btn-outline-secondary" @click="addPaymentDetail">+</button>
+        <button class="btn btn-outline-secondary" @click="addPaymentDetail">
+          +
+        </button>
       </div>
     </div>
   </div>
@@ -686,7 +774,11 @@ onMounted(() => {
         <div class="modal-footer">
           <select name="selectDate" id="selectDate" v-model="selectedDate">
             <option disabled value="">날짜 선택</option>
-            <option v-for="(schedule, index) in scheduleDates" :key="index" :value="index">
+            <option
+              v-for="(schedule, index) in scheduleDates"
+              :key="index"
+              :value="index"
+            >
               {{ schedule.date }}
             </option>
           </select>
@@ -705,7 +797,13 @@ onMounted(() => {
           >
             여행 계획에 추가
           </button>
-          <button type="button" class="btn btn-secondary" @click="showModal = false">닫기</button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            @click="showModal = false"
+          >
+            닫기
+          </button>
         </div>
       </div>
     </div>
@@ -720,7 +818,11 @@ onMounted(() => {
     <div class="modal-content">
       <select name="selectDate" id="selectDate" v-model="selectedDate">
         <option disabled value="">날짜 선택</option>
-        <option v-for="(schedule, index) in scheduleDates" :key="index" :value="index">
+        <option
+          v-for="(schedule, index) in scheduleDates"
+          :key="index"
+          :value="index"
+        >
           {{ schedule.date }}
         </option>
       </select>
@@ -747,7 +849,11 @@ onMounted(() => {
       >
         여행 계획에 추가
       </button>
-      <button type="button" class="btn btn-secondary" @click="showNewMarkerModal = false">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        @click="showNewMarkerModal = false"
+      >
         닫기
       </button>
     </div>
