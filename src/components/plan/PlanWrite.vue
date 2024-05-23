@@ -11,6 +11,10 @@ import blueMarkerImage from "@/assets/img/marker-sky.png";
 import greenMarkerImage from "@/assets/img/marker-green.png";
 import orangeMarkerImage from "@/assets/img/marker-orange.png";
 import yellowMarkerImage from "@/assets/img/marker-yellow.png";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/src/sweetalert2.scss";
+
+const { VITE_LOCALHOST_URL } = import.meta.env;
 
 const local = localAxios();
 const route = useRoute();
@@ -260,7 +264,7 @@ const getMemberInfo = async () => {
       memberList.value[index] = data;
       if (memberList.value[index].image && !memberList.value[index].image.startsWith("http")) {
         memberList.value[index].image =
-          "http://localhost/products/" + memberList.value[index].image;
+          `http://${VITE_LOCALHOST_URL}/products/` + memberList.value[index].image;
       }
     } catch (error) {
       console.error("Error fetching nickname:", error);
@@ -429,6 +433,19 @@ onMounted(async () => {
     (isReady) => {
       if (!isReady) return;
       const gmap = mapRef.value.map;
+      watch(markerLocations, (newLocations) => {
+        if (newLocations.length === 0) return;
+        const bounds = new google.maps.LatLngBounds();
+        newLocations.forEach((dayLocation) => {
+          // 일자별
+          dayLocation.forEach((location) => {
+            bounds.extend(
+              new google.maps.LatLng(parseFloat(location.lat), parseFloat(location.lng))
+            );
+          });
+        });
+        gmap.fitBounds(bounds);
+      });
       watch(locations, (newLocations) => {
         if (newLocations.length === 0) return;
         const bounds = new google.maps.LatLngBounds();

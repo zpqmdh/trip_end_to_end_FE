@@ -112,7 +112,7 @@ const insertArticle = async () => {
         text: "여행 공유 게시글이 등록되었습니다.",
       });
     });
-  router.replace({ name: "share-plan-list" });
+  router.push({ name: "share-plan-list" });
 };
 
 const getMemberId = () => {
@@ -129,6 +129,20 @@ onMounted(() => {
     () => mapRef.value.ready,
     (isReady) => {
       if (!isReady) return;
+      const gmap = mapRef.value.map;
+      watch(markerLocations, (newLocations) => {
+        if (newLocations.length === 0) return;
+        const bounds = new google.maps.LatLngBounds();
+        newLocations.forEach((dayLocation) => {
+          // 일자별
+          dayLocation.forEach((location) => {
+            bounds.extend(
+              new google.maps.LatLng(parseFloat(location.lat), parseFloat(location.lng))
+            );
+          });
+        });
+        gmap.fitBounds(bounds);
+      });
     }
   );
 });
@@ -168,8 +182,7 @@ const getPlanDetail = (planId) => {
     };
     startDate.value = new Date(planInfo.value.planDto.startDate);
     endDate.value = new Date(planInfo.value.planDto.endDate);
-    planBoardObject.value.planBoard.theNumberOfMembers =
-      planInfo.value.memberIds.length;
+    planBoardObject.value.planBoard.theNumberOfMembers = planInfo.value.memberIds.length;
     scheduleDates.value = planInfo.value.scheduleDates.map((date) => ({
       ...date,
       expanded: false,
@@ -242,9 +255,7 @@ const searchTag = () => {
   });
 };
 const addTag = (tag) => {
-  const exists = planBoardObject.value.tagList.some(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const exists = planBoardObject.value.tagList.some((t) => t.tagTypeId === tag.tagTypeId);
   if (!exists) {
     if (planBoardObject.value.tagList.length >= 3) {
       Swal.fire({
@@ -257,9 +268,7 @@ const addTag = (tag) => {
   }
 };
 const removeTag = (tag) => {
-  const index = planBoardObject.value.tagList.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const index = planBoardObject.value.tagList.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (index !== -1) {
     planBoardObject.value.tagList.splice(index, 1);
   }
@@ -338,11 +347,7 @@ const onThumbnailChange = (event) => {
           <div class="date-section">
             <label>📆 여행 기간</label>
             <div class="date-inputs">
-              <input
-                type="date"
-                v-model="planDto.startDate"
-                :disabled="getDataBoolean"
-              />
+              <input type="date" v-model="planDto.startDate" :disabled="getDataBoolean" />
               <span class="mt-2">~</span>
               <input
                 type="date"
@@ -367,12 +372,7 @@ const onThumbnailChange = (event) => {
 
           <!-- 여행 (plan) 에서 가져오기 -->
           <div class="mb-3">
-            <button
-              id="btn-get"
-              @click="getDataListPlan"
-              type="submit"
-              class="btn w-100"
-            >
+            <button id="btn-get" @click="getDataListPlan" type="submit" class="btn w-100">
               여행에서 불러오기
             </button>
             <select
@@ -381,11 +381,7 @@ const onThumbnailChange = (event) => {
               v-model="selectedPlan"
             >
               <option value="" disabled selected>여행을 선택하세요</option>
-              <option
-                v-for="plan in plans"
-                :key="plan.planId"
-                :value="plan.planId"
-              >
+              <option v-for="plan in plans" :key="plan.planId" :value="plan.planId">
                 {{ plan.title }} | 기간: {{ plan.startDate }} -
                 {{ plan.endDate }}
               </option>
@@ -393,24 +389,14 @@ const onThumbnailChange = (event) => {
             <!-- 여행 세부 일정 -->
             <div class="schedule-section">
               <label>🕘 여행 일정</label>
-              <button @click="toggleAll(true)" class="btn btn-light">
-                모두 열기
-              </button>
-              <button @click="toggleAll(false)" class="btn btn-light">
-                모두 닫기
-              </button>
-              <div
-                v-for="(date, index1) in scheduleDates"
-                :key="index1"
-                class="day-schedule"
-              >
+              <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
+              <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
+              <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
                 <div
                   @click="toggleAccordion(index1)"
                   :class="['schedule-date', `color-${(index1 % 5) + 1}`]"
                 >
-                  <span class="schedule-date">{{
-                    scheduleDates[index1].date
-                  }}</span>
+                  <span class="schedule-date">{{ scheduleDates[index1].date }}</span>
                 </div>
                 <transition
                   name="accordion"
@@ -418,10 +404,7 @@ const onThumbnailChange = (event) => {
                   @enter="enter"
                   @leave="leave"
                 >
-                  <div
-                    v-show="scheduleDates[index1].expanded"
-                    class="accordion-content"
-                  >
+                  <div v-show="scheduleDates[index1].expanded" class="accordion-content">
                     <table class="styled-table">
                       <thead>
                         <tr>
@@ -431,10 +414,7 @@ const onThumbnailChange = (event) => {
                         </tr>
                       </thead>
                       <tbody>
-                        <tr
-                          v-for="(location, index2) in planLocations[index1]"
-                          :key="index2"
-                        >
+                        <tr v-for="(location, index2) in planLocations[index1]" :key="index2">
                           <td>
                             <input
                               type="time"
@@ -463,9 +443,7 @@ const onThumbnailChange = (event) => {
         <div class="col-md-4" style="margin-right: 20px">
           <!-- Thumbnail -->
           <div class="mb-3">
-            <label for="thumbnailInput" class="form-label"
-              >🖼️ 대표 사진 지정하기</label
-            >
+            <label for="thumbnailInput" class="form-label">🖼️ 대표 사진 지정하기</label>
             <input
               class="form-control"
               type="file"
@@ -489,15 +467,8 @@ const onThumbnailChange = (event) => {
             />
           </div>
           <div class="text-center mb-4">
-            <div
-              v-for="tag in tagResults"
-              :key="tag.tagTypeId"
-              class="d-inline-block"
-            >
-              <button
-                class="btn btn-outline-secondary m-1"
-                @click="addTag(tag)"
-              >
+            <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
+              <button class="btn btn-outline-secondary m-1" @click="addTag(tag)">
                 {{ tag.name }}
               </button>
             </div>
@@ -510,22 +481,14 @@ const onThumbnailChange = (event) => {
               :key="selectedTag.tagTypeId"
               class="d-inline-block"
             >
-              <button
-                class="btn btn-outline-secondary m-1"
-                @click="removeTag(selectedTag)"
-              >
+              <button class="btn btn-outline-secondary m-1" @click="removeTag(selectedTag)">
                 {{ selectedTag.name }}
               </button>
             </div>
           </div>
           <!-- Insert Article Button -->
           <div class="text-center">
-            <button
-              id="btn-insert"
-              @click="insertArticle"
-              type="submit"
-              class="btn w-100"
-            >
+            <button id="btn-insert" @click="insertArticle" type="submit" class="btn w-100">
               등록
             </button>
           </div>

@@ -124,17 +124,10 @@ watch(isSecretBoolean, (newVal) => {
           />
         </div>
         <div class="col-auto text-center">
-          <button
-            type="button"
-            id="btn-register"
-            class="btn btn-outline-primary mb-3"
-            @click="insertArticle"
-          >
+          <button type="button" id="btn-register" class="btn" @click="insertArticle">
             등록하기
           </button>
-          <button type="reset" class="btn btn-outline-danger mb-3" @click="resetInput">
-            초기화
-          </button>
+          <button id="btn-reset" type="reset" class="btn" @click="resetInput">초기화</button>
         </div>
       </div>
     </div>
@@ -144,5 +137,24 @@ watch(isSecretBoolean, (newVal) => {
 <style scoped>
 #title {
   margin: 35px 0px;
+}
+#btn-register {
+  border-color: #577b8d;
+  color: #577b8d;
+  background-color: white;
+  margin-right: 10px;
+}
+#btn-register:hover {
+  background-color: #577b8d;
+  color: white;
+}
+#btn-reset {
+  border-color: #97654c;
+  color: #97654c;
+  background-color: white;
+}
+#btn-reset:hover {
+  background-color: #97654c;
+  color: white;
 }
 </style>

@@ -20,6 +20,9 @@ const author = ref({});
 const getQnADetail = (id) => {
   local.get("/qna/" + id).then(({ data }) => {
     article.value = data.article;
+    article.value.commentList.forEach((comment) => {
+      comment.content = comment.content.replaceAll(/(\n|\r\n)/g, "<br>");
+    });
     console.log(article.value);
     getAuthor();
   });
@@ -212,7 +215,7 @@ const mvModify = () => {
               v-if="editingComment !== comment.commentId"
               class="d-flex justify-content-between align-items-center"
             >
-              <p>{{ comment.content }}</p>
+              <div v-html="comment.content"></div>
               <div v-if="comment.memberId === member.memberId" class="comment-actions">
                 <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
                   수정

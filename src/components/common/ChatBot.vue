@@ -11,11 +11,7 @@
           <span>회원님의 여행을 책임지는 AI 어시스턴트입니다</span>
         </div>
         <div class="chat-box" ref="chatBox">
-          <div
-            v-for="(message, index) in messages"
-            :key="index"
-            :class="message.type"
-          >
+          <div v-for="(message, index) in messages" :key="index" :class="message.type">
             <div class="message-bubble">{{ message.content }}</div>
           </div>
           <div v-if="loading" class="loading">
@@ -31,9 +27,7 @@
             v-model="userInput"
             @keydown.enter="sendMessage"
           />
-          <button @click="sendMessage" class="btn btn-outline-secondary">
-            Send
-          </button>
+          <button @click="sendMessage" class="btn btn-outline-secondary">Send</button>
         </div>
       </div>
     </div>
@@ -41,48 +35,48 @@
 </template>
 
 <script setup>
-// import { ref } from "vue";
-// import { io } from "socket.io-client";
+import { ref } from "vue";
+import { io } from "socket.io-client";
 
-// const socket = io("http://192.168.205.52:5000");
-// const chatBox = ref(null);
-// const userInput = ref("");
-// const messages = ref([]);
-// const showChatbot = ref(false);
-// const loading = ref(false); // 로딩 상태 관리
+const socket = io("http://192.168.205.52:5000");
+const chatBox = ref(null);
+const userInput = ref("");
+const messages = ref([]);
+const showChatbot = ref(false);
+const loading = ref(false); // 로딩 상태 관리
 
-// const toggleChatbot = () => {
-//   showChatbot.value = !showChatbot.value;
-// };
+const toggleChatbot = () => {
+  showChatbot.value = !showChatbot.value;
+};
 
-// const sendMessage = () => {
-//   if (userInput.value.trim() === "") return;
+const sendMessage = () => {
+  if (userInput.value.trim() === "") return;
 
-//   const userMessage = { content: userInput.value, type: "user" };
-//   messages.value.push(userMessage);
+  const userMessage = { content: userInput.value, type: "user" };
+  messages.value.push(userMessage);
 
-//   loading.value = true; // 메시지를 보낸 직후 로딩 상태로 설정
-//   socket.emit("message", { message: userInput.value });
+  loading.value = true; // 메시지를 보낸 직후 로딩 상태로 설정
+  socket.emit("message", { message: userInput.value });
 
-//   userInput.value = ""; // Clear the input field
+  userInput.value = ""; // Clear the input field
 
-//   // Scroll to the bottom of the chat box
-//   setTimeout(() => {
-//     chatBox.value.scrollTop = chatBox.value.scrollHeight;
-//   }, 100);
-// };
+  // Scroll to the bottom of the chat box
+  setTimeout(() => {
+    chatBox.value.scrollTop = chatBox.value.scrollHeight;
+  }, 100);
+};
 
-// socket.on("response", (data) => {
-//   const botMessage = { content: data.data, type: "bot" };
-//   messages.value.push(botMessage);
+socket.on("response", (data) => {
+  const botMessage = { content: data.data, type: "bot" };
+  messages.value.push(botMessage);
 
-//   loading.value = false; // 응답을 받은 후 로딩 상태 해제
+  loading.value = false; // 응답을 받은 후 로딩 상태 해제
 
-//   // Scroll to the bottom of the chat box
-//   setTimeout(() => {
-//     chatBox.value.scrollTop = chatBox.value.scrollHeight;
-//   }, 100);
-// });
+  // Scroll to the bottom of the chat box
+  setTimeout(() => {
+    chatBox.value.scrollTop = chatBox.value.scrollHeight;
+  }, 100);
+});
 </script>
 
 <style scoped>

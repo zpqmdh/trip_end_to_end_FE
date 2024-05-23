@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { GoogleMap, Marker, Polyline } from "vue3-google-map";
 import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
@@ -15,7 +15,7 @@ const local = localAxios();
 
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 const center = { lat: 36.35538, lng: 127.8 };
-const zoom = ref(7);
+const zoom = ref(13);
 const mapRef = ref(null);
 
 const planBoardObject = ref({
@@ -51,6 +51,28 @@ onMounted(() => {
     newLike.value.memberId = data.memberId;
   });
   getDetail();
+  watch(
+    () => mapRef.value.ready,
+    (isReady) => {
+      if (!isReady) return;
+      const gmap = mapRef.value.map;
+      watch(markerLocations, (newLocations) => {
+        console.log(markerLocations.value);
+        if (newLocations.length === 0) return;
+        const bounds = new google.maps.LatLngBounds();
+        newLocations.forEach((dayLocation) => {
+          // 일자별
+          dayLocation.forEach((location) => {
+            console.log(location);
+            bounds.extend(
+              new google.maps.LatLng(parseFloat(location.lat), parseFloat(location.lng))
+            );
+          });
+        });
+        gmap.fitBounds(bounds);
+      });
+    }
+  );
 });
 
 const getDetail = () => {
@@ -62,6 +84,9 @@ const getDetail = () => {
 
     planBoardObject.value.planBoard = data.planBoard;
     planBoardObject.value.commentList = data.commentList;
+    planBoardObject.value.commentList.forEach((comment) => {
+      comment.content = comment.content.replaceAll(/(\n|\r\n)/g, "<br>");
+    });
     planBoardObject.value.likeList = data.likeList;
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
@@ -496,7 +521,7 @@ const deleteArticle = () => {
               v-if="editingComment !== comment.commentId"
               class="d-flex justify-content-between align-items-center mt-3"
             >
-              <p>{{ comment.content }}</p>
+              <div v-html="comment.content"></div>
               <div v-if="comment.memberId === memberId" class="comment-actions">
                 <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
                   수정

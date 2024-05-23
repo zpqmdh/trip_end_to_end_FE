@@ -66,52 +66,37 @@ const moveWrite = () => {
 </script>
 
 <template>
-  <div class="row" style="margin-top: 50px">
-    <div class="col-md-4 d-flex align-items-center position-relative">
-      <div class="fixed-title text-center">
-        <h1>🚗 다녀온 여행 공유</h1>
-        <div class="text-center mb-4">
-          <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">
-            게시글 작성하기
-          </button>
-        </div>
-        <form class="text-center mb-4">
-          <div class="form-row justify-content-center">
-            <div class="d-flex flex-column align-items-center mb-4">
-              <label class="mr-sm-3" for="inlineFormCustomSelect">태그 검색</label>
-              <input
-                type="text"
-                class="form-control"
-                style="width: 100%; text-align: center"
-                placeholder="Tag"
-                v-model.trim="tagName"
-                @input.prevent="searchTag"
-              />
-            </div>
+  <div class="main" style="padding: 80px">
+    <div class="row">
+      <div class="col-md-4 d-flex align-items-center position-relative">
+        <div class="fixed-title text-center">
+          <h1>🚗 다녀온 여행 공유</h1>
+          <div class="text-center mb-4">
+            <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">
+              게시글 작성하기
+            </button>
           </div>
-        </form>
-        <div class="text-center mb-4">
-          <div class="tags-container">
-            <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
-              <button
-                class="btn btn-outline-secondary m-1"
-                @click.prevent="filterTag(tag)"
-                :class="{ active: filteredTag.includes(tag) }"
-              >
-                {{ tag.name }}
-              </button>
+          <form class="text-center mb-4">
+            <div class="form-row justify-content-center">
+              <div class="d-flex flex-column align-items-center mb-4">
+                <label class="mr-sm-3" for="inlineFormCustomSelect">태그 검색</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  style="width: 100%; text-align: center"
+                  placeholder="Tag"
+                  v-model.trim="tagName"
+                  @input.prevent="searchTag"
+                />
+              </div>
             </div>
-          </div>
-        </div>
-        <!-- New section to display search results -->
-        <div class="text-center mb-4">
-          <div v-if="filteredTag.length > 0">
-            <h5>검색 결과</h5>
+          </form>
+          <div class="text-center mb-4">
             <div class="tags-container">
-              <div v-for="tag in filteredTag" :key="tag.tagTypeId" class="d-inline-block">
+              <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
                 <button
                   class="btn btn-outline-secondary m-1"
-                  @click.prevent="removeTag(tag)"
+                  @click.prevent="filterTag(tag)"
                   :class="{ active: filteredTag.includes(tag) }"
                 >
                   {{ tag.name }}
@@ -119,17 +104,34 @@ const moveWrite = () => {
               </div>
             </div>
           </div>
+          <!-- New section to display search results -->
+          <div class="text-center mb-4">
+            <div v-if="filteredTag.length > 0">
+              <h5>검색 결과</h5>
+              <div class="tags-container">
+                <div v-for="tag in filteredTag" :key="tag.tagTypeId" class="d-inline-block">
+                  <button
+                    class="btn btn-outline-secondary m-1"
+                    @click.prevent="removeTag(tag)"
+                    :class="{ active: filteredTag.includes(tag) }"
+                  >
+                    {{ tag.name }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="col-md-7">
-      <div class="row">
-        <div
-          class="col-md-4 mb-4"
-          v-for="planArticle in filteredArticleList"
-          :key="planArticle.planBoardId"
-        >
-          <PlanBoardCard :planArticle="planArticle" />
+      <div class="col-md-7">
+        <div class="row">
+          <div
+            class="col-md-4 mb-4"
+            v-for="planArticle in filteredArticleList"
+            :key="planArticle.planBoardId"
+          >
+            <PlanBoardCard :planArticle="planArticle" />
+          </div>
         </div>
       </div>
     </div>
@@ -141,9 +143,18 @@ const moveWrite = () => {
   width: 100%;
   overflow: hidden;
 }
+.main {
+  background-color: #b5ccce;
+  height: 100vh;
+}
+.form-control {
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+}
 #btn-go-write {
+  margin-top: 10px;
   background-color: #577b8d;
-  border-color: white;
+  border-color: #577b8d;
   color: white;
 }
 #btn-go-write:hover {

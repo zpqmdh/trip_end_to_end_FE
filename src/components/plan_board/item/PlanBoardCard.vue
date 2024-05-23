@@ -1,36 +1,43 @@
 <script setup>
 const { VITE_LOCALHOST_URL } = import.meta.env;
+import { useRouter } from "vue-router";
 
 const prop = defineProps({ planArticle: Object });
+const router = useRouter();
 if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
   prop.planArticle.planBoard.thumbnail =
     `http://${VITE_LOCALHOST_URL}/products/` + prop.planArticle.planBoard.thumbnail;
 }
+const mvDetail = () => {
+  router.push({
+    name: "share-plan-detail",
+    params: { id: prop.planArticle.planBoard.planBoardId },
+  });
+};
+console.log(prop.planArticle);
 </script>
 <template>
   <div class="card">
-    <img class="card-img-top" :src="prop.planArticle.planBoard.thumbnail" alt="Card image cap" />
+    <img
+      class="card-img-top"
+      :src="prop.planArticle.planBoard.thumbnail"
+      alt="Card image cap"
+      @click.prevent="mvDetail"
+    />
     <div class="card-body">
+      <div class="card-info" style="color: #666">
+        🗓️ {{ prop.planArticle.planBoard.startDate }} - {{ prop.planArticle.planBoard.endDate }} 🗓️
+      </div>
       <h5 class="card-title">{{ prop.planArticle.planBoard.subject }}</h5>
-      <div class="card-info d-flex justify-content-end">
-        {{ prop.planArticle.planBoard.registerTime }}
-      </div>
+      <div class="card-info d-flex justify-content-end">👁 {{ prop.planArticle.planBoard.hit }}</div>
       <hr />
-      <div class="card-info">
-        🗓️ {{ prop.planArticle.planBoard.startDate }} -
-        {{ prop.planArticle.planBoard.endDate }}
+      <div class="card-info d-flex justify-content-end">
+        <div>👤 {{ prop.planArticle.planBoard.nickname }}</div>
       </div>
-      <div class="d-flex justify-content-end">
-        <router-link
-          :to="{
-            name: 'share-plan-detail',
-            params: { id: prop.planArticle.planBoard.planBoardId },
-          }"
-          class="btn btn-primary"
-        >
-          자세히 보기
-        </router-link>
+      <div class="card-info d-flex justify-content-end">
+        <div>🕘 {{ prop.planArticle.planBoard.registerTime }}</div>
       </div>
+
       <hr />
       <div class="d-flex justify-content-center">
         <button v-for="tag in prop.planArticle.tagList" :key="tag.planBoardTagId" class="tag-btn">
@@ -45,8 +52,9 @@ if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
 .card {
   width: 18rem;
   margin-bottom: 20px;
-  border: 1px solid #ccc;
   border-radius: 8px;
+  border: none;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
 .card-img-top {
@@ -55,6 +63,9 @@ if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
   object-fit: fill;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
+}
+.card-img-top:hover {
+  cursor: pointer;
 }
 
 .card-body {
