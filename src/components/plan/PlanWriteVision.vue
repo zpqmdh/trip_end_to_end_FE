@@ -20,10 +20,14 @@ const local = localAxios();
 const route = useRoute();
 const router = useRouter();
 
+const visionLat = parseFloat(route.params.latitude);
+const visionLng = parseFloat(route.params.longitude);
+
 const planInfo = ref("");
 const loginedId = decodedTokenFunc();
 
 const memberId = ref("");
+const clickMarker = ref({});
 
 const getMemberId = async () => {
   try {
@@ -54,8 +58,8 @@ const paymentDetails = ref([]);
 const planLocations = ref([]);
 const selectedDate = ref(""); // 추가된 선택된 날짜를 저장하는 변수
 
-const center = { lat: 36.35538, lng: 127.8 };
-const zoom = ref(8);
+const center = { lat: visionLat, lng: visionLng };
+const zoom = ref(10);
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 const showMemberModal = ref(false);
 const allMemberList = ref([]);
@@ -65,7 +69,7 @@ const mapRef = ref(null);
 const locations = ref([]);
 const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
 const showModal = ref(false); // 모달 표시 여부를 제어할 ref
-const clickMarker = ref("");
+
 const newMarkertitle = ref("");
 import clickMarkerImage from "@/assets/img/click-marker-blue.png";
 
@@ -416,6 +420,23 @@ watch(
 );
 
 onMounted(async () => {
+  watch(
+    () => mapRef.value.ready,
+    (isReady) => {
+      if (!isReady) return;
+      clickMarker.value = {
+        position: {
+          lat: visionLat,
+          lng: visionLng,
+        },
+        icon: {
+          url: clickMarkerImage, // 커스텀 마커 아이콘 URL
+          scaledSize: new google.maps.Size(70, 70), // 아이콘 크기 조절
+        },
+      };
+      const gmap = mapRef.value.map;
+    }
+  );
   await setMemberIdValue();
   // 작성자 memberId 참여 멤버에 업데이트
   memberIds.value.push({
@@ -428,36 +449,6 @@ onMounted(async () => {
     makeOption(data);
   });
   fetchMemberList();
-  watch(
-    () => mapRef.value.ready,
-    (isReady) => {
-      if (!isReady) return;
-      const gmap = mapRef.value.map;
-      watch(markerLocations, (newLocations) => {
-        if (newLocations.length === 0) return;
-        const bounds = new google.maps.LatLngBounds();
-        newLocations.forEach((dayLocation) => {
-          // 일자별
-          dayLocation.forEach((location) => {
-            bounds.extend(
-              new google.maps.LatLng(parseFloat(location.lat), parseFloat(location.lng))
-            );
-          });
-        });
-        gmap.fitBounds(bounds);
-      });
-      watch(locations, (newLocations) => {
-        if (newLocations.length === 0) return;
-        const bounds = new google.maps.LatLngBounds();
-        newLocations.forEach((location) => {
-          bounds.extend(
-            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
-          );
-        });
-        gmap.fitBounds(bounds);
-      });
-    }
-  );
 });
 </script>
 <template>

@@ -50,6 +50,7 @@
                 lng: parseFloat(landmark.longitude),
               },
             }"
+            @click="showModal(landmark.latitude, landmark.longitude)"
             :clickable="true"
             :draggable="false"
           />
@@ -76,15 +77,43 @@
     <div v-if="checkNoInput && landmarks.length == 0 && fileNames.length > 0">
       <p>{{ checkNoInput }}</p>
     </div>
+    <!-- 여행 계획에 추가 -->
+    <div v-if="isModalOpen" class="modal fade show d-block" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-footer">
+            <select class="form-select mt-2" v-model="selectedPlan">
+              <option value="" disabled selected>여행을 선택하세요</option>
+              <option v-for="plan in plans" :key="plan.planId" :value="plan.planId">
+                {{ plan.title }} | 기간: {{ plan.startDate }} -
+                {{ plan.endDate }}
+              </option>
+            </select>
+            <button type="button" class="btn btn-primary" @click="addToExistingPlan(selectedPlan)">
+              기존 여행 계획에 추가
+            </button>
+            <button type="button" class="btn btn-primary" @click="addToNewPlan()">
+              새 여행 계획에 추가
+            </button>
+            <button type="button" class="btn btn-secondary" @click="isModalOpen = false">
+              닫기
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <div style="height: 200px"></div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { GoogleMap, Marker } from "vue3-google-map";
 import { localAxios } from "@/util/http-commons";
+import { decodedTokenFunc } from "@/util/auth";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const local = localAxios();
 const file = ref(null);
 const fileNames = ref([]);
@@ -160,6 +189,11 @@ async function handleSubmit() {
   }
 }
 
+const currentMarker = ref({
+  latitude: "",
+  longitude: "",
+});
+
 function onMapLoad(map) {
   watch(landmarks, (newLandmarks) => {
     if (newLandmarks.length > 0) {
@@ -178,6 +212,82 @@ function moveToLocation(lat, lng) {
     mapRef.value.panTo(new google.maps.LatLng(lat, lng));
   }
 }
+const isModalOpen = ref(false);
+function showModal(latitude, longitude) {
+  isModalOpen.value = true;
+  currentMarker.value.latitude = latitude;
+  currentMarker.value.longitude = longitude;
+}
+const planBoardObject = ref({
+  planBoard: {
+    memberId: "",
+    subject: "",
+    content: "",
+    startDate: "",
+    endDate: "",
+    theNumberOfMembers: "",
+    thumbnail: "",
+  },
+  tagList: [],
+});
+
+const loginedId = ref("");
+const plans = ref([]);
+const selectedPlan = ref("");
+const getMemberId = () => {
+  const logined = decodedTokenFunc();
+  loginedId.value = logined;
+  local.get(`/members/detail/${loginedId.value}`).then(({ data }) => {
+    planBoardObject.value.planBoard.memberId = data.memberId;
+    getDataListPlan();
+  });
+};
+const getDataListPlan = () => {
+  local.get(`/plans/list/all/${loginedId.value}`).then(({ data }) => {
+    addPlanByCheckingDate(data);
+  });
+};
+const addPlanByCheckingDate = (data) => {
+  let today = new Date();
+  let year = today.getFullYear();
+  let month = ("0" + (today.getMonth() + 1)).slice(-2);
+  let day = ("0" + today.getDate()).slice(-2);
+
+  let dateString = `${year}-${month}-${day}`;
+  const todayDate = new Date(dateString);
+  plans.value = [];
+  data.forEach((plan) => {
+    if (new Date(plan.endDate) >= todayDate) {
+      plans.value.push(plan);
+    }
+  });
+  plans.value.forEach((plan) => {
+    console.log(plan);
+  });
+};
+const addToNewPlan = () => {
+  console.log(currentMarker.value.latitude, currentMarker.value.longitude);
+  router.push({
+    name: "plan-write-vision",
+    params: { latitude: currentMarker.value.latitude, longitude: currentMarker.value.longitude },
+  });
+};
+const addToExistingPlan = (selectedPlan) => {
+  console.log(currentMarker.value.latitude, currentMarker.value.longitude);
+  console.log(selectedPlan);
+  router.push({
+    name: "plan-detail-ongoing-vision",
+    params: {
+      id: selectedPlan,
+      latitude: currentMarker.value.latitude,
+      longitude: currentMarker.value.longitude,
+    },
+  });
+};
+
+onMounted(() => {
+  getMemberId();
+});
 </script>
 
 <style scoped>
@@ -201,5 +311,29 @@ function moveToLocation(lat, lng) {
 }
 .dnd-dropzone.drag-over {
   background-color: #e0f7ff;
+}
+
+.modal {
+  display: block; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 5; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 10% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 500px;
+  height: auto;
+  align-content: center;
+  flex-direction: column;
 }
 </style>
