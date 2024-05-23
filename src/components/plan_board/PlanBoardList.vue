@@ -78,7 +78,7 @@ const moveWrite = () => {
         <form class="text-center mb-4">
           <div class="form-row justify-content-center">
             <div class="d-flex flex-column align-items-center mb-4">
-              <label class="mr-sm-2" for="inlineFormCustomSelect">태그 검색</label>
+              <label class="mr-sm-3" for="inlineFormCustomSelect">태그 검색</label>
               <input
                 type="text"
                 class="form-control"
@@ -137,6 +137,10 @@ const moveWrite = () => {
 </template>
 
 <style scoped>
+.html .body {
+  width: 100%;
+  overflow: hidden;
+}
 #btn-go-write {
   background-color: #577b8d;
   border-color: white;

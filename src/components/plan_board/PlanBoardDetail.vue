@@ -14,8 +14,8 @@ const router = useRouter();
 const local = localAxios();
 
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
-const center = { lat: 36.355387, lng: 127.29964 };
-const zoom = ref(8);
+const center = { lat: 36.35538, lng: 127.8 };
+const zoom = ref(7);
 const mapRef = ref(null);
 
 const planBoardObject = ref({
@@ -68,6 +68,15 @@ const getDetail = () => {
       planBoardObject.value.planBoard.thumbnail =
         `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.thumbnail;
     }
+    if (!planBoardObject.value.planBoard.image.startsWith("http")) {
+      planBoardObject.value.planBoard.image =
+        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.image;
+    }
+    planBoardObject.value.commentList.forEach((comment) => {
+      if (!comment.image.startsWith("http")) {
+        comment.image = `http://${VITE_LOCALHOST_URL}/products/` + comment.image;
+      }
+    });
     const like = planBoardObject.value.likeList.find((like) => like.memberId === memberId.value);
     if (like) {
       // 로그인 상태의 유저가 해당 게시글에 좋아요를 누른 상태
@@ -314,9 +323,9 @@ const deleteArticle = () => {
     </div>
   </div>
   <div>
-    <div class="row my-5 d-flex justify-content-between">
+    <div class="row my-5 justify-content-center">
       <!-- Map Section -->
-      <div class="col-md-4" style="margin-left: 20px">
+      <div class="col-md-3" style="margin-right: 20px; margin-left: 20px">
         <GoogleMap
           ref="mapRef"
           :api-key="VITE_GOOGLE_MAP_KEY"
@@ -357,7 +366,7 @@ const deleteArticle = () => {
         </GoogleMap>
       </div>
       <!-- Plan Details Section -->
-      <div class="col-md-3">
+      <div class="col-md-3" style="margin-right: 20px; margin-left: 20px">
         <div class="mb-3">
           <!-- Date -->
           <div class="date-section">
@@ -376,14 +385,18 @@ const deleteArticle = () => {
             alt="Thumbnail"
           />
           <!-- 동행인 수 -->
-          <div style="margin-bottom: 10px">
+          <div style="margin-bottom: 15px; margin-top: 20px">
             👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
           </div>
           <!-- Content -->
-          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
+          <div
+            class="content-box"
+            v-html="planBoardObject.planBoard.content"
+            style="height: 370px"
+          ></div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3" style="margin-right: 20px; margin-left: 20px">
         <div class="schedule-section">
           <label>🕘 여행 일정</label>
           <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
@@ -428,10 +441,6 @@ const deleteArticle = () => {
               </div>
             </transition>
           </div>
-          <!-- 동행인 수 -->
-          <div>👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
-          <!-- Content -->
-          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
         </div>
       </div>
     </div>
@@ -476,12 +485,16 @@ const deleteArticle = () => {
         <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
-            <div>
-              <p>👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}</p>
+            <div class="comment-header d-flex align-items-center justify-content-between">
+              <span>
+                <img :src="comment.image" alt="Profile Image" class="profile-image" />
+                <span>{{ comment.nickname }}</span>
+              </span>
+              <p class="text-end ml-auto" style="font-size: 14px">🕒 {{ comment.registerTime }}</p>
             </div>
             <div
               v-if="editingComment !== comment.commentId"
-              class="d-flex justify-content-between align-items-center"
+              class="d-flex justify-content-between align-items-center mt-3"
             >
               <p>{{ comment.content }}</p>
               <div v-if="comment.memberId === memberId" class="comment-actions">
@@ -662,14 +675,14 @@ const deleteArticle = () => {
   width: 100%; /* Ensure the comment item takes up full width */
 }
 .article-profile-image {
-  width: 100px;
-  height: 100px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   margin-right: 10px;
 }
 .profile-image {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   margin-right: 10px;
 }
