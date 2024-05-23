@@ -271,6 +271,7 @@ onBeforeRouteLeave((to, from, next) => {
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  z-index: 9999;
 }
 .chat-container {
   display: flex;
