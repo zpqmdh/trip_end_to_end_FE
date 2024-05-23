@@ -2,27 +2,19 @@
   <div class="sidebar">
     <h5 class="category-title">마이페이지</h5>
     <ul class="list-group mb-3">
-      <li
-        class="list-group-item d-flex justify-content-between align-items-center"
-      >
-        <router-link :to="{ name: 'member-mypage' }" class="sidebar-text"
-          >내 정보 관리</router-link
-        >
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <router-link :to="{ name: 'member-mypage' }" class="sidebar-text">내 정보 관리</router-link>
       </li>
-      <li
-        class="list-group-item d-flex justify-content-between align-items-center"
-      >
-        <router-link :to="{ name: 'plan-list' }" class="sidebar-text"
-          >나의 여행 계획</router-link
-        >
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <router-link :to="{ name: 'plan-list' }" class="sidebar-text">나의 여행 계획</router-link>
       </li>
-      <li
+      <!-- <li
         class="list-group-item d-flex justify-content-between align-items-center"
       >
         <router-link :to="{ name: 'member-myboard' }" class="sidebar-text"
           >내가 쓴 글</router-link
         >
-      </li>
+      </li> -->
     </ul>
   </div>
 </template>

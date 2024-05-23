@@ -16,27 +16,25 @@ const findMember = ref({
 const findComplete = ref("");
 
 const handleFindPassword = async () => {
-  local.get(`/members/detail/${findMember.value.id}`).then(({ member }) => {
-    if (
-      member.emailId === findMember.value.emailId &&
-      member.emailDomain === findMember.value.emailDomain
-    ) {
-      findComplete.value =
-        "회원님의 이메일로 비밀번호 설정 링크가 발송되었습니다!";
-    } else {
-      const swalWithBootstrapButtons = Swal.mixin({
-        customClass: {
-          confirmButton: "btn btn-success mx-3",
-          cancelButton: "btn btn-danger",
-        },
-        buttonsStyling: false,
-      });
-      swalWithBootstrapButtons.fire({
-        title: "해당하는 회원 정보가 없습니다.",
-        icon: "error",
-      });
-    }
-  });
+  const response = await local.get(`/members/detail/${findMember.value.id}`);
+  if (
+    response.data.emailId == findMember.value.emailId &&
+    response.data.emailDomain == findMember.value.emailDomain
+  ) {
+    findComplete.value = "회원님의 이메일로 비밀번호 설정 링크가 발송되었습니다!";
+  } else {
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: "btn btn-success mx-3",
+        cancelButton: "btn btn-danger",
+      },
+      buttonsStyling: false,
+    });
+    swalWithBootstrapButtons.fire({
+      title: "해당하는 회원 정보가 없습니다.",
+      icon: "error",
+    });
+  }
 };
 
 const handleMoveToLogin = async () => {
@@ -56,12 +54,7 @@ const handleMoveToSignup = async () => {
         <h2 class="find-password-title">비밀번호 찾기</h2>
         <div class="form-group">
           <label for="id" class="mb-2">아이디</label>
-          <input
-            v-model="findMember.id"
-            type="text"
-            class="form-control"
-            required
-          />
+          <input v-model="findMember.id" type="text" class="form-control" required />
         </div>
         <div class="form-group">
           <label for="emailId" class="mb-2">이메일</label>
@@ -83,11 +76,7 @@ const handleMoveToSignup = async () => {
             />
           </div>
         </div>
-        <button
-          type="submit"
-          class="btn btn-primary"
-          @click="handleFindPassword"
-        >
+        <button type="submit" class="btn btn-primary" @click="handleFindPassword">
           비밀번호 찾기
         </button>
       </div>
@@ -95,18 +84,10 @@ const handleMoveToSignup = async () => {
         {{ findComplete }}
       </div>
       <div class="links">
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="handleMoveToLogin"
-        >
+        <button type="button" class="btn btn-secondary" @click="handleMoveToLogin">
           로그인 페이지로
         </button>
-        <button
-          type="button"
-          class="btn btn-secondary"
-          @click="handleMoveToSignup"
-        >
+        <button type="button" class="btn btn-secondary" @click="handleMoveToSignup">
           회원가입 페이지로
         </button>
       </div>
