@@ -70,6 +70,7 @@ import blueMarkerImage from "@/assets/img/marker-sky.png";
 import greenMarkerImage from "@/assets/img/marker-green.png";
 import orangeMarkerImage from "@/assets/img/marker-orange.png";
 import yellowMarkerImage from "@/assets/img/marker-yellow.png";
+import { sassTrue } from "sass";
 const markerImages = [
   blueMarkerImage,
   redMarkerImage,
@@ -89,7 +90,7 @@ const getPlanDetail = () => {
     console.log(data);
     scheduleDates.value = data.scheduleDates.map((date) => ({
       ...date,
-      expanded: false,
+      expanded: sassTrue,
     }));
     planLocations.value = data.planLocations;
     getMarkerLocations();

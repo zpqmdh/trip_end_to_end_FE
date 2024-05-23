@@ -164,7 +164,7 @@ const getPlanDetail = async () => {
     bookContents.value = planInfo.value.bookContents;
     scheduleDates.value = planInfo.value.scheduleDates.map((date) => ({
       ...date,
-      expanded: false,
+      expanded: true,
     }));
     paymentDetails.value = planInfo.value.paymentDetails;
     planLocations.value = planInfo.value.planLocations;
