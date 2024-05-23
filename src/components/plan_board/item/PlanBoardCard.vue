@@ -29,7 +29,9 @@ console.log(prop.planArticle);
         🗓️ {{ prop.planArticle.planBoard.startDate }} - {{ prop.planArticle.planBoard.endDate }} 🗓️
       </div>
       <h5 class="card-title">{{ prop.planArticle.planBoard.subject }}</h5>
-      <div class="card-info d-flex justify-content-end">👁 {{ prop.planArticle.planBoard.hit }}</div>
+      <div class="card-info d-flex justify-content-end">
+        👁 {{ prop.planArticle.planBoard.hit }} ❤ {{ prop.planArticle.planBoard.likeCnt }}
+      </div>
       <hr />
       <div class="card-info d-flex justify-content-end">
         <div>👤 {{ prop.planArticle.planBoard.nickname }}</div>
