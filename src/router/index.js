@@ -2,7 +2,9 @@ import { createRouter, createWebHistory } from "vue-router";
 import TheMainView from "@/views/TheMainView.vue";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import "sweetalert2/src/sweetalert2.scss";
-
+import PlanWriteVision from "@/components/plan/PlanWriteVision.vue";
+import PlanDetailOnGoingVision from "@/components/plan/PlanDetailOnGoingVision.vue";
+import PlanWrite from "@/components/plan/PlanWrite.vue";
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -66,7 +68,12 @@ const router = createRouter({
         {
           path: "write",
           name: "plan-write",
-          component: () => import("@/components/plan/PlanWrite.vue"),
+          component: PlanWrite,
+        },
+        {
+          path: "write/:latitude/:longitude",
+          name: "plan-write-vision",
+          component: PlanWriteVision,
         },
         {
           path: "list",
@@ -77,6 +84,11 @@ const router = createRouter({
           path: "detail/ongoing/:id",
           name: "plan-detail-ongoing",
           component: () => import("@/components/plan/PlanDetailOnGoing.vue"),
+        },
+        {
+          path: "detail/ongoing/:id/:latitude/:longitude",
+          name: "plan-detail-ongoing-vision",
+          component: PlanDetailOnGoingVision,
         },
         {
           path: "detail/finished/:id",

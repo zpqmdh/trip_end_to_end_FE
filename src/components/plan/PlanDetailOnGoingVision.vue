@@ -4,100 +4,40 @@ import { GoogleMap, Marker, Polyline } from "vue3-google-map";
 import { localAxios } from "@/util/http-commons";
 import { useRoute, useRouter } from "vue-router";
 import PlanLiveChat from "@/components/plan/item/PlanLiveChat.vue";
-import { decodedTokenFunc } from "@/util/auth";
-import dayjs from "dayjs"; // dayjs를 사용하여 날짜 조작
-import redMarkerImage from "@/assets/img/marker-red.png";
-import blueMarkerImage from "@/assets/img/marker-sky.png";
-import greenMarkerImage from "@/assets/img/marker-green.png";
-import orangeMarkerImage from "@/assets/img/marker-orange.png";
-import yellowMarkerImage from "@/assets/img/marker-yellow.png";
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import "sweetalert2/src/sweetalert2.scss";
-
 const { VITE_LOCALHOST_URL } = import.meta.env;
-
 const local = localAxios();
 const route = useRoute();
 const router = useRouter();
+const visionLat = parseFloat(route.params.latitude);
+const visionLng = parseFloat(route.params.longitude);
 
 const planInfo = ref("");
-const loginedId = decodedTokenFunc();
-
-const memberId = ref("");
-
-const getMemberId = async () => {
-  try {
-    const loginedId = decodedTokenFunc(); // 또는 실제 로그인된 사용자의 ID
-    const { data } = await local.get(`/members/detail/${loginedId}`);
-    memberId.value = data.memberId;
-  } catch (error) {
-    console.error("Error fetching member details:", error);
-  }
-};
-
-const setMemberIdValue = async () => {
-  await getMemberId();
-};
-
-const planDto = ref({
-  planId: "",
-  memberId: memberId.value,
-  title: "",
-  startDate: "",
-  endDate: "",
-});
-
+const planDto = ref({});
 const memberIds = ref([]);
 const bookContents = ref([]);
 const scheduleDates = ref([]);
 const paymentDetails = ref([]);
 const planLocations = ref([]);
 const selectedDate = ref(""); // 추가된 선택된 날짜를 저장하는 변수
-
-const center = { lat: 36.35538, lng: 127.8 };
-const zoom = ref(8);
+const planId = route.params.id;
+const center = { lat: visionLat, lng: visionLng };
+const zoom = ref(10);
 const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 const showMemberModal = ref(false);
+const newMemberId = ref("");
 const allMemberList = ref([]);
 const searchQuery = ref("");
 const filteredMemberList = ref([]);
+let selectDate = "";
 const mapRef = ref(null);
 const locations = ref([]);
 const selectedLocation = ref(null); // 선택된 위치 정보를 저장할 ref
 const showModal = ref(false); // 모달 표시 여부를 제어할 ref
-const clickMarker = ref("");
 const newMarkertitle = ref("");
 import clickMarkerImage from "@/assets/img/click-marker-blue.png";
-
-// 날짜 범위 생성 함수
-const generateDateRange = (start, end) => {
-  const dateArray = [];
-  let currentDate = dayjs(start);
-  let idCounter = 1;
-  while (currentDate.isBefore(dayjs(end).add(1, "day"))) {
-    dateArray.push({
-      planScheduleId: idCounter,
-      date: currentDate.format("YYYY-MM-DD"),
-      planId: null, // 필요에 따라 planId 할당
-    });
-    currentDate = currentDate.add(1, "day");
-    idCounter += 1;
-  }
-  return dateArray;
-};
-
-// watch 함수 설정
-watch(
-  [() => planDto.value.startDate, () => planDto.value.endDate],
-  ([newStartDate, newEndDate]) => {
-    if (newStartDate && newEndDate) {
-      scheduleDates.value = generateDateRange(newStartDate, newEndDate);
-      // planLocations 배열을 각 날짜별로 초기화
-      planLocations.value = scheduleDates.value.map(() => []);
-    }
-  }
-);
-
+const clickMarker = ref({});
 const addMarker = (event) => {
   clickMarker.value = {
     position: { lat: event.latLng.lat(), lng: event.latLng.lng() },
@@ -110,6 +50,11 @@ const addMarker = (event) => {
 
 const polylineColors = ["#0a296d", "#742405", "#97654c", "#054b2a", "#812f00"];
 
+import redMarkerImage from "@/assets/img/marker-red.png";
+import blueMarkerImage from "@/assets/img/marker-sky.png";
+import greenMarkerImage from "@/assets/img/marker-green.png";
+import orangeMarkerImage from "@/assets/img/marker-orange.png";
+import yellowMarkerImage from "@/assets/img/marker-yellow.png";
 const markerImages = [
   blueMarkerImage,
   redMarkerImage,
@@ -140,11 +85,11 @@ const addMember = (member) => {
   if (member) {
     memberIds.value.push({
       memberId: member.memberId,
-      planId: "",
+      planId: planId,
     });
     searchQuery.value = "";
     filterMembers();
-    getMemberInfo();
+    getMemberNicknames();
     showMemberModal.value = false;
   }
 };
@@ -256,7 +201,7 @@ const search = () => {
 
 const memberList = ref([{}]);
 
-const getMemberInfo = async () => {
+const getMemberNicknames = async () => {
   memberList.value = new Array(memberIds.value.length).fill(""); // nicknames 배열을 memberIds 길이만큼 초기화
   const memberPromises = memberIds.value.map(async (member, index) => {
     try {
@@ -271,6 +216,32 @@ const getMemberInfo = async () => {
     }
   });
   await Promise.all(memberPromises);
+};
+const getPlanDetail = async () => {
+  try {
+    const response = await local.get(`/plans/detail/${planId}`);
+    planInfo.value = response.data;
+
+    planDto.value = {
+      planId: planInfo.value.planDto.planId,
+      memberId: planInfo.value.planDto.memberId,
+      title: planInfo.value.planDto.title,
+      startDate: planInfo.value.planDto.startDate,
+      endDate: planInfo.value.planDto.endDate,
+    };
+    memberIds.value = planInfo.value.memberIds;
+    bookContents.value = planInfo.value.bookContents;
+    scheduleDates.value = planInfo.value.scheduleDates.map((date) => ({
+      ...date,
+      expanded: true,
+    }));
+    paymentDetails.value = planInfo.value.paymentDetails;
+    planLocations.value = planInfo.value.planLocations;
+    getMarkerLocations();
+    await getMemberNicknames(); // 닉네임 로드 함수 호출
+  } catch (error) {
+    console.error("Error fetching plan detail:", error);
+  }
 };
 
 const markerLocations = ref([]);
@@ -297,34 +268,56 @@ const printMarkerLocations = (index) => {
 };
 
 const submitUpdatedDetail = async () => {
-  planDto.value.memberId = memberId.value;
-  try {
-    planInfo.value = {
-      planDto: planDto.value,
-      memberIds: memberIds.value,
-      bookContents: bookContents.value,
-      scheduleDates: scheduleDates.value,
-      paymentDetails: paymentDetails.value,
-      planLocations: planLocations.value,
-    };
+  planInfo.value.planDto = { ...planDto.value };
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+    },
+    buttonsStyling: true,
+  });
+  swalWithBootstrapButtons;
+  local.put(`/plans/update/${planId}`, planInfo.value).then(() => {
+    swalWithBootstrapButtons.fire({
+      title: "수정 완료",
+      icon: "success",
+    });
+    router.push({ name: "plan-list" });
+  });
+};
 
-    const swalWithBootstrapButtons = Swal.mixin({
-      customClass: {
-        confirmButton: "btn btn-success mx-3",
-      },
-      buttonsStyling: true,
+const deletePlan = () => {
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
+  });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local.delete(`/plans/delete/${planId}`).then(() => {
+          swalWithBootstrapButtons.fire({
+            title: "삭제 완료",
+            icon: "success",
+          });
+          router.push({ name: "plan-list" });
+        });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
     });
-    swalWithBootstrapButtons;
-    local.post(`/plans/create`, planInfo.value).then(() => {
-      swalWithBootstrapButtons.fire({
-        title: "작성 완료",
-        icon: "success",
-      });
-      router.push({ name: "plan-list" });
-    });
-  } catch (error) {
-    console.error("여행 계획 작성에 실패하였습니다:", error);
-  }
 };
 
 const addPaymentDetail = () => {
@@ -333,13 +326,13 @@ const addPaymentDetail = () => {
     content: "",
     price: "",
     memberId: "",
-    planId: "",
+    planId: planId,
   });
 };
 
 const addBookContent = () => {
   bookContents.value.push({
-    planId: "",
+    planId: planId,
     content: "",
   });
 };
@@ -359,7 +352,7 @@ const addPlanLocation = (date_index, title, latitude, longitude, contentId) => {
   setTimeout(function () {
     toggleAll(true);
   }, 50);
-  selectedDate.value = "";
+  selectDate = "";
   showNewMarkerModal.value = false;
 };
 
@@ -376,6 +369,7 @@ const showDetail = (location) => {
     showModal.value = true;
   });
 };
+
 const showNewMarkerModal = ref(false);
 const showAddModal = () => {
   showNewMarkerModal.value = !showNewMarkerModal.value;
@@ -415,47 +409,27 @@ watch(
   { immediate: true, deep: true }
 );
 
-onMounted(async () => {
-  await setMemberIdValue();
-  // 작성자 memberId 참여 멤버에 업데이트
-  memberIds.value.push({
-    memberId: memberId.value,
-    planId: "",
-  });
-  // 작성자 정보 호출
-  getMemberInfo();
+onMounted(() => {
   local.get("/shareplan/map/sido").then(({ data }) => {
     makeOption(data);
   });
+  getPlanDetail();
   fetchMemberList();
+
   watch(
     () => mapRef.value.ready,
     (isReady) => {
       if (!isReady) return;
-      const gmap = mapRef.value.map;
-      watch(markerLocations, (newLocations) => {
-        if (newLocations.length === 0) return;
-        const bounds = new google.maps.LatLngBounds();
-        newLocations.forEach((dayLocation) => {
-          // 일자별
-          dayLocation.forEach((location) => {
-            bounds.extend(
-              new google.maps.LatLng(parseFloat(location.lat), parseFloat(location.lng))
-            );
-          });
-        });
-        gmap.fitBounds(bounds);
-      });
-      watch(locations, (newLocations) => {
-        if (newLocations.length === 0) return;
-        const bounds = new google.maps.LatLngBounds();
-        newLocations.forEach((location) => {
-          bounds.extend(
-            new google.maps.LatLng(parseFloat(location.latitude), parseFloat(location.longitude))
-          );
-        });
-        gmap.fitBounds(bounds);
-      });
+      clickMarker.value = {
+        position: {
+          lat: visionLat,
+          lng: visionLng,
+        },
+        icon: {
+          url: clickMarkerImage, // 커스텀 마커 아이콘 URL
+          scaledSize: new google.maps.Size(70, 70), // 아이콘 크기 조절
+        },
+      };
     }
   );
 });
@@ -508,7 +482,6 @@ onMounted(async () => {
         />
         <button id="btn-search" class="btn-search" type="button" @click="search">검색</button>
       </form>
-
       <!-- Map -->
       <div class="map-container">
         <GoogleMap
@@ -537,7 +510,7 @@ onMounted(async () => {
                   lat: parseFloat(planLocations[index1][index2].latitude),
                   lng: parseFloat(planLocations[index1][index2].longitude),
                 },
-                icon: getMarkerIcon(index1),
+                icon: getMarkerIcon(index1, index2),
                 label: {
                   text: `${index2 + 1}`,
                   color: 'black',
@@ -548,20 +521,19 @@ onMounted(async () => {
               }"
               @click="toggleAccordion(index1)"
             />
+            <Marker
+              v-for="location in locations"
+              :options="{
+                position: {
+                  lat: parseFloat(location.latitude),
+                  lng: parseFloat(location.longitude),
+                },
+              }"
+              :key="location.contentId"
+              @click="showDetail(location)"
+            />
+            <Marker :options="clickMarker" @click="showAddModal()" />
           </div>
-          <Marker
-            v-for="location in locations"
-            :options="{
-              position: {
-                lat: parseFloat(location.latitude),
-                lng: parseFloat(location.longitude),
-              },
-            }"
-            :key="location.contentId"
-            @click="showDetail(location)"
-          />
-          <Marker :options="clickMarker" @click="showAddModal()" />
-
           <button @click="resetSearch" class="btn-search-result">검색 결과 초기화</button>
         </GoogleMap>
       </div>
@@ -569,14 +541,12 @@ onMounted(async () => {
 
     <!-- 여행 정보 상세 -->
     <div class="details">
-      <form @submit.prevent="submitUpdatedDetail">
-        <label class="mb-0">📝 제목 </label>
-        <div :v-model="memberId"></div>
-        <div class="title-section">
-          <input type="text" v-model="planDto.title" required />
-          <button class="btn-submit" type="submit">저장</button>
-        </div>
-      </form>
+      <label class="mb-0">📝 제목 </label>
+      <div class="title-section">
+        <input type="text" v-model="planDto.title" required />
+        <button class="btn-submit" @click="submitUpdatedDetail">수정</button>
+        <button class="btn-delete" @click="deletePlan" tpye="button">삭제</button>
+      </div>
       <div class="members-section">
         <label>👨‍👩‍👦 참여 멤버</label>
         <div class="members-list">
@@ -737,7 +707,6 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-
   <!-- Attraction Description Modal -->
   <div
     v-if="showModal"
@@ -1047,37 +1016,37 @@ button:hover {
   margin-top: 10px;
   margin-bottom: 10px;
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: collapse; /* Collapse borders to have single border */
 }
 
 .styled-table th,
 .styled-table td {
-  padding: 8px;
+  padding: 8px; /* Add padding to table cells */
 }
 
 .styled-table th {
-  background-color: #f2f2f2;
+  background-color: #f2f2f2; /* Add background color to table headers */
   text-align: left;
 }
 
 .styled-table tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #f9f9f9; /* Add background color to even rows */
 }
 
 .styled-table th:first-child {
-  border-top-left-radius: 10px;
+  border-top-left-radius: 10px; /* Top-left corner */
 }
 
 .styled-table th:last-child {
-  border-top-right-radius: 10px;
+  border-top-right-radius: 10px; /* Top-right corner */
 }
 
 .styled-table td:first-child {
-  border-bottom-left-radius: 10px;
+  border-bottom-left-radius: 10px; /* Bottom-left corner */
 }
 
 .styled-table td:last-child {
-  border-bottom-right-radius: 10px;
+  border-bottom-right-radius: 10px; /* Bottom-right corner */
 }
 
 .addMember p {
@@ -1094,11 +1063,12 @@ button:hover {
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  background-color: rgb(230, 230, 230);
+  background-color: rgb(230, 230, 230); /* 투명 배경 */
 }
+
 .addMember button i {
-  font-size: 24px;
-  color: black;
+  font-size: 24px; /* 아이콘 크기 조절 */
+  color: black; /* 아이콘 색상 */
 }
 
 .btn {
@@ -1194,6 +1164,18 @@ button:hover {
   background-color: #547586;
 }
 
+.btn-delete {
+  background-color: #acb8be;
+  border: none;
+  color: white;
+  text-decoration: none;
+  cursor: pointer;
+  width: 80px;
+  height: 80%;
+  margin-left: 10px;
+  border-radius: 8px;
+}
+
 .btn-remove {
   color: black;
   text-decoration: none;
@@ -1223,8 +1205,9 @@ button:hover {
   height: auto;
 }
 
+/* ul과 li 스타일 설정 */
 .member-list {
-  list-style-type: none;
+  list-style-type: none; /* 불릿 기호 제거 */
   padding: 0;
   margin: 0;
 }
@@ -1233,26 +1216,28 @@ button:hover {
   margin-bottom: 10px;
 }
 
+/* 버튼 스타일 설정 */
 .member-button {
   display: block;
   width: 100%;
   padding: 10px;
-  border: none;
-  background: none;
-  text-align: left;
+  border: none; /* 버튼 스타일 제거 */
+  background: none; /* 배경 제거 */
+  text-align: left; /* 텍스트 왼쪽 정렬 */
   font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease; /* 부드러운 전환 효과 */
 }
 
+/* Hover 효과 */
 .member-button:hover {
-  background-color: #f0f0f0;
+  background-color: #f0f0f0; /* 밝은 회색 */
 }
 
 .modal-footer {
   display: flex;
   align-items: center;
-  gap: 10px;
-  justify-content: center;
+  gap: 10px; /* 간격 조절 */
+  justify-content: center; /* 중앙 정렬 */
 }
 </style>
