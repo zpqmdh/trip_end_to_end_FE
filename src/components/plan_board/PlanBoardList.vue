@@ -34,9 +34,7 @@ const searchTag = () => {
 };
 
 const filterTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (tagIndex === -1) {
     filteredTag.value.push(tag);
   } else {
@@ -45,24 +43,18 @@ const filterTag = (tag) => {
 
   filteredArticleList.value = planArticleList.value.filter((article) => {
     return filteredTag.value.every((filter) => {
-      return article.tagList.some(
-        (item) => item.tagTypeId === filter.tagTypeId
-      );
+      return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
     });
   });
 };
 
 const removeTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex(
-    (t) => t.tagTypeId === tag.tagTypeId
-  );
+  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
   if (tagIndex !== -1) {
     filteredTag.value.splice(tagIndex, 1);
     filteredArticleList.value = planArticleList.value.filter((article) => {
       return filteredTag.value.every((filter) => {
-        return article.tagList.some(
-          (item) => item.tagTypeId === filter.tagTypeId
-        );
+        return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
       });
     });
   }
@@ -86,9 +78,7 @@ const moveWrite = () => {
         <form class="text-center mb-4">
           <div class="form-row justify-content-center">
             <div class="d-flex flex-column align-items-center mb-4">
-              <label class="mr-sm-2" for="inlineFormCustomSelect"
-                >태그 검색</label
-              >
+              <label class="mr-sm-2" for="inlineFormCustomSelect">태그 검색</label>
               <input
                 type="text"
                 class="form-control"
@@ -102,11 +92,7 @@ const moveWrite = () => {
         </form>
         <div class="text-center mb-4">
           <div class="tags-container">
-            <div
-              v-for="tag in tagResults"
-              :key="tag.tagTypeId"
-              class="d-inline-block"
-            >
+            <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
               <button
                 class="btn btn-outline-secondary m-1"
                 @click.prevent="filterTag(tag)"
@@ -122,11 +108,7 @@ const moveWrite = () => {
           <div v-if="filteredTag.length > 0">
             <h5>검색 결과</h5>
             <div class="tags-container">
-              <div
-                v-for="tag in filteredTag"
-                :key="tag.tagTypeId"
-                class="d-inline-block"
-              >
+              <div v-for="tag in filteredTag" :key="tag.tagTypeId" class="d-inline-block">
                 <button
                   class="btn btn-outline-secondary m-1"
                   @click.prevent="removeTag(tag)"
@@ -171,12 +153,11 @@ const moveWrite = () => {
   border: none;
 }
 .fixed-title {
-  position: absolute;
+  position: fixed;
   width: calc(100% - 30px); /* Adjusted for padding/margin */
   max-width: 400px;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 30%;
+  left: 5%;
   padding: 10px;
 }
 .tags-container {

@@ -52,7 +52,7 @@ if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
 .card-img-top {
   width: 100%;
   height: 200px;
-  object-fit: contain;
+  object-fit: fill;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
 }
