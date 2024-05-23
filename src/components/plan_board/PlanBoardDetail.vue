@@ -66,12 +66,9 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
-        `http://${VITE_LOCALHOST_URL}/products/` +
-        planBoardObject.value.planBoard.thumbnail;
+        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.thumbnail;
     }
-    const like = planBoardObject.value.likeList.find(
-      (like) => like.memberId === memberId.value
-    );
+    const like = planBoardObject.value.likeList.find((like) => like.memberId === memberId.value);
     if (like) {
       // 로그인 상태의 유저가 해당 게시글에 좋아요를 누른 상태
       isClickedLike.value = like;
@@ -107,17 +104,15 @@ const getMarkerIcon = (index1) => {
   };
 };
 const getPlanDetail = () => {
-  local
-    .get(`/plans/detail/${planBoardObject.value.planBoard.planId}`)
-    .then(({ data }) => {
-      console.log(data);
-      scheduleDates.value = data.scheduleDates.map((date) => ({
-        ...date,
-        expanded: false,
-      }));
-      planLocations.value = data.planLocations;
-      getMarkerLocations();
-    });
+  local.get(`/plans/detail/${planBoardObject.value.planBoard.planId}`).then(({ data }) => {
+    console.log(data);
+    scheduleDates.value = data.scheduleDates.map((date) => ({
+      ...date,
+      expanded: false,
+    }));
+    planLocations.value = data.planLocations;
+    getMarkerLocations();
+  });
 };
 const getMarkerLocations = () => {
   markerLocations.value = planLocations.value.map(() => []); // planLocations와 같은 구조로 초기화
@@ -169,10 +164,7 @@ const leave = (el, done) => {
 /* Comment */
 const addComment = () => {
   local
-    .post(
-      `/shareplan/insert/${newComment.value.planBoardId}/comment`,
-      newComment.value
-    )
+    .post(`/shareplan/insert/${newComment.value.planBoardId}/comment`, newComment.value)
     .then(() => {
       getDetail();
       newComment.value.content = "";
@@ -234,21 +226,16 @@ const clickLike = () => {
     console.log("qwe");
     console.log(newLike.value);
     local
-      .post(
-        `/shareplan/insert/${newLike.value.planBoardId}/like`,
-        newLike.value
-      )
+      .post(`/shareplan/insert/${newLike.value.planBoardId}/like`, newLike.value)
       .then(({ data }) => {
         console.log(data);
         getDetail();
       });
   } else {
-    local
-      .delete(`/shareplan/like/${isClickedLike.value.planLikeId}`)
-      .then(({ data }) => {
-        console.log(data);
-        getDetail();
-      });
+    local.delete(`/shareplan/like/${isClickedLike.value.planLikeId}`).then(({ data }) => {
+      console.log(data);
+      getDetail();
+    });
   }
 };
 
@@ -319,13 +306,9 @@ const deleteArticle = () => {
           </span>
         </div>
         <div class="meta">
-          <span class="views"
-            >👁 조회수: {{ planBoardObject.planBoard.hit }}</span
-          >
+          <span class="views">👁 조회수: {{ planBoardObject.planBoard.hit }}</span>
           <span class="divider">|</span>
-          <span class="time"
-            >🕒 {{ planBoardObject.planBoard.registerTime }}</span
-          >
+          <span class="time">🕒 {{ planBoardObject.planBoard.registerTime }}</span>
         </div>
       </div>
     </div>
@@ -380,17 +363,9 @@ const deleteArticle = () => {
           <div class="date-section">
             <label>📆 여행 기간</label>
             <div class="date-inputs">
-              <input
-                type="date"
-                v-model="planBoardObject.planBoard.startDate"
-                disabled
-              />
+              <input type="date" v-model="planBoardObject.planBoard.startDate" disabled />
               <span class="mt-2">~</span>
-              <input
-                type="date"
-                v-model="planBoardObject.planBoard.endDate"
-                disabled
-              />
+              <input type="date" v-model="planBoardObject.planBoard.endDate" disabled />
             </div>
           </div>
           <!-- Thumbnail -->
@@ -405,44 +380,23 @@ const deleteArticle = () => {
             👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}
           </div>
           <!-- Content -->
-          <div
-            class="content-box"
-            v-html="planBoardObject.planBoard.content"
-          ></div>
+          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
         </div>
       </div>
       <div class="col-md-4">
         <div class="schedule-section">
           <label>🕘 여행 일정</label>
-          <button @click="toggleAll(true)" class="btn btn-light">
-            모두 열기
-          </button>
-          <button @click="toggleAll(false)" class="btn btn-light">
-            모두 닫기
-          </button>
-          <div
-            v-for="(date, index1) in scheduleDates"
-            :key="index1"
-            class="day-schedule"
-          >
+          <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
+          <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
+          <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
             <div
               @click="toggleAccordion(index1)"
               :class="['schedule-date', `color-${(index1 % 5) + 1}`]"
             >
-              <span class="schedule-date">{{
-                scheduleDates[index1].date
-              }}</span>
+              <span class="schedule-date">{{ scheduleDates[index1].date }}</span>
             </div>
-            <transition
-              name="accordion"
-              @before-enter="beforeEnter"
-              @enter="enter"
-              @leave="leave"
-            >
-              <div
-                v-show="scheduleDates[index1].expanded"
-                class="accordion-content"
-              >
+            <transition name="accordion" @before-enter="beforeEnter" @enter="enter" @leave="leave">
+              <div v-show="scheduleDates[index1].expanded" class="accordion-content">
                 <table class="styled-table">
                   <thead>
                     <tr>
@@ -452,10 +406,7 @@ const deleteArticle = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr
-                      v-for="(location, index2) in planLocations[index1]"
-                      :key="index2"
-                    >
+                    <tr v-for="(location, index2) in planLocations[index1]" :key="index2">
                       <td>
                         <input
                           type="time"
@@ -477,6 +428,10 @@ const deleteArticle = () => {
               </div>
             </transition>
           </div>
+          <!-- 동행인 수 -->
+          <div>👥 동반인 수: {{ planBoardObject.planBoard.theNumberOfMembers }}</div>
+          <!-- Content -->
+          <div class="content-box" v-html="planBoardObject.planBoard.content"></div>
         </div>
       </div>
     </div>
@@ -485,28 +440,14 @@ const deleteArticle = () => {
     <!-- Like Section -->
     <div class="like-section">
       <button @click="clickLike" class="like-button">
-        <img
-          v-show="isClickedLike"
-          src="@/assets/img/like-on.png"
-          class="like-icon"
-          alt="Liked"
-        />
-        <img
-          v-show="!isClickedLike"
-          src="@/assets/img/like-off.png"
-          class="like-icon"
-          alt="Like"
-        />
+        <img v-show="isClickedLike" src="@/assets/img/like-on.png" class="like-icon" alt="Liked" />
+        <img v-show="!isClickedLike" src="@/assets/img/like-off.png" class="like-icon" alt="Like" />
         <h5>{{ planBoardObject.likeList.length }}</h5>
       </button>
     </div>
     <!-- Tag Section -->
     <div class="tag-section">
-      <button
-        v-for="tag in planBoardObject.tagList"
-        :key="tag.planBoardTagId"
-        class="tag-btn"
-      >
+      <button v-for="tag in planBoardObject.tagList" :key="tag.planBoardTagId" class="tag-btn">
         #{{ tag.name }}
       </button>
     </div>
@@ -514,12 +455,8 @@ const deleteArticle = () => {
     <div class="d-flex justify-content-end">
       <button id="btn-list" class="btn" @click="moveList">목록으로</button>
       <template v-if="planBoardObject.planBoard.memberId === memberId">
-        <button id="btn-modify" class="btn" @click="moveModify">
-          수정하기
-        </button>
-        <button id="btn-delete" class="btn" @click="deleteArticle">
-          삭제하기
-        </button>
+        <button id="btn-modify" class="btn" @click="moveModify">수정하기</button>
+        <button id="btn-delete" class="btn" @click="deleteArticle">삭제하기</button>
       </template>
     </div>
     <hr />
@@ -536,27 +473,11 @@ const deleteArticle = () => {
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
-        <div
-          v-for="comment in planBoardObject.commentList"
-          :key="comment.id"
-          class="comment-item"
-        >
+        <div v-for="comment in planBoardObject.commentList" :key="comment.id" class="comment-item">
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
-            <div
-              class="comment-header d-flex align-items-center justify-content-between"
-            >
-              <span>
-                <img
-                  :src="comment.image"
-                  alt="Profile Image"
-                  class="profile-image"
-                />
-                <span>{{ comment.nickname }}</span>
-              </span>
-              <p class="text-end ml-auto" style="font-size: 14px">
-                🕒 {{ comment.registerTime }}
-              </p>
+            <div>
+              <p>👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}</p>
             </div>
             <div
               v-if="editingComment !== comment.commentId"
@@ -564,11 +485,7 @@ const deleteArticle = () => {
             >
               <p>{{ comment.content }}</p>
               <div v-if="comment.memberId === memberId" class="comment-actions">
-                <button
-                  @click="startEditingComment(comment)"
-                  class="btn btn-sm"
-                  id="btn-modify"
-                >
+                <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
                   수정
                 </button>
                 <button
@@ -587,11 +504,7 @@ const deleteArticle = () => {
                 style="width: 80%; margin-right: 10px"
                 rows="2"
               ></textarea>
-              <button
-                @click="saveEditComment(comment.commentId)"
-                class="btn mt-2"
-                id="btn-list"
-              >
+              <button @click="saveEditComment(comment.commentId)" class="btn mt-2" id="btn-list">
                 저장
               </button>
             </div>
