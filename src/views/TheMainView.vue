@@ -2,21 +2,19 @@
   <div class="main-view">
     <div class="hero text-center">
       <h1>여행 계획의 모든 것을 담은</h1>
-      <h1>Trip End-to-End와 함께하세요</h1>
+      <div style="display: flex; justify-content: center">
+        <h1 style="color: #357081; margin-right: 10px">Trip End-to-End</h1>
+        <h1>와 함께하세요</h1>
+      </div>
+
       <div class="btn-group mt-4">
         <button class="btn btn-light">
-          <router-link
-            :to="{ name: 'landmark' }"
-            class="text-black"
-            style="text-decoration: none"
+          <router-link :to="{ name: 'landmark' }" class="text-black" style="text-decoration: none"
             >사진으로 장소찾기</router-link
           >
         </button>
         <button class="btn btn-primary">
-          <router-link
-            :to="{ name: 'plan-write' }"
-            class="text-black"
-            style="text-decoration: none"
+          <router-link :to="{ name: 'plan-write' }" class="text-black" style="text-decoration: none"
             >여행계획 바로가기</router-link
           >
         </button>
@@ -71,7 +69,11 @@ body {
 }
 
 .btn-primary {
-  background-color: #5698ad;
+  background-color: #4c8799;
   border: none;
+}
+
+.btn-primary:hover {
+  background-color: #4c8799;
 }
 </style>
