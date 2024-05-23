@@ -142,7 +142,7 @@ const getPlanDetail = () => {
     console.log(data);
     scheduleDates.value = data.scheduleDates.map((date) => ({
       ...date,
-      expanded: false,
+      expanded: true,
     }));
     planLocations.value = data.planLocations;
     getMarkerLocations();

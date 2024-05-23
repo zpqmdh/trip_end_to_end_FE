@@ -185,7 +185,7 @@ const getPlanDetail = (planId) => {
     planBoardObject.value.planBoard.theNumberOfMembers = planInfo.value.memberIds.length;
     scheduleDates.value = planInfo.value.scheduleDates.map((date) => ({
       ...date,
-      expanded: false,
+      expanded: true,
     }));
     planLocations.value = planInfo.value.planLocations;
     getMarkerLocations();
