@@ -89,7 +89,7 @@
                 {{ plan.endDate }}
               </option>
             </select>
-            <button type="button" class="btn btn-primary" @click="addToExistingPlan(selectedPlan)">
+            <button type="button" class="btn btn-success" @click="addToExistingPlan(selectedPlan)">
               기존 여행 계획에 추가
             </button>
             <button type="button" class="btn btn-primary" @click="addToNewPlan()">
@@ -328,7 +328,7 @@ onMounted(() => {
 
 .modal-content {
   background-color: #fefefe;
-  margin: 10% auto;
+  margin: 50% auto;
   padding: 20px;
   border: 1px solid #888;
   width: 500px;
