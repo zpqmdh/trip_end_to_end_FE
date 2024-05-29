@@ -3,8 +3,7 @@ import { onMounted, ref } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
-import Swal from "sweetalert2/dist/sweetalert2.js";
-import "sweetalert2/src/sweetalert2.scss";
+import Swal from "sweetalert2";
 
 const local = localAxios();
 const router = useRouter();
@@ -86,10 +85,22 @@ const insertArticle = () => {
           <label class="form-check-label" for="isFixed"> 고정하기 </label>
         </div>
         <div class="col-auto text-center">
-          <button type="button" id="btn-register" class="btn mb-3" @click="insertArticle">
+          <button
+            type="button"
+            id="btn-register"
+            class="btn mb-3"
+            @click="insertArticle"
+          >
             등록하기
           </button>
-          <button id="btn-reset" type="reset" class="btn mb-3" @click="resetInput">초기화</button>
+          <button
+            id="btn-reset"
+            type="reset"
+            class="btn mb-3"
+            @click="resetInput"
+          >
+            초기화
+          </button>
         </div>
       </div>
     </div>

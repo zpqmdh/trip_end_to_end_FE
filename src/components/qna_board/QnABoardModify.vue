@@ -3,8 +3,7 @@ import { ref, onMounted, watch } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
-import Swal from "sweetalert2/dist/sweetalert2.js";
-import "sweetalert2/src/sweetalert2.scss";
+import Swal from "sweetalert2";
 
 const local = localAxios();
 const route = useRoute();
@@ -46,7 +45,10 @@ const updateArticle = () => {
   const id = route.params.id;
   article.value.qnaBoardDto.secret = isSecretBoolean.value ? "1" : "0";
 
-  if (isSecretBoolean.value && !/^\d{4}$/.test(article.value.qnaBoardDto.password)) {
+  if (
+    isSecretBoolean.value &&
+    !/^\d{4}$/.test(article.value.qnaBoardDto.password)
+  ) {
     Swal.fire({
       icon: "error",
       text: "게시글 비밀번호는 4자리 숫자로 설정해주세요.",
@@ -125,7 +127,9 @@ watch(isSecretBoolean, (newVal) => {
             v-model="isSecretBoolean"
             id="flexCheckDefault"
           />
-          <label class="form-check-label" for="flexCheckDefault"> 비밀글로 등록하기 </label>
+          <label class="form-check-label" for="flexCheckDefault">
+            비밀글로 등록하기
+          </label>
         </div>
         <div class="col-lg-4">
           <input
@@ -140,10 +144,22 @@ watch(isSecretBoolean, (newVal) => {
           />
         </div>
         <div class="col-auto text-center">
-          <button type="button" id="btn-update" class="btn mb-3" @click="updateArticle">
+          <button
+            type="button"
+            id="btn-update"
+            class="btn mb-3"
+            @click="updateArticle"
+          >
             등록하기
           </button>
-          <button id="btn-reset" type="reset" class="btn mb-3" @click="resetInput">초기화</button>
+          <button
+            id="btn-reset"
+            type="reset"
+            class="btn mb-3"
+            @click="resetInput"
+          >
+            초기화
+          </button>
         </div>
       </div>
     </div>
