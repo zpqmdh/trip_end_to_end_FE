@@ -3,8 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
-import Swal from "sweetalert2/dist/sweetalert2.js";
-import "sweetalert2/src/sweetalert2.scss";
+import Swal from "sweetalert2";
 
 const route = useRoute();
 const router = useRouter();
@@ -37,9 +36,11 @@ const getMember = () => {
 };
 
 const getAuthor = () => {
-  local.get(`/plans/getMember/${article.value.qnaBoardDto.memberId}`).then(({ data }) => {
-    author.value = data;
-  });
+  local
+    .get(`/plans/getMember/${article.value.qnaBoardDto.memberId}`)
+    .then(({ data }) => {
+      author.value = data;
+    });
 };
 
 const deleteArticle = () => {
@@ -61,13 +62,15 @@ const deleteArticle = () => {
     })
     .then((result) => {
       if (result.isConfirmed) {
-        local.delete(`/qna/${article.value.qnaBoardDto.qnaBoardId}`).then(({ data }) => {
-          swalWithBootstrapButtons.fire({
-            title: "삭제 완료",
-            icon: "success",
+        local
+          .delete(`/qna/${article.value.qnaBoardDto.qnaBoardId}`)
+          .then(({ data }) => {
+            swalWithBootstrapButtons.fire({
+              title: "삭제 완료",
+              icon: "success",
+            });
+            router.push({ name: "qna-list" });
           });
-          router.push({ name: "qna-list" });
-        });
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         swalWithBootstrapButtons.fire({
           title: "취소되었습니다.",
@@ -92,7 +95,10 @@ const updateComment = ref({
 
 const addComment = () => {
   local
-    .post(`/qna/insert/${newComment.value.qnaBoardId}/comment`, newComment.value)
+    .post(
+      `/qna/insert/${newComment.value.qnaBoardId}/comment`,
+      newComment.value
+    )
     .then(({ data }) => {
       console.log(data);
       getQnADetail(route.params.id);
@@ -158,7 +164,10 @@ const mvList = () => {
 };
 
 const mvModify = () => {
-  router.push({ name: "qna-modify", params: { id: article.value.qnaBoardDto.qnaBoardId } });
+  router.push({
+    name: "qna-modify",
+    params: { id: article.value.qnaBoardDto.qnaBoardId },
+  });
 };
 </script>
 
@@ -182,10 +191,24 @@ const mvModify = () => {
     </div>
     <div class="content">{{ article.qnaBoardDto.content }}</div>
     <div class="col-auto text-end">
-      <button id="btn-list" type="button" class="btn mb-3" @click="mvList">목록으로</button>
+      <button id="btn-list" type="button" class="btn mb-3" @click="mvList">
+        목록으로
+      </button>
       <template v-if="author.memberId === member.memberId">
-        <button id="btn-modify" type="button" class="btn mb-3" @click="mvModify">수정하기</button>
-        <button id="btn-delete" type="button" class="btn mb-3" @click.prevent="deleteArticle">
+        <button
+          id="btn-modify"
+          type="button"
+          class="btn mb-3"
+          @click="mvModify"
+        >
+          수정하기
+        </button>
+        <button
+          id="btn-delete"
+          type="button"
+          class="btn mb-3"
+          @click.prevent="deleteArticle"
+        >
           삭제하기
         </button>
       </template>
@@ -205,19 +228,32 @@ const mvModify = () => {
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
       <div class="comment-list mt-4">
-        <div v-for="comment in article.commentList" :key="comment.id" class="comment-item">
+        <div
+          v-for="comment in article.commentList"
+          :key="comment.id"
+          class="comment-item"
+        >
           <!-- Existing Comments -->
           <template v-if="comment.deleted == 0">
             <div>
-              <p>👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}</p>
+              <p>
+                👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}
+              </p>
             </div>
             <div
               v-if="editingComment !== comment.commentId"
               class="d-flex justify-content-between align-items-center"
             >
               <div v-html="comment.content"></div>
-              <div v-if="comment.memberId === member.memberId" class="comment-actions">
-                <button @click="startEditingComment(comment)" class="btn btn-sm" id="btn-modify">
+              <div
+                v-if="comment.memberId === member.memberId"
+                class="comment-actions"
+              >
+                <button
+                  @click="startEditingComment(comment)"
+                  class="btn btn-sm"
+                  id="btn-modify"
+                >
                   수정
                 </button>
                 <button
@@ -236,7 +272,11 @@ const mvModify = () => {
                 style="width: 80%; margin-right: 10px"
                 rows="2"
               ></textarea>
-              <button @click="saveEditComment(comment.commentId)" class="btn mt-2" id="btn-list">
+              <button
+                @click="saveEditComment(comment.commentId)"
+                class="btn mt-2"
+                id="btn-list"
+              >
                 저장
               </button>
             </div>

@@ -3,8 +3,7 @@ import { onMounted, ref, watch } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
-import Swal from "sweetalert2/dist/sweetalert2.js";
-import "sweetalert2/src/sweetalert2.scss";
+import Swal from "sweetalert2";
 
 const local = localAxios();
 const router = useRouter();
@@ -109,7 +108,9 @@ watch(isSecretBoolean, (newVal) => {
             v-model="isSecretBoolean"
             id="flexCheckDefault"
           />
-          <label class="form-check-label" for="flexCheckDefault"> 비밀글로 등록하기 </label>
+          <label class="form-check-label" for="flexCheckDefault">
+            비밀글로 등록하기
+          </label>
         </div>
         <div class="col-lg-4">
           <input
@@ -124,10 +125,17 @@ watch(isSecretBoolean, (newVal) => {
           />
         </div>
         <div class="col-auto text-center">
-          <button type="button" id="btn-register" class="btn" @click="insertArticle">
+          <button
+            type="button"
+            id="btn-register"
+            class="btn"
+            @click="insertArticle"
+          >
             등록하기
           </button>
-          <button id="btn-reset" type="reset" class="btn" @click="resetInput">초기화</button>
+          <button id="btn-reset" type="reset" class="btn" @click="resetInput">
+            초기화
+          </button>
         </div>
       </div>
     </div>

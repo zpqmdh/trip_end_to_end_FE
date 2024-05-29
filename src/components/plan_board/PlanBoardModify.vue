@@ -6,8 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
 import { QuillEditor } from "@vueup/vue-quill";
 import "@vueup/vue-quill/dist/vue-quill.snow.css";
-import Swal from "sweetalert2/dist/sweetalert2.js";
-import "sweetalert2/src/sweetalert2.scss";
+import Swal from "sweetalert2";
 
 const { VITE_LOCALHOST_URL } = import.meta.env;
 const local = localAxios();
@@ -49,11 +48,13 @@ const getDetail = () => {
     planBoardObject.value.tagList = data.tagList;
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
-        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.thumbnail;
+        `http://${VITE_LOCALHOST_URL}/products/` +
+        planBoardObject.value.planBoard.thumbnail;
     }
     if (!planBoardObject.value.planBoard.image.startsWith("http")) {
       planBoardObject.value.planBoard.image =
-        `http://${VITE_LOCALHOST_URL}/products/` + planBoardObject.value.planBoard.image;
+        `http://${VITE_LOCALHOST_URL}/products/` +
+        planBoardObject.value.planBoard.image;
     }
     getMember(); // 수정 권한 확인
     getPlanDetail();
@@ -86,15 +87,17 @@ const getMarkerIcon = (index1) => {
   };
 };
 const getPlanDetail = () => {
-  local.get(`/plans/detail/${planBoardObject.value.planBoard.planId}`).then(({ data }) => {
-    console.log(data);
-    scheduleDates.value = data.scheduleDates.map((date) => ({
-      ...date,
-      expanded: sassTrue,
-    }));
-    planLocations.value = data.planLocations;
-    getMarkerLocations();
-  });
+  local
+    .get(`/plans/detail/${planBoardObject.value.planBoard.planId}`)
+    .then(({ data }) => {
+      console.log(data);
+      scheduleDates.value = data.scheduleDates.map((date) => ({
+        ...date,
+        expanded: sassTrue,
+      }));
+      planLocations.value = data.planLocations;
+      getMarkerLocations();
+    });
 };
 const getMarkerLocations = () => {
   markerLocations.value = planLocations.value.map(() => []); // planLocations와 같은 구조로 초기화
@@ -156,7 +159,9 @@ const searchTag = () => {
   });
 };
 const addTag = (tag) => {
-  const exists = planBoardObject.value.tagList.some((t) => t.tagTypeId === tag.tagTypeId);
+  const exists = planBoardObject.value.tagList.some(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (!exists) {
     if (planBoardObject.value.tagList.length >= 3) {
       Swal.fire({
@@ -169,7 +174,9 @@ const addTag = (tag) => {
   }
 };
 const removeTag = (tag) => {
-  const index = planBoardObject.value.tagList.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const index = planBoardObject.value.tagList.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (index !== -1) {
     planBoardObject.value.tagList.splice(index, 1);
   }
@@ -194,9 +201,13 @@ const updateArticle = () => {
   );
   formData.append("thumbnail", thumbnail.value);
   local
-    .put(`/shareplan/${planBoardObject.value.planBoard.planBoardId}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    })
+    .put(
+      `/shareplan/${planBoardObject.value.planBoard.planBoardId}`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    )
     .then(({ data }) => {
       console.log(data);
       Swal.fire({
@@ -247,7 +258,9 @@ const onThumbnailChange = (event) => {
       <div class="meta">
         <span class="views">👁 조회수: {{ planBoardObject.planBoard.hit }}</span>
         <span class="divider">|</span>
-        <span class="time">🕒 {{ planBoardObject.planBoard.registerTime }}</span>
+        <span class="time"
+          >🕒 {{ planBoardObject.planBoard.registerTime }}</span
+        >
       </div>
     </div>
     <hr />
@@ -303,14 +316,24 @@ const onThumbnailChange = (event) => {
           <div class="date-section">
             <label>📆 여행 기간</label>
             <div class="date-inputs">
-              <input type="date" v-model="planBoardObject.planBoard.startDate" disabled />
+              <input
+                type="date"
+                v-model="planBoardObject.planBoard.startDate"
+                disabled
+              />
               <span class="mt-2">~</span>
-              <input type="date" v-model="planBoardObject.planBoard.endDate" disabled />
+              <input
+                type="date"
+                v-model="planBoardObject.planBoard.endDate"
+                disabled
+              />
             </div>
           </div>
           <!-- Thumbnail -->
           <div class="mb-3">
-            <label for="thumbnailInput" class="form-label">대표 사진 변경하기</label>
+            <label for="thumbnailInput" class="form-label"
+              >대표 사진 변경하기</label
+            >
             <input
               class="form-control"
               type="file"
@@ -325,14 +348,24 @@ const onThumbnailChange = (event) => {
           <!-- 여행 일정 -->
           <div class="schedule-section">
             <label>🕘 여행 일정</label>
-            <button @click="toggleAll(true)" class="btn btn-light">모두 열기</button>
-            <button @click="toggleAll(false)" class="btn btn-light">모두 닫기</button>
-            <div v-for="(date, index1) in scheduleDates" :key="index1" class="day-schedule">
+            <button @click="toggleAll(true)" class="btn btn-light">
+              모두 열기
+            </button>
+            <button @click="toggleAll(false)" class="btn btn-light">
+              모두 닫기
+            </button>
+            <div
+              v-for="(date, index1) in scheduleDates"
+              :key="index1"
+              class="day-schedule"
+            >
               <div
                 @click="toggleAccordion(index1)"
                 :class="['schedule-date', `color-${(index1 % 5) + 1}`]"
               >
-                <span class="schedule-date">{{ scheduleDates[index1].date }}</span>
+                <span class="schedule-date">{{
+                  scheduleDates[index1].date
+                }}</span>
               </div>
               <transition
                 name="accordion"
@@ -340,7 +373,10 @@ const onThumbnailChange = (event) => {
                 @enter="enter"
                 @leave="leave"
               >
-                <div v-show="scheduleDates[index1].expanded" class="accordion-content">
+                <div
+                  v-show="scheduleDates[index1].expanded"
+                  class="accordion-content"
+                >
                   <table class="styled-table">
                     <thead>
                       <tr>
@@ -350,7 +386,10 @@ const onThumbnailChange = (event) => {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(location, index2) in planLocations[index1]" :key="index2">
+                      <tr
+                        v-for="(location, index2) in planLocations[index1]"
+                        :key="index2"
+                      >
                         <td>
                           <input
                             type="time"
@@ -424,7 +463,9 @@ const onThumbnailChange = (event) => {
         </div>
         <!-- 수정 버튼 -->
         <div class="text-center">
-          <button id="btn-update" class="btn w-100" @click="updateArticle">수정</button>
+          <button id="btn-update" class="btn w-100" @click="updateArticle">
+            수정
+          </button>
         </div>
       </div>
     </div>

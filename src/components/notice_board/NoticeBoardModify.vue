@@ -3,8 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
-import Swal from "sweetalert2/dist/sweetalert2.js";
-import "sweetalert2/src/sweetalert2.scss";
+import Swal from "sweetalert2";
 
 const local = localAxios();
 const route = useRoute();
@@ -102,14 +101,31 @@ const resetInput = () => {
           ></textarea>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" v-model="isFixedBoolean" id="isFixed" />
+          <input
+            class="form-check-input"
+            type="checkbox"
+            v-model="isFixedBoolean"
+            id="isFixed"
+          />
           <label class="form-check-label" for="isFixed">고정하기</label>
         </div>
         <div class="col-auto text-center">
-          <button type="button" id="btn-update" class="btn mb-3" @click="updateArticle">
+          <button
+            type="button"
+            id="btn-update"
+            class="btn mb-3"
+            @click="updateArticle"
+          >
             등록하기
           </button>
-          <button id="btn-reset" type="reset" class="btn mb-3" @click="resetInput">초기화</button>
+          <button
+            id="btn-reset"
+            type="reset"
+            class="btn mb-3"
+            @click="resetInput"
+          >
+            초기화
+          </button>
         </div>
       </div>
     </div>
