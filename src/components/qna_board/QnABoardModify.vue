@@ -9,17 +9,20 @@ const local = localAxios();
 const route = useRoute();
 const router = useRouter();
 
+// 게시글 정보
 const article = ref({
   qnaBoardDto: {},
   commentList: [],
 });
 
+// 비밀글 여부 판단하는 boolean 변수
 const isSecretBoolean = ref(false);
 
 onMounted(() => {
   getDetail(route.params.id);
 });
 
+// 게시글 정보 가져오기
 const getDetail = (id) => {
   local.get("/qna/" + id).then(({ data }) => {
     article.value = data.article;
@@ -31,6 +34,7 @@ const getDetail = (id) => {
 const getMember = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
+    // 로그인한 유저가 게시글 수정 권한 있는지 확인
     if (data.memberId != article.value.qnaBoardDto.memberId) {
       Swal.fire({
         icon: "error",
@@ -45,6 +49,7 @@ const updateArticle = () => {
   const id = route.params.id;
   article.value.qnaBoardDto.secret = isSecretBoolean.value ? "1" : "0";
 
+  // 비밀글 설정 && 입력한 비밀번호가 4글자 숫자로만 이루어져 있지 않음
   if (
     isSecretBoolean.value &&
     !/^\d{4}$/.test(article.value.qnaBoardDto.password)
@@ -77,6 +82,7 @@ const resetInput = () => {
   article.value.qnaBoardDto = {};
 };
 
+// secret 여부에 따라 isSecretBoolean 값 변경
 watch(
   () => article.value.qnaBoardDto.secret,
   (newVal) => {
@@ -84,6 +90,7 @@ watch(
   }
 );
 
+// isSecretBoolean이 false라면 비밀번호 필드 초기화
 watch(isSecretBoolean, (newVal) => {
   if (!newVal) {
     article.value.qnaBoardDto.password = "";
@@ -94,10 +101,12 @@ watch(isSecretBoolean, (newVal) => {
 <template>
   <div class="container">
     <div class="row justify-content-center">
+      <!-- 헤더 -->
       <div class="d-flex justify-content-center mt-3">
         <h1>❓ 문의 게시판</h1>
       </div>
       <div class="col-lg-8 col-md-10 col-sm-12">
+        <!-- 제목 -->
         <div class="mb-3">
           <label for="subject" class="form-label">제목 : </label>
           <input
@@ -109,6 +118,7 @@ watch(isSecretBoolean, (newVal) => {
             v-model="article.qnaBoardDto.subject"
           />
         </div>
+        <!-- 내용 -->
         <div class="mb-3">
           <label for="content" class="form-label">내용 : </label>
           <textarea
@@ -120,6 +130,7 @@ watch(isSecretBoolean, (newVal) => {
             v-model="article.qnaBoardDto.content"
           ></textarea>
         </div>
+        <!-- 비밀글 여부 판단하는 체크박스 -->
         <div class="form-check">
           <input
             class="form-check-input"
@@ -131,6 +142,7 @@ watch(isSecretBoolean, (newVal) => {
             비밀글로 등록하기
           </label>
         </div>
+        <!-- 비밀글로 설정했을 때 비밀번호 입력창 활성화 -->
         <div class="col-lg-4">
           <input
             type="password"

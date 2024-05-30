@@ -9,32 +9,52 @@ const route = useRoute();
 const router = useRouter();
 const local = localAxios();
 
+// 게시글 세부 정보 ref 객체
 const article = ref({
-  qnaBoardDto: {},
-  commentList: [],
+  qnaBoardDto: {}, // 게시글 정보
+  commentList: [], // 게시글에 달린 댓글 목록
 });
+// 로그인한 유저 ref 객체
 const member = ref({});
+// 게시글 작성자 정보 ref 객체
 const author = ref({});
+// 댓글 작성 폼 ref 객체
+const newComment = ref({
+  qnaBoardId: route.params.id,
+  memberId: "",
+  content: "",
+  depth: "-1",
+  commentGroup: "-1",
+});
+// 현재 편집 중인 댓글의 ID
+const editingComment = ref(null);
+// 수정할 댓글 ref 객체
+const updateComment = ref({
+  commentId: -1,
+  content: "",
+});
 
+// 문의 게시글 세부 정보 가져오기
 const getQnADetail = (id) => {
   local.get("/qna/" + id).then(({ data }) => {
     article.value = data.article;
     article.value.commentList.forEach((comment) => {
-      comment.content = comment.content.replaceAll(/(\n|\r\n)/g, "<br>");
+      comment.content = comment.content.replaceAll(/(\n|\r\n)/g, "<br>"); // 개행 <br> 태그로 바꿔주기
     });
-    console.log(article.value);
-    getAuthor();
+    getAuthor(); // 게시글 작성자 정보 불러오기
   });
 };
 
+// 로그인한 유저 정보 가져오기
 const getMember = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
     member.value = data;
-    newComment.value.memberId = data.memberId;
+    newComment.value.memberId = data.memberId; // 댓글 작성자 member 세팅
   });
 };
 
+// 게시글 작성자 정보 가져오기
 const getAuthor = () => {
   local
     .get(`/plans/getMember/${article.value.qnaBoardDto.memberId}`)
@@ -43,6 +63,7 @@ const getAuthor = () => {
     });
 };
 
+// 게시글 삭제
 const deleteArticle = () => {
   const swalWithBootstrapButtons = Swal.mixin({
     customClass: {
@@ -80,19 +101,7 @@ const deleteArticle = () => {
     });
 };
 
-const newComment = ref({
-  qnaBoardId: route.params.id,
-  memberId: "",
-  content: "",
-  depth: "-1",
-  commentGroup: "-1",
-});
-const editingComment = ref(null); // 현재 편집 중인 댓글의 ID
-const updateComment = ref({
-  commentId: -1,
-  content: "",
-});
-
+// 댓글 새로 등록하기
 const addComment = () => {
   local
     .post(
@@ -100,18 +109,19 @@ const addComment = () => {
       newComment.value
     )
     .then(({ data }) => {
-      console.log(data);
-      getQnADetail(route.params.id);
-      newComment.value.content = "";
+      getQnADetail(route.params.id); // 새로 게시글 정보 가져오기
+      newComment.value.content = ""; // 초기화
     });
 };
 
+// 댓글 수정 시작 -> editingComment, updateComment 값 설정
 const startEditingComment = (comment) => {
   editingComment.value = comment.commentId;
   updateComment.value.commentId = comment.commentId;
   updateComment.value.content = comment.content;
 };
 
+// 등록된 댓글 수정하기
 const saveEditComment = (commentId) => {
   local.put(`/qna/comment/${commentId}`, updateComment.value).then(() => {
     getQnADetail(route.params.id);
@@ -119,6 +129,7 @@ const saveEditComment = (commentId) => {
   });
 };
 
+// 댓글 삭제하기
 const deleteComment = (commentId) => {
   const swalWithBootstrapButtons = Swal.mixin({
     customClass: {
@@ -159,10 +170,12 @@ onMounted(() => {
   getMember();
 });
 
+// 문의 게시글 목록으로 이동
 const mvList = () => {
   router.push({ name: "qna-list" });
 };
 
+// 문의 게시글 수정 페이지로 이동
 const mvModify = () => {
   router.push({
     name: "qna-modify",
@@ -175,13 +188,14 @@ const mvModify = () => {
   <div class="d-flex justify-content-center mt-3">
     <h1>❓ 문의 게시판</h1>
   </div>
+  <!-- 게시글 정보 -->
   <div class="container" id="main">
-    <!-- Main Section -->
+    <!-- 제목 -->
     <div class="d-flex justify-content-center">
       <h2>{{ article.qnaBoardDto.subject }}</h2>
     </div>
     <hr />
-
+    <!-- 부가 정보 -->
     <div class="meta">
       <span class="author">👤 작성자: {{ author.nickname }}</span>
       <span class="divider">|</span>
@@ -189,7 +203,9 @@ const mvModify = () => {
       <span class="divider">|</span>
       <span class="time">🕒 {{ article.qnaBoardDto.registerTime }}</span>
     </div>
+    <!-- 내용 -->
     <div class="content">{{ article.qnaBoardDto.content }}</div>
+    <!-- 버튼 -->
     <div class="col-auto text-end">
       <button id="btn-list" type="button" class="btn mb-3" @click="mvList">
         목록으로
@@ -214,10 +230,11 @@ const mvModify = () => {
       </template>
     </div>
   </div>
+  <!-- 댓글 -->
   <div class="container">
-    <!-- Comment Section -->
     <div class="comment-section">
       <h4>댓글</h4>
+      <!-- 댓글 작성 폼 -->
       <div class="comment-form d-flex justify-content-center">
         <textarea
           v-model="newComment.content"
@@ -227,70 +244,59 @@ const mvModify = () => {
         ></textarea>
         <button @click="addComment" class="btn">댓글 달기</button>
       </div>
+      <!-- 등록된 댓글 조회 -->
       <div class="comment-list mt-4">
         <div
           v-for="comment in article.commentList"
           :key="comment.id"
           class="comment-item"
         >
-          <!-- Existing Comments -->
-          <template v-if="comment.deleted == 0">
-            <div>
-              <p>
-                👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}
-              </p>
-            </div>
+          <div>
+            <p>
+              👤 작성자: {{ comment.nickname }} 🕒 {{ comment.registerTime }}
+            </p>
+          </div>
+          <div
+            v-if="editingComment !== comment.commentId"
+            class="d-flex justify-content-between align-items-center"
+          >
+            <div v-html="comment.content"></div>
+            <!-- 댓글 작성자와 로그인한 유저가 일치할 때만 -->
             <div
-              v-if="editingComment !== comment.commentId"
-              class="d-flex justify-content-between align-items-center"
+              v-if="comment.memberId === member.memberId"
+              class="comment-actions"
             >
-              <div v-html="comment.content"></div>
-              <div
-                v-if="comment.memberId === member.memberId"
-                class="comment-actions"
-              >
-                <button
-                  @click="startEditingComment(comment)"
-                  class="btn btn-sm"
-                  id="btn-modify"
-                >
-                  수정
-                </button>
-                <button
-                  @click="deleteComment(comment.commentId)"
-                  class="btn btn-sm"
-                  id="btn-delete"
-                >
-                  삭제
-                </button>
-              </div>
-            </div>
-            <div v-else class="d-flex justify-content-center">
-              <textarea
-                v-model="updateComment.content"
-                class="form-control"
-                style="width: 80%; margin-right: 10px"
-                rows="2"
-              ></textarea>
               <button
-                @click="saveEditComment(comment.commentId)"
-                class="btn mt-2"
-                id="btn-list"
+                @click="startEditingComment(comment)"
+                class="btn btn-sm"
+                id="btn-modify"
               >
-                저장
+                수정
+              </button>
+              <button
+                @click="deleteComment(comment.commentId)"
+                class="btn btn-sm"
+                id="btn-delete"
+              >
+                삭제
               </button>
             </div>
-          </template>
-          <!-- Deleted Comments -->
-          <template v-if="comment.deleted == 1">
-            <div v-if="comment.depth != 0" class="col-1"></div>
-            <div class="col">
-              <p>
-                <strong> - </strong>
-              </p>
-              <p>삭제된 댓글입니다.</p>
-            </div>
-          </template>
+          </div>
+          <div v-else class="d-flex justify-content-center">
+            <textarea
+              v-model="updateComment.content"
+              class="form-control"
+              style="width: 80%; margin-right: 10px"
+              rows="2"
+            ></textarea>
+            <button
+              @click="saveEditComment(comment.commentId)"
+              class="btn mt-2"
+              id="btn-list"
+            >
+              저장
+            </button>
+          </div>
         </div>
       </div>
     </div>
