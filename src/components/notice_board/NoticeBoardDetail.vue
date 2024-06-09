@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { localAxios } from "@/util/http-commons.js";
 import { useRoute, useRouter } from "vue-router";
 import { decodedTokenFunc } from "@/util/auth";
+import Swal from "sweetalert2";
 
 const local = localAxios();
 const route = useRoute();
@@ -10,8 +11,9 @@ const router = useRouter();
 
 const notice = ref({});
 const member = ref({});
+
 onMounted(() => {
-  getDetail(route.params.id);
+  getDetail(route.params.id); // 글번호로 세부 정보 가져오기
   getMember();
 });
 
@@ -19,9 +21,11 @@ const getDetail = (id) => {
   local.get("/notice/" + id).then(({ data }) => {
     console.log(data);
     notice.value = data;
-    notice.value.content = data.content.replaceAll(/(\n|\r\n)/g, "<br>");
+    notice.value.content = data.content.replaceAll(/(\n|\r\n)/g, "<br>"); // textarea 개행
   });
 };
+
+// 로그인 유저 정보 가져오기
 const getMember = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
@@ -34,16 +38,45 @@ const mvList = () => {
   router.push({ name: "notice-list" });
 };
 const mvModify = () => {
-  router.push({ name: "notice-modify", params: { id: notice.value.noticeBoardId } });
+  router.push({
+    name: "notice-modify",
+    params: { id: notice.value.noticeBoardId },
+  });
 };
 const deleteArticle = () => {
-  const flag = confirm("정말 삭제하시겠습니까?");
-  if (!flag) return;
-  const id = route.params.id;
-  local.delete("/notice/" + id).then(({ data }) => {
-    console.log(data);
-    router.push({ name: "notice-list" });
+  const swalWithBootstrapButtons = Swal.mixin({
+    customClass: {
+      confirmButton: "btn btn-success mx-3",
+      cancelButton: "btn btn-danger",
+    },
+    buttonsStyling: false,
   });
+  swalWithBootstrapButtons
+    .fire({
+      title: "정말 삭제하실 건가요??",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "예",
+      cancelButtonText: "아니오",
+      reverseButtons: true,
+    })
+    .then((result) => {
+      if (result.isConfirmed) {
+        local.delete("/notice/" + id).then(({ data }) => {
+          console.log(data);
+          swalWithBootstrapButtons.fire({
+            title: "삭제 완료",
+            icon: "success",
+          });
+          router.push({ name: "notice-list" });
+        });
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        swalWithBootstrapButtons.fire({
+          title: "취소되었습니다.",
+          icon: "error",
+        });
+      }
+    });
 };
 </script>
 
@@ -65,10 +98,24 @@ const deleteArticle = () => {
     </div>
     <div class="content" v-html="notice.content"></div>
     <div class="col-auto text-end">
-      <button id="btn-list" type="button" class="btn mb-3" @click="mvList">목록으로</button>
+      <button id="btn-list" type="button" class="btn mb-3" @click="mvList">
+        목록으로
+      </button>
       <template v-if="member.type == 3">
-        <button id="btn-modify" type="button" class="btn mb-3" @click="mvModify">수정하기</button>
-        <button id="btn-delete" type="button" class="btn mb-3" @click.prevent="deleteArticle">
+        <button
+          id="btn-modify"
+          type="button"
+          class="btn mb-3"
+          @click="mvModify"
+        >
+          수정하기
+        </button>
+        <button
+          id="btn-delete"
+          type="button"
+          class="btn mb-3"
+          @click.prevent="deleteArticle"
+        >
           삭제하기
         </button>
       </template>
