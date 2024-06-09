@@ -23,6 +23,7 @@ onMounted(() => {
   getArticleList();
 });
 
+// 태그 목록 조회
 const searchTag = () => {
   if (!tagName.value.trim()) {
     tagResults.value = [];
@@ -33,28 +34,40 @@ const searchTag = () => {
   });
 };
 
+// 게시글에 달린 태그 검색 -> 필터링
 const filterTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (tagIndex === -1) {
+    // 검색 조건 태그 추가
     filteredTag.value.push(tag);
   } else {
+    // 검색 조건 태그 제거
     filteredTag.value.splice(tagIndex, 1);
   }
 
   filteredArticleList.value = planArticleList.value.filter((article) => {
     return filteredTag.value.every((filter) => {
-      return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
+      return article.tagList.some(
+        (item) => item.tagTypeId === filter.tagTypeId
+      );
     });
   });
 };
 
+// 검색 조건 태그 제거
 const removeTag = (tag) => {
-  const tagIndex = filteredTag.value.findIndex((t) => t.tagTypeId === tag.tagTypeId);
+  const tagIndex = filteredTag.value.findIndex(
+    (t) => t.tagTypeId === tag.tagTypeId
+  );
   if (tagIndex !== -1) {
     filteredTag.value.splice(tagIndex, 1);
     filteredArticleList.value = planArticleList.value.filter((article) => {
       return filteredTag.value.every((filter) => {
-        return article.tagList.some((item) => item.tagTypeId === filter.tagTypeId);
+        return article.tagList.some(
+          (item) => item.tagTypeId === filter.tagTypeId
+        );
       });
     });
   }
@@ -72,14 +85,20 @@ const moveWrite = () => {
         <div class="fixed-title text-center">
           <h1>🚗 다녀온 여행 공유</h1>
           <div class="text-center mb-4">
-            <button class="btn btn-primary" id="btn-go-write" @click="moveWrite">
+            <button
+              class="btn btn-primary"
+              id="btn-go-write"
+              @click="moveWrite"
+            >
               게시글 작성하기
             </button>
           </div>
           <form class="text-center mb-4">
             <div class="form-row justify-content-center">
               <div class="d-flex flex-column align-items-center mb-4">
-                <label class="mr-sm-3" for="inlineFormCustomSelect">태그 검색</label>
+                <label class="mr-sm-3" for="inlineFormCustomSelect"
+                  >태그 검색</label
+                >
                 <input
                   type="text"
                   class="form-control"
@@ -93,7 +112,11 @@ const moveWrite = () => {
           </form>
           <div class="text-center mb-4">
             <div class="tags-container">
-              <div v-for="tag in tagResults" :key="tag.tagTypeId" class="d-inline-block">
+              <div
+                v-for="tag in tagResults"
+                :key="tag.tagTypeId"
+                class="d-inline-block"
+              >
                 <button
                   class="btn btn-outline-secondary m-1"
                   @click.prevent="filterTag(tag)"
@@ -109,7 +132,11 @@ const moveWrite = () => {
             <div v-if="filteredTag.length > 0">
               <h5>검색 결과</h5>
               <div class="tags-container">
-                <div v-for="tag in filteredTag" :key="tag.tagTypeId" class="d-inline-block">
+                <div
+                  v-for="tag in filteredTag"
+                  :key="tag.tagTypeId"
+                  class="d-inline-block"
+                >
                   <button
                     class="btn btn-outline-secondary m-1"
                     @click.prevent="removeTag(tag)"
