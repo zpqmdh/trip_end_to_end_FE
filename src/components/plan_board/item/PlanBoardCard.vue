@@ -4,17 +4,20 @@ import { useRouter } from "vue-router";
 
 const prop = defineProps({ planArticle: Object });
 const router = useRouter();
+
+// 썸네일 이미지 경로 -> 추후 수정 예정
 if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
   prop.planArticle.planBoard.thumbnail =
-    `http://${VITE_LOCALHOST_URL}/products/` + prop.planArticle.planBoard.thumbnail;
+    `http://${VITE_LOCALHOST_URL}/products/` +
+    prop.planArticle.planBoard.thumbnail;
 }
+
 const mvDetail = () => {
   router.push({
     name: "share-plan-detail",
     params: { id: prop.planArticle.planBoard.planBoardId },
   });
 };
-console.log(prop.planArticle);
 </script>
 <template>
   <div class="card">
@@ -26,11 +29,13 @@ console.log(prop.planArticle);
     />
     <div class="card-body">
       <div class="card-info" style="color: #666">
-        🗓️ {{ prop.planArticle.planBoard.startDate }} - {{ prop.planArticle.planBoard.endDate }} 🗓️
+        🗓️ {{ prop.planArticle.planBoard.startDate }} -
+        {{ prop.planArticle.planBoard.endDate }} 🗓️
       </div>
       <h5 class="card-title">{{ prop.planArticle.planBoard.subject }}</h5>
       <div class="card-info d-flex justify-content-end">
-        👁 {{ prop.planArticle.planBoard.hit }} ❤ {{ prop.planArticle.planBoard.likeCnt }}
+        👁 {{ prop.planArticle.planBoard.hit }} ❤
+        {{ prop.planArticle.planBoard.likeCnt }}
       </div>
       <hr />
       <div class="card-info d-flex justify-content-end">
@@ -41,8 +46,13 @@ console.log(prop.planArticle);
       </div>
 
       <hr />
+      <!-- 해시태그 -->
       <div class="d-flex justify-content-center">
-        <button v-for="tag in prop.planArticle.tagList" :key="tag.planBoardTagId" class="tag-btn">
+        <button
+          v-for="tag in prop.planArticle.tagList"
+          :key="tag.planBoardTagId"
+          class="tag-btn"
+        >
           #{{ tag.name }}
         </button>
       </div>

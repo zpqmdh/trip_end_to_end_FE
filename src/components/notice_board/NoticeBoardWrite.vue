@@ -7,11 +7,19 @@ import Swal from "sweetalert2";
 
 const local = localAxios();
 const router = useRouter();
-let member = ref({
+const member = ref({
   memberId: "",
   id: "",
   nickname: "",
 });
+const noticeBoardDto = ref({
+  memberId: "",
+  subject: "",
+  content: "",
+  secret: false,
+  password: "",
+});
+
 const getMemberId = () => {
   const loginedId = decodedTokenFunc();
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
@@ -27,16 +35,11 @@ const getMemberId = () => {
     member.value.nickname = data.nickname;
   });
 };
-const noticeBoardDto = ref({
-  memberId: "",
-  subject: "",
-  content: "",
-  secret: false,
-  password: "",
-});
+
 onMounted(() => {
   getMemberId();
 });
+
 const insertArticle = () => {
   noticeBoardDto.value.memberId = member.value.memberId;
   noticeBoardDto.value.isFixed = noticeBoardDto.value.isFixed ? 1 : 0;

@@ -7,12 +7,13 @@ import { decodedTokenFunc } from "@/util/auth";
 import Swal from "sweetalert2";
 
 const { VITE_LOCALHOST_URL } = import.meta.env;
+const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
 
 const route = useRoute();
 const router = useRouter();
 const local = localAxios();
 
-const { VITE_GOOGLE_MAP_KEY } = import.meta.env;
+// 구글 맵에 필요한 정보
 const center = { lat: 36.35538, lng: 127.8 };
 const zoom = ref(13);
 const mapRef = ref(null);
@@ -42,8 +43,28 @@ const newLike = ref({
 
 const memberId = ref("");
 const isClickedLike = ref(null);
+
+// 지도에 표시할 여행 계획 정보
+const scheduleDates = ref([]);
+const planLocations = ref([]);
+const markerLocations = ref([]);
+const polylineColors = ["#0a296d", "#742405", "#97654c", "#054b2a", "#812f00"];
+import redMarkerImage from "@/assets/img/marker-red.png";
+import blueMarkerImage from "@/assets/img/marker-sky.png";
+import greenMarkerImage from "@/assets/img/marker-green.png";
+import orangeMarkerImage from "@/assets/img/marker-orange.png";
+import yellowMarkerImage from "@/assets/img/marker-yellow.png";
+const markerImages = [
+  blueMarkerImage,
+  redMarkerImage,
+  yellowMarkerImage,
+  greenMarkerImage,
+  orangeMarkerImage,
+];
+
 onMounted(() => {
   const loginedId = decodedTokenFunc();
+  // 로그인한 유저 정보 가져오기
   local.get(`/members/detail/${loginedId}`).then(({ data }) => {
     memberId.value = data.memberId;
     newComment.value.memberId = data.memberId;
@@ -86,11 +107,13 @@ const getDetail = () => {
 
     planBoardObject.value.planBoard = data.planBoard;
     planBoardObject.value.commentList = data.commentList;
+    // 댓글 textarea 개행 추가
     planBoardObject.value.commentList.forEach((comment) => {
       comment.content = comment.content.replaceAll(/(\n|\r\n)/g, "<br>");
     });
     planBoardObject.value.likeList = data.likeList;
     planBoardObject.value.tagList = data.tagList;
+    // 썸네일과 작성자 프로필 가져오기 -> 추후 수정 예정
     if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
       planBoardObject.value.planBoard.thumbnail =
         `http://${VITE_LOCALHOST_URL}/products/` +
@@ -120,23 +143,7 @@ const getDetail = () => {
   });
 };
 
-const scheduleDates = ref([]);
-const planLocations = ref([]);
-// 지도에 표시할 여행 계획 정보
-const markerLocations = ref([]);
-const polylineColors = ["#0a296d", "#742405", "#97654c", "#054b2a", "#812f00"];
-import redMarkerImage from "@/assets/img/marker-red.png";
-import blueMarkerImage from "@/assets/img/marker-sky.png";
-import greenMarkerImage from "@/assets/img/marker-green.png";
-import orangeMarkerImage from "@/assets/img/marker-orange.png";
-import yellowMarkerImage from "@/assets/img/marker-yellow.png";
-const markerImages = [
-  blueMarkerImage,
-  redMarkerImage,
-  yellowMarkerImage,
-  greenMarkerImage,
-  orangeMarkerImage,
-];
+// 마커 정보 가져오기
 const getMarkerIcon = (index1) => {
   return {
     url: markerImages[index1 % markerImages.length], // 이미지 경로
@@ -144,6 +151,8 @@ const getMarkerIcon = (index1) => {
     labelOrigin: new google.maps.Point(15, 14), // 라벨 위치 조정 (x, y)
   };
 };
+
+// 여행 계획 불러오기
 const getPlanDetail = () => {
   local
     .get(`/plans/detail/${planBoardObject.value.planBoard.planId}`)
@@ -157,6 +166,7 @@ const getPlanDetail = () => {
       getMarkerLocations();
     });
 };
+
 const getMarkerLocations = () => {
   markerLocations.value = planLocations.value.map(() => []); // planLocations와 같은 구조로 초기화
   planLocations.value.forEach((scheduleDate, index) => {
@@ -176,6 +186,7 @@ const getMarkerLocations = () => {
 const printMarkerLocations = (index) => {
   return markerLocations.value[index];
 };
+// 여행 계획 토글 버튼
 const toggleAccordion = (index) => {
   scheduleDates.value[index].expanded = !scheduleDates.value[index].expanded;
 };
@@ -204,7 +215,7 @@ const leave = (el, done) => {
   });
   el.addEventListener("transitionend", done);
 };
-/* Comment */
+// 댓글
 const addComment = () => {
   local
     .post(
@@ -216,20 +227,17 @@ const addComment = () => {
       newComment.value.content = "";
     });
 };
-
 const startEditingComment = (comment) => {
   editingComment.value = comment.commentId;
   updateComment.value.commentId = comment.commentId;
   updateComment.value.content = comment.content;
 };
-
 const saveEditComment = (commentId) => {
   local.put(`/shareplan/comment/${commentId}`, updateComment.value).then(() => {
     getDetail();
     editingComment.value = null;
   });
 };
-
 const deleteComment = (commentId) => {
   const swalWithBootstrapButtons = Swal.mixin({
     customClass: {
@@ -265,12 +273,9 @@ const deleteComment = (commentId) => {
     });
 };
 
-/* Like */
+// 좋아요
 const clickLike = () => {
-  console.log(isClickedLike.value);
   if (isClickedLike.value == null) {
-    console.log("qwe");
-    console.log(newLike.value);
     local
       .post(
         `/shareplan/insert/${newLike.value.planBoardId}/like`,
@@ -633,16 +638,6 @@ const deleteArticle = () => {
               >
                 저장
               </button>
-            </div>
-          </template>
-          <!-- Deleted Comments -->
-          <template v-if="comment.deleted == 1">
-            <div v-if="comment.depth != 0" class="col-1"></div>
-            <div class="col">
-              <p>
-                <strong> - </strong>
-              </p>
-              <p>삭제된 댓글입니다.</p>
             </div>
           </template>
         </div>
