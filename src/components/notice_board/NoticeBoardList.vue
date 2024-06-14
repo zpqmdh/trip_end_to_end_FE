@@ -2,11 +2,10 @@
 import NoticeBoardArticleItem from "./item/NoticeBoardArticleItem.vue";
 import NoticePageNavigation from "./item/NoticePageNavigation.vue";
 import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import { localAxios } from "@/util/http-commons.js";
 import { decodedTokenFunc } from "@/util/auth";
 
-const route = useRoute();
 const router = useRouter();
 const local = localAxios();
 
@@ -19,7 +18,9 @@ const word = ref("");
 
 const getArticleList = () => {
   local
-    .get(`/notice/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`)
+    .get(
+      `/notice/list?pgno=${currentPage.value}&key=${key.value}&word=${word.value}`
+    )
     .then(({ data }) => {
       articles.value = data.articles;
       currentPage.value = data.pageNavigation.currentPage;
