@@ -208,7 +208,7 @@ const handleDelete = async () => {
 // 컴포넌트 마운트 시 실행
 onMounted(() => {
   loadMemberDetails();
-  local.get("/shareplan/map/sido").then(({ data }) => {
+  local.get("/map/sido").then(({ data }) => {
     makeOption(data);
   });
 });

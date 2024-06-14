@@ -223,7 +223,7 @@ const makeOption = (data) => {
 };
 
 const getGugun = (sidoCode) => {
-  const url = `/shareplan/map/gugun/${sidoCode}`;
+  const url = `/map/gugun/${sidoCode}`;
   local.get(url).then(({ data }) => {
     makeGugunOption(data);
   });
@@ -253,7 +253,7 @@ const search = () => {
   if (contentTypeId != 0) queryString += `&contentTypeId=${contentTypeId}`;
   if (keyword.trim() != "") queryString += `&keyword=${keyword}`;
 
-  local.get("/shareplan/map/attractioninfo?" + queryString).then(({ data }) => {
+  local.get("/map/attractioninfo?" + queryString).then(({ data }) => {
     locations.value = data.attractionInfoList;
   });
 };
@@ -373,7 +373,7 @@ const addPlanLocation = (date_index, title, latitude, longitude, contentId) => {
 
 const showDetail = (location) => {
   local
-    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
+    .get(`/map/attractiondescription/${location.contentId}`)
     .then(({ data }) => {
       selectedLocation.value = data;
       selectedLocation.value.title = location.title;
@@ -451,7 +451,7 @@ onMounted(async () => {
   });
   // 작성자 정보 호출
   getMemberInfo();
-  local.get("/shareplan/map/sido").then(({ data }) => {
+  local.get("/map/sido").then(({ data }) => {
     makeOption(data);
   });
   fetchMemberList();

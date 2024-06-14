@@ -239,7 +239,7 @@ const deletePlan = () => {
 
 const showDetail = (location) => {
   local
-    .get(`/shareplan/map/attractiondescription/${location.contentId}`)
+    .get(`/map/attractiondescription/${location.contentId}`)
     .then(({ data }) => {
       selectedLocation.value = data;
       selectedLocation.value.title = location.title;
