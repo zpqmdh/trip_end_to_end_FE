@@ -1,4 +1,8 @@
+## 💻  프로젝트 명
+Trip-End-To-End
+
 ## 📄  프로젝트 소개
+Trip-End-To-End는 사용자가 개인 맞춤 정보를 활용하여 여행 계획을 세우고, 여행 후기를 작성 및 공유할 수 있는 여행 계획 웹 사이트입니다. 이 플랫폼은 사용자가 여행 일정을 보다 효율적으로 관리하고, 여행지에서의 경험을 다른 사용자와 나눌 수 있도록 돕습니다.
 
 
 ## ⭐  주요 기능
@@ -31,8 +35,8 @@
 ### 3️⃣ 여행 후기 게시판
    ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/4f72760f-0fc7-495d-a0d6-baf026126f23)
    
-### 4️⃣ 공지 사항
-   ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/e7f635f2-411c-419d-ac4b-9c7e8c61aae5)
+### 4️⃣ 공지 사항[
+   <img width="1278" alt="KakaoTalk_Photo_2024-06-14-15-21-19" src="https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/bf70db7d-de8f-486b-b21d-118dc78762ba">
 
 ### 5️⃣ 문의 게시판
    ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/f9bac806-4652-4ddc-90e0-338b7f142152)
@@ -44,7 +48,7 @@
 ### 7️⃣ 챗봇
   <img width="740" alt="image" src="https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/c48241eb-7003-4468-b086-6e510a2d2e20">
 
-## Developers
+## 👩‍💻  Developers
 | Developer | Developer |
 | -- | -- |
 | [유지현](https://github.com/jihyeon-yu) | [강윤서](https://github.com/zpqmdh) |
