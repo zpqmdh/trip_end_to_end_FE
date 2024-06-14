@@ -1,35 +1,50 @@
-# trip-end-to-end-fe
+## 📄  프로젝트 소개
 
-This template should help get you started developing with Vue 3 in Vite.
 
-## Recommended IDE Setup
+## ⭐  주요 기능
+### 1️⃣ 회원 관리
+   + 회원 가입
+    ![KakaoTalk_Photo_2024-06-14-14-27-18 007png](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/c9cb41b9-d6c1-4509-9c44-2f65db47486e)
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+   + 로그인
+      ![KakaoTalk_Photo_2024-06-14-14-27-18 002png](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/4c1e1538-b179-4e99-a9dd-fb4bfae20c3c)
 
-## Customize configuration
+   + 비밀번호 찾기
+      ![KakaoTalk_Photo_2024-06-14-14-27-18 001png](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/bbc9f93e-b1f6-4c70-92aa-0adfd0b357af)
+      ![KakaoTalk_Photo_2024-06-14-14-27-18 006png](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/5a549eaf-2bdd-4a61-9895-0e34ccb31b4e)
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+   + 마이 페이지
+       + 회원 정보 수정
+         ![KakaoTalk_Photo_2024-06-14-14-27-18 005png](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/079b5813-9431-4b6f-8144-df23a343fa51)
 
-## Project Setup
+       + 비밀번호 변경
+         ![KakaoTalk_Photo_2024-06-14-14-27-18 003png](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/9b7a65c9-15dc-4df1-9c28-a772abec34a7)
 
-```sh
-npm install
-```
 
-### Compile and Hot-Reload for Development
+### 2️⃣ 여행 계획
+   + 계획 작성
+   ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/ac3f6156-b7e9-4d31-92d6-84d889f15274)
 
-```sh
-npm run dev
-```
+   + 실시간 채팅
+   ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/df9f35fc-ee3f-4c20-96ee-dae77f0427c6)
 
-### Compile and Minify for Production
+### 3️⃣ 여행 후기 게시판
+   ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/4f72760f-0fc7-495d-a0d6-baf026126f23)
+   
+### 4️⃣ 공지 사항
+   ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/e7f635f2-411c-419d-ac4b-9c7e8c61aae5)
 
-```sh
-npm run build
-```
+### 5️⃣ 문의 게시판
+   ![image](https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/f9bac806-4652-4ddc-90e0-338b7f142152)
 
-### Lint with [ESLint](https://eslint.org/)
+### 6️⃣ 랜드마크
+   <img width="481" alt="image" src="https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/c5d883ab-de9a-4cc4-bf6b-e79ada6286d0">
+   <img width="477" alt="image" src="https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/34e440f0-88f4-4cf5-a797-1bab1a701c56">
 
-```sh
-npm run lint
-```
+### 7️⃣ 챗봇
+  <img width="740" alt="image" src="https://github.com/zpqmdh/trip_end_to_end_FE/assets/87455115/c48241eb-7003-4468-b086-6e510a2d2e20">
+
+## Developers
+| Developer | Developer |
+| -- | -- |
+| [유지현](https://github.com/jihyeon-yu) | [강윤서](https://github.com/zpqmdh) |
