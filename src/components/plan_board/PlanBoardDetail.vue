@@ -113,23 +113,7 @@ const getDetail = () => {
     });
     planBoardObject.value.likeList = data.likeList;
     planBoardObject.value.tagList = data.tagList;
-    // 썸네일과 작성자 프로필 가져오기 -> 추후 수정 예정
-    if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
-      planBoardObject.value.planBoard.thumbnail =
-        `http://${VITE_LOCALHOST_URL}/products/` +
-        planBoardObject.value.planBoard.thumbnail;
-    }
-    if (!planBoardObject.value.planBoard.image.startsWith("http")) {
-      planBoardObject.value.planBoard.image =
-        `http://${VITE_LOCALHOST_URL}/products/` +
-        planBoardObject.value.planBoard.image;
-    }
-    planBoardObject.value.commentList.forEach((comment) => {
-      if (!comment.image.startsWith("http")) {
-        comment.image =
-          `http://${VITE_LOCALHOST_URL}/products/` + comment.image;
-      }
-    });
+
     const like = planBoardObject.value.likeList.find(
       (like) => like.memberId === memberId.value
     );

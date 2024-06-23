@@ -100,10 +100,6 @@ const loadMemberDetails = async () => {
       sex: data.sex,
       phoneNumber: data.phoneNumber,
     };
-    if (!member.value.image.startsWith("http")) {
-      member.value.image =
-        `http://${VITE_LOCALHOST_URL}/products/` + member.value.image;
-    }
   } catch (error) {
     Swal.fire({
       icon: "error",

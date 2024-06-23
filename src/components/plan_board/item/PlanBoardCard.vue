@@ -5,13 +5,6 @@ import { useRouter } from "vue-router";
 const prop = defineProps({ planArticle: Object });
 const router = useRouter();
 
-// 썸네일 이미지 경로 -> 추후 수정 예정
-if (!prop.planArticle.planBoard.thumbnail.startsWith("http")) {
-  prop.planArticle.planBoard.thumbnail =
-    `http://${VITE_LOCALHOST_URL}/products/` +
-    prop.planArticle.planBoard.thumbnail;
-}
-
 const mvDetail = () => {
   router.push({
     name: "share-plan-detail",

@@ -46,6 +46,7 @@ const handleSignup = async () => {
     const response = await local.post("/members/signup", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
+    console.log(response);
     Swal.fire({
       icon: "success",
       title: "회원가입 성공 !",

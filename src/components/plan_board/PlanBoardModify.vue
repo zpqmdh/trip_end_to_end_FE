@@ -46,16 +46,7 @@ const getDetail = () => {
   local.get(`/shareplan/${route.params.id}`).then(({ data }) => {
     planBoardObject.value.planBoard = data.planBoard;
     planBoardObject.value.tagList = data.tagList;
-    if (!planBoardObject.value.planBoard.thumbnail.startsWith("http")) {
-      planBoardObject.value.planBoard.thumbnail =
-        `http://${VITE_LOCALHOST_URL}/products/` +
-        planBoardObject.value.planBoard.thumbnail;
-    }
-    if (!planBoardObject.value.planBoard.image.startsWith("http")) {
-      planBoardObject.value.planBoard.image =
-        `http://${VITE_LOCALHOST_URL}/products/` +
-        planBoardObject.value.planBoard.image;
-    }
+
     getMember(); // 수정 권한 확인
     getPlanDetail();
   });
